@@ -1,0 +1,183 @@
+<div id="cr-wireframe" aria-label="Currency Raise mobile wireframe">
+  <style>
+    #cr-wireframe { --cr-bg:light-dark(#fafaf8,#181918); --cr-panel:light-dark(#ffffff,#222421); --cr-ink:light-dark(#222720,#eef1eb); --cr-muted:light-dark(#60665d,#b4bcad); --cr-line:light-dark(#d8dcd4,#444b40); --cr-soft:light-dark(#edf0e9,#30362b); --cr-accent:light-dark(#303a2b,#d0dcc4); --cr-on-accent:light-dark(#ffffff,#202b18); font:400 14px/1.5 Arial,sans-serif; color:var(--cr-ink); width:100%; }
+    #cr-wireframe * { box-sizing:border-box; }
+    #cr-wireframe button,#cr-wireframe select,#cr-wireframe input { font:inherit; }
+    #cr-wireframe button { cursor:pointer; }
+    #cr-wireframe button:disabled { opacity:.5; cursor:default; }
+    #cr-wireframe [hidden] { display:none!important; }
+    #cr-wireframe .cr-caption { max-width:390px; margin:0 auto 12px; display:flex; justify-content:space-between; gap:12px; font-size:12px; color:var(--cr-muted); letter-spacing:.06em; }
+    #cr-wireframe .cr-phone { max-width:390px; width:100%; margin:auto; background:var(--cr-bg); border:1px solid var(--cr-line); border-radius:26px; position:relative; overflow:hidden; }
+    #cr-wireframe .cr-appbar { padding:18px 18px 8px; display:flex; align-items:center; justify-content:space-between; min-height:70px; gap:12px; }
+    #cr-wireframe .cr-brand { font-size:18px; font-weight:500; letter-spacing:-.4px; flex:1; }
+    #cr-wireframe #cr-back { order:-1; }
+    #cr-wireframe strong { font-weight:500; }
+    #cr-wireframe .cr-icon { border:0; background:transparent; color:var(--cr-ink); min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; }
+    #cr-wireframe .cr-icon:hover { background:var(--cr-soft); }
+    #cr-wireframe .cr-page { padding:10px 22px 24px; min-height:570px; }
+    #cr-wireframe .cr-eyebrow { color:var(--cr-muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+    #cr-wireframe h2 { font-size:32px; font-weight:500; line-height:1.2; letter-spacing:-1px; margin:8px 0 6px; }
+    #cr-wireframe h3 { font-size:16px; font-weight:500; margin:0 0 6px; }
+    #cr-wireframe p { margin:0; }
+    #cr-wireframe .cr-subtle { color:var(--cr-muted); font-size:13px; }
+    #cr-wireframe .cr-rates { display:grid; grid-template-columns:1fr 1fr; margin:26px 0 12px; background:var(--cr-panel); border:1px solid var(--cr-line); border-radius:16px; }
+    #cr-wireframe .cr-rate { padding:19px 15px; min-width:0; }
+    #cr-wireframe .cr-rate+.cr-rate { border-left:1px solid var(--cr-line); }
+    #cr-wireframe .cr-rate-title { font-weight:500; font-size:14px; }
+    #cr-wireframe .cr-value { font-size:36px; font-weight:500; line-height:1.25; letter-spacing:-1.6px; font-variant-numeric:tabular-nums; margin:9px 0 2px; }
+    #cr-wireframe .cr-units { font-size:12px; color:var(--cr-muted); }
+    #cr-wireframe .cr-context { font-size:12px; color:var(--cr-muted); }
+    #cr-wireframe .cr-times { margin:27px 0 23px; }
+    #cr-wireframe .cr-time { display:flex; justify-content:space-between; gap:14px; padding:6px 0; font-size:13px; }
+    #cr-wireframe .cr-time span:first-child { color:var(--cr-muted); }
+    #cr-wireframe .cr-time span:last-child { text-align:right; font-variant-numeric:tabular-nums; }
+    #cr-wireframe .cr-time-note { font-size:12px; color:var(--cr-muted); text-align:right; }
+    #cr-wireframe .cr-primary { width:100%; min-height:48px; border:0; border-radius:24px; background:var(--cr-accent); color:var(--cr-on-accent); display:flex; align-items:center; justify-content:center; gap:9px; font-weight:500; }
+    #cr-wireframe .cr-status { font-size:12px; color:var(--cr-muted); min-height:30px; padding-top:8px; text-align:center; }
+    #cr-wireframe .cr-schedule { display:flex; gap:12px; align-items:flex-start; padding:18px 0; margin-top:10px; border-top:1px solid var(--cr-line); }
+    #cr-wireframe .cr-schedule i,#cr-wireframe .cr-schedule svg { flex-shrink:0; margin-top:3px; }
+    #cr-wireframe .cr-notice { display:flex; gap:10px; background:var(--cr-soft); border-radius:12px; padding:13px; margin-top:19px; font-size:13px; }
+    #cr-wireframe .cr-notice svg { flex-shrink:0; margin-top:2px; }
+    #cr-wireframe .cr-empty { padding:36px 10px; text-align:center; border:1px dashed var(--cr-line); border-radius:16px; margin:26px 0; }
+    #cr-wireframe .cr-empty-icon { display:flex; justify-content:center; margin-bottom:18px; }
+    #cr-wireframe .cr-empty p { max-width:240px; margin:auto; color:var(--cr-muted); }
+    #cr-wireframe .cr-section-label { font-size:12px; color:var(--cr-muted); letter-spacing:.08em; text-transform:uppercase; margin:25px 0 8px; }
+    #cr-wireframe .cr-setting { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid var(--cr-line); }
+    #cr-wireframe .cr-setting-text { display:block; font-weight:500; }
+    #cr-wireframe .cr-setting small { display:block; font-size:12px; color:var(--cr-muted); margin-top:3px; max-width:242px; }
+    #cr-wireframe .cr-switch { appearance:none; width:46px; height:28px; flex-shrink:0; border:1px solid var(--cr-line); border-radius:20px; background:var(--cr-soft); cursor:pointer; position:relative; margin:0; }
+    #cr-wireframe .cr-switch:before { content:''; position:absolute; width:20px; height:20px; top:3px; left:3px; border-radius:50%; background:var(--cr-muted); }
+    #cr-wireframe .cr-switch:checked { background:var(--cr-accent); border-color:var(--cr-accent); }
+    #cr-wireframe .cr-switch:checked:before { left:21px; background:var(--cr-on-accent); }
+    #cr-wireframe .cr-select { background:var(--cr-panel); color:var(--cr-ink); border:1px solid var(--cr-line); padding:10px; border-radius:10px; max-width:160px; min-height:44px; font-size:16px; }
+    #cr-wireframe .cr-select:disabled { opacity:.5; }
+    #cr-wireframe .cr-link { background:transparent; border:0; padding:10px 0; min-height:44px; color:var(--cr-ink); text-decoration:underline; text-underline-offset:4px; }
+    #cr-wireframe .cr-blocked { padding:14px; background:var(--cr-soft); border-radius:12px; margin-top:16px; }
+    #cr-wireframe .cr-footer { text-align:center; color:var(--cr-muted); font-size:12px; padding:14px 0 0; }
+    #cr-wireframe .cr-overlay { position:absolute; inset:0; background:light-dark(#20251d77,#00000099); display:flex; align-items:center; justify-content:center; padding:20px; z-index:5; }
+    #cr-wireframe .cr-dialog { background:var(--cr-panel); border:1px solid var(--cr-line); border-radius:22px; width:100%; padding:24px; }
+    #cr-wireframe .cr-dialog p { color:var(--cr-muted); margin:10px 0 20px; }
+    #cr-wireframe .cr-dialog button+button { margin-top:7px; }
+    #cr-wireframe .cr-secondary { min-height:44px; border:0; border-radius:22px; background:var(--cr-soft); color:var(--cr-ink); width:100%; }
+    #cr-wireframe .cr-settings-heading { margin:0 0 4px; font-size:28px; }
+    #cr-wireframe[data-layout="stacked"] .cr-rates { grid-template-columns:1fr; }
+    #cr-wireframe[data-layout="stacked"] .cr-rate { display:grid; grid-template-columns:1fr auto; align-items:center; }
+    #cr-wireframe[data-layout="stacked"] .cr-rate+.cr-rate { border-left:0; border-top:1px solid var(--cr-line); }
+    #cr-wireframe[data-layout="stacked"] .cr-value { margin:0; }
+    #cr-wireframe[data-layout="stacked"] .cr-units { grid-column:2; text-align:right; }
+    #cr-wireframe[data-tone="teal"] { --cr-accent:light-dark(#1d6258,#98d5c9); --cr-on-accent:light-dark(#ffffff,#073b32); }
+    @media(max-width:350px) { #cr-wireframe .cr-page{padding-left:16px;padding-right:16px} #cr-wireframe .cr-rate{padding:17px 12px} #cr-wireframe .cr-value{font-size:32px} #cr-wireframe .cr-select{max-width:142px} }
+  </style>
+  <div class="cr-caption"><span>WIREFRAME 01</span><span>SAMPLE DATA</span></div>
+  <div class="cr-phone" aria-label="Currency Raise app preview">
+    <header class="cr-appbar">
+      <span class="cr-brand" id="cr-brand">Currency Raise</span>
+      <button type="button" class="cr-icon" id="cr-settings-open" aria-label="Open Settings"><i data-lucide="settings-2" aria-hidden="true"></i></button>
+      <button type="button" class="cr-icon" id="cr-back" aria-label="Back to Home" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+    </header>
+    <main class="cr-page" id="cr-home">
+      <div class="cr-eyebrow">Banque Misr · Cash rates</div>
+      <h2>USD / EGP</h2>
+      <p class="cr-subtle">Egyptian pounds for 1 US dollar</p>
+      <div class="cr-notice" id="cr-offline" hidden><i data-lucide="wifi-off" aria-hidden="true"></i><div><strong>Unable to refresh</strong><br>Showing your last saved rates.</div></div>
+      <div class="cr-rates" id="cr-rate-box">
+        <div class="cr-rate"><div class="cr-rate-title">Bank buys</div><div class="cr-value" id="cr-buy">51.27</div><div class="cr-units">EGP · You sell USD</div></div>
+        <div class="cr-rate"><div class="cr-rate-title">Bank sells</div><div class="cr-value" id="cr-sell">51.37</div><div class="cr-units">EGP · You buy USD</div></div>
+      </div>
+      <div class="cr-context" id="cr-rate-context">Cash exchange · Prices may change</div>
+      <div class="cr-empty" id="cr-empty" hidden>
+        <div class="cr-empty-icon"><i data-lucide="banknote" aria-hidden="true"></i></div>
+        <h3 id="cr-empty-heading">No saved rates yet</h3>
+        <p id="cr-empty-message">Connect to the internet and refresh to get your first quote.</p>
+      </div>
+      <div class="cr-times" id="cr-times">
+        <div class="cr-time"><span>Last checked</span><span id="cr-checked">Today, 9:41 AM</span></div>
+        <div class="cr-time"><span>Source display time</span><span>10 Sep, 2:28 PM</span></div>
+        <div class="cr-time-note">Source timezone unspecified</div>
+      </div>
+      <button type="button" class="cr-primary" id="cr-refresh"><i data-lucide="refresh-cw" aria-hidden="true"></i><span id="cr-refresh-label">Refresh rates</span></button>
+      <div class="cr-status" id="cr-status" role="status" aria-live="polite"></div>
+      <div class="cr-schedule"><i data-lucide="clock-3" aria-hidden="true"></i><div><p id="cr-schedule-text">Checks about every hour</p><p class="cr-subtle" id="cr-alert-text">Alerts only when prices change</p></div></div>
+      <button type="button" class="cr-link" id="cr-source">About these rates</button>
+    </main>
+    <main class="cr-page" id="cr-settings" hidden>
+      <h2 class="cr-settings-heading">Settings</h2>
+      <p class="cr-subtle">Choose when to check and get notified.</p>
+      <div class="cr-section-label">Background updates</div>
+      <label class="cr-setting"><span><span class="cr-setting-text">Automatic checks</span><small>Check even when the app is closed.</small></span><input class="cr-switch" id="cr-auto" type="checkbox" checked></label>
+      <label class="cr-setting" for="cr-frequency"><span class="cr-setting-text">Check interval</span><select class="cr-select" id="cr-frequency"><option value="1">Every hour</option><option value="2">Every 2 hours</option><option value="4">Every 4 hours</option><option value="6">Every 6 hours</option><option value="12">Every 12 hours</option><option value="24">Every 24 hours</option></select></label>
+      <p class="cr-subtle" style="margin-top:12px">Android may delay checks to save battery or wait for a connection.</p>
+      <div class="cr-section-label">Notifications</div>
+      <label class="cr-setting"><span><span class="cr-setting-text">Rate change alerts</span><small>Notify when the bank’s buy or sell price changes.</small></span><input class="cr-switch" id="cr-notify" type="checkbox" checked></label>
+      <div class="cr-blocked" id="cr-blocked" hidden><h3 id="cr-permission-status">Notifications blocked</h3><p class="cr-subtle">Allow notifications to receive rate alerts.</p><button type="button" class="cr-link" id="cr-system-settings">Open notification settings</button></div>
+      <p class="cr-subtle" id="cr-paused-note" style="margin-top:12px" hidden>Turn on automatic checks to receive background rate alerts.</p>
+      <div class="cr-section-label">Rate source</div>
+      <div class="cr-setting"><span><span class="cr-setting-text">Banque Misr</span><small>USD / EGP · Cash buy and sell prices</small></span><i data-lucide="landmark" aria-hidden="true"></i></div>
+      <div class="cr-footer" role="status" id="cr-settings-status" aria-live="polite">Changes are saved automatically</div>
+    </main>
+    <div class="cr-overlay" id="cr-permission" hidden>
+      <section class="cr-dialog" role="dialog" aria-modal="true" aria-labelledby="cr-permission-title"><h3 id="cr-permission-title">Allow rate notifications?</h3><p>Currency Raise can let you know when the bank’s buy or sell price changes.</p><button type="button" class="cr-primary" id="cr-allow">Allow</button><button type="button" class="cr-secondary" id="cr-deny">Not now</button></section>
+    </div>
+    <div class="cr-overlay" id="cr-info" hidden>
+      <section class="cr-dialog" role="dialog" aria-modal="true" aria-labelledby="cr-info-title"><h3 id="cr-info-title">About these rates</h3><p>Bank buys: what you receive when selling USD.<br><br>Bank sells: what you pay when buying USD.<br><br>The bank’s displayed time and your last successful check are shown separately.</p><button type="button" class="cr-primary" id="cr-info-close">Got it</button></section>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('cr-wireframe');
+      const el = id => root.querySelector('#'+id);
+      const design = { scenario:'saved', layout:'pair', tone:'neutral', notificationPermission:'allowed' };
+      const app = { screen:'home', automatic:true, notifications:true, frequency:'1', refreshing:false, checked:'Today, 9:41 AM' };
+      let timer;
+      function show(id, visible) { el(id).hidden = !visible; }
+      function render() {
+        root.dataset.layout = design.layout;
+        root.dataset.tone = design.tone;
+        const settings = app.screen === 'settings';
+        show('cr-home', !settings); show('cr-settings',settings);
+        show('cr-settings-open',!settings); show('cr-back',settings);
+        const initial = design.scenario === 'loading', empty = design.scenario === 'empty', offline = design.scenario === 'offline';
+        show('cr-offline',offline); show('cr-rate-box',!initial&&!empty); show('cr-rate-context',!initial&&!empty); show('cr-times',!initial&&!empty);
+        show('cr-empty',initial||empty);
+        el('cr-empty-heading').textContent = initial ? 'Getting your first quote' : 'No saved rates yet';
+        el('cr-empty-message').textContent = initial ? 'Checking Banque Misr’s published cash rates…' : 'Connect to the internet and refresh to get your first quote.';
+        el('cr-refresh-label').textContent = app.refreshing || initial ? 'Checking rates…' : offline || empty ? 'Try again' : 'Refresh rates';
+        el('cr-refresh').disabled = app.refreshing || initial;
+        el('cr-checked').textContent = offline ? 'Yesterday, 4:12 PM' : app.checked;
+        el('cr-schedule-text').textContent = !app.automatic ? 'Automatic checks paused' : app.frequency === '1' ? 'Checks about every hour' : 'Checks about every '+app.frequency+' hours';
+        el('cr-alert-text').textContent = !app.automatic ? 'Manual refresh is available' : !app.notifications ? 'Rate alerts are off' : design.notificationPermission !== 'allowed' ? 'Notification permission needed' : 'Alerts only when prices change';
+        el('cr-auto').checked = app.automatic;
+        el('cr-notify').checked = app.notifications;
+        el('cr-frequency').value = app.frequency;
+        el('cr-frequency').disabled = !app.automatic;
+        show('cr-blocked', app.notifications && design.notificationPermission !== 'allowed');
+        el('cr-permission-status').textContent = design.notificationPermission === 'blocked' ? 'Notifications blocked' : 'Permission needed';
+        el('cr-system-settings').textContent = design.notificationPermission === 'blocked' ? 'Open notification settings' : 'Allow notifications';
+        show('cr-paused-note',!app.automatic&&app.notifications);
+      }
+      function screen(value) { app.screen=value; render(); (value==='settings'?el('cr-back'):el('cr-settings-open')).focus(); }
+      function modal(id, visible, focusTarget) { show(id,visible); const panel=settingsPanel(); if(visible) { panel.inert=true; el('cr-settings-open').disabled=true; el('cr-back').disabled=true; } else { panel.inert=false; el('cr-settings-open').disabled=false; el('cr-back').disabled=false; } if(focusTarget) el(focusTarget).focus(); }
+      function settingsPanel() { return app.screen==='settings'?el('cr-settings'):el('cr-home'); }
+      el('cr-settings-open').onclick=()=>screen('settings'); el('cr-back').onclick=()=>screen('home');
+      el('cr-refresh').onclick=()=> { app.refreshing=true; el('cr-status').textContent=''; render(); clearTimeout(timer); timer=setTimeout(()=> { app.refreshing=false; if(design.scenario==='offline'||design.scenario==='empty') { el('cr-status').textContent='Could not connect. Try again later.'; } else { app.checked='Just now'; el('cr-status').textContent='Checked successfully · Prices unchanged'; } render(); },850); };
+      el('cr-auto').onchange=e=> { app.automatic=e.target.checked; el('cr-settings-status').textContent=app.automatic?'Automatic checks enabled':'Automatic checks paused'; render(); };
+      el('cr-frequency').onchange=e=> { app.frequency=e.target.value; el('cr-settings-status').textContent='Check interval saved'; render(); };
+      function permissionDialog(inSettings) { el('cr-permission-title').textContent=inSettings?'Android notifications':'Allow rate notifications?'; el('cr-allow').textContent=inSettings?'Enable notifications':'Allow'; el('cr-deny').textContent=inSettings?'Back':'Not now'; modal('cr-permission',true,'cr-allow'); }
+      el('cr-notify').onchange=e=> { app.notifications=e.target.checked; render(); if(app.notifications&&design.notificationPermission==='not-requested') permissionDialog(false); else el('cr-settings-status').textContent=!app.notifications?'Rate alerts disabled':design.notificationPermission==='blocked'?'Enable alerts in Android settings':'Rate alerts enabled'; };
+      el('cr-system-settings').onclick=()=>permissionDialog(design.notificationPermission === 'blocked');
+      el('cr-allow').onclick=()=> { design.notificationPermission='allowed'; modal('cr-permission',false,'cr-notify'); el('cr-settings-status').textContent='Notifications allowed'; render(); };
+      el('cr-deny').onclick=()=> { design.notificationPermission='blocked'; modal('cr-permission',false,'cr-notify'); render(); };
+      el('cr-source').onclick=()=>modal('cr-info',true,'cr-info-close');
+      el('cr-info-close').onclick=()=>modal('cr-info',false,'cr-source');
+      root.addEventListener('keydown',e=> { if(e.key==='Escape') { if(!el('cr-info').hidden) modal('cr-info',false,'cr-source'); if(!el('cr-permission').hidden) { design.notificationPermission='blocked'; modal('cr-permission',false,'cr-notify'); render(); } } });
+      render();
+      if(globalThis.Tweak) {
+        const tweak=new Tweak({container:root,onChange:()=> { el('cr-status').textContent=''; render(); }});
+        tweak.addSelect(design,'scenario',{label:'Home state',options:[{label:'Saved rates',value:'saved'},{label:'Offline with saved rates',value:'offline'},{label:'First load',value:'loading'},{label:'No saved rates · offline',value:'empty'}]});
+        tweak.addSelect(design,'notificationPermission',{label:'Android notifications',options:[{label:'Allowed',value:'allowed'},{label:'Blocked',value:'blocked'},{label:'Not requested yet',value:'not-requested'}]});
+        tweak.addSelect(design,'layout',{label:'Rate layout',options:[{label:'Side by side',value:'pair'},{label:'Stacked rows',value:'stacked'}]});
+        tweak.addSelect(design,'tone',{label:'Appearance',options:[{label:'Neutral wireframe',value:'neutral'},{label:'Teal accent',value:'teal'}]});
+      }
+    })();
+  </script>
+</div>
