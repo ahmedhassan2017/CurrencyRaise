@@ -77,17 +77,22 @@ Normal checks:
 .\gradlew.bat :app:connectedDebugAndroidTest --console=plain
 ```
 
-Optimized device checks use a separate, non-debuggable application ID
-(com.example.currencyraise.smoke), displayed as Currency Raise Release Check:
+The optimized device check uses a separate, non-debuggable application ID
+(`com.example.currencyraise.smoke`), displayed as Currency Raise Release Check:
 
 ```powershell
-.\gradlew.bat -PtestBuildType=releaseSmoke :app:connectedReleaseSmokeAndroidTest --console=plain
+.\gradlew.bat :app:assembleReleaseSmoke --console=plain
+android run --device=<serial> --apks=app\build\outputs\apk\releaseSmoke\app-releaseSmoke.apk --activity=com.example.currencyraise.MainActivity
 ```
 
 This variant inherits release optimization and uses the local debug certificate.
-It is for local verification only. It can coexist with the usual app. Connected
-instrumentation runs can reinstall/remove their target app; use the isolated
-variant for acceptance runs when you want to preserve your personal installation.
+It can coexist with the usual app. Verify a fresh online launch, a cold restart,
+the persisted quote, and its WorkManager job on the disposable installation.
+
+Instrumentation behavior is exercised against debug. The two tests that change
+notification permission/channel state stay isolated-only and are currently pending:
+the optimized AndroidJUnitRunner test APK is not reliable with this AGP/R8 setup.
+This does not affect the normal release APK or the standalone optimized app smoke test.
 
 Tests use historical fixtures as test inputs, never as fallback production rates.
 The parser/cache/repository/Home pipeline is exercised with deterministic online
@@ -103,7 +108,9 @@ The optional local parser probe accepts a separately saved provider page:
 ## Release artifacts and signing
 
 Release builds enable code and resource shrinking with the optimized Android
-default rules. No broad app-specific keep rules are added.
+default rules. The normal release uses no app-specific keep rules. The isolated
+releaseSmoke setup has narrow AndroidX test-runner rules under review; they do not
+apply to the normal release artifact.
 
 The normal artifact is app/build/outputs/apk/release/app-release-unsigned.apk.
 It requires a separate signing step before installation or distribution.

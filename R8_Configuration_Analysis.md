@@ -2,23 +2,26 @@
 
 Reviewed 2026-09-11 for Phase 6.
 
-The project uses AGP 9.2.1 and its standard minify/shrink settings. The release build enables
-code and resource optimization with the optimized Android default configuration.
-No package restrictions or full-mode opt-out are configured.
+The project uses AGP 9.2.1. The normal release enables code and resource optimization
+with the optimized Android default configuration. It has no app-specific keep rules,
+package-wide retention, warning suppression, or full-mode opt-out.
 
-There are no app-specific keep-rule files to remove or narrow. Hilt, WorkManager,
-DataStore, Compose, coroutines, OkHttp, and Jsoup retain their consumer rules.
-Do not add broad package-wide keep rules or blanket warning suppression as a
-substitute for understanding an actual optimized-build failure.
+The isolated releaseSmoke target and test APK each contain the same narrow rule for
+`androidx.tracing.Trace`. These rules support an AndroidX instrumentation-runner
+experiment; application code does not use reflection to load this class. The target
+rule allowed the runner to advance, but optimized instrumentation remains unreliable
+before test discovery. Remove both rules and their optimized-instrumentation wiring
+when that experimental route is retired or replaced. They do not affect the normal
+release artifact.
 
-The releaseSmoke variant inherits release optimization, uses a separate application
-ID, and is signed with the local debug certificate only for device checks.
-The normal release artifact remains unsigned until explicitly signed for distribution.
+No broader rule subsumes these rules. Hilt, WorkManager, DataStore, Compose, coroutines,
+OkHttp, and Jsoup use their library consumer configuration; no extra library-wide rules
+should be added.
 
-Verification results are recorded in IMPLEMENTATION_PLAN.md. Automated optimized
-device checks must cover Hilt worker creation, provider parsing, persistence,
-Home/Settings behavior, and notification construction. Visual and real long-running
-device acceptance remain separately tracked.
+The optimized, non-debuggable releaseSmoke APK passed standalone device checks through
+the parser, live HTTPS source, persistence, Home state, cold restart, and WorkManager
+registration. Continue running the UI/device behavior suite against debug, and rerun the
+standalone optimized smoke after dependency or shrinker changes.
 
 References:
 - https://developer.android.com/reference/tools/gradle-api/9.2/com/android/build/api/dsl/Optimization
