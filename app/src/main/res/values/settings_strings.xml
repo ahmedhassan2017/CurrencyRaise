@@ -1,0 +1,37 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="back_home">Back to Home</string>
+    <string name="settings_subtitle">Choose your update and alert preferences.</string>
+    <string name="preferences_preview">You can save preferences now. Background checks and alerts will become active in a later version.</string>
+    <string name="background_section">Background updates</string>
+    <string name="automatic_checks">Automatic checks</string>
+    <string name="automatic_preference_help">Save your preference for checking while the app is closed.</string>
+    <string name="interval_approximate">Android may delay checks to save battery or wait for a connection. Intervals are approximate.</string>
+    <string name="notifications_section">Notifications</string>
+    <string name="rate_alerts">Rate change alerts</string>
+    <string name="rate_alerts_help">Notify when the bank’s buy or sell price changes. This preference is separate from Android permission.</string>
+    <string name="android_notifications_allowed">Android allows notifications.</string>
+    <string name="android_permission_needed">Android notification permission is needed.</string>
+    <string name="android_notifications_blocked">Android has blocked this app’s notifications.</string>
+    <string name="android_channel_blocked">The rate alert channel or its group is blocked in Android settings.</string>
+    <string name="permission_context">Allow notifications to receive rate alerts once automatic checks are available. Your choice here does not start background checks.</string>
+    <string name="allow_notifications">Allow notifications</string>
+    <string name="open_notification_settings">Open Android notification settings</string>
+    <string name="alerts_paused">Automatic checks are off. Background alerts will stay paused until they are enabled.</string>
+    <string name="source_section">Rate source</string>
+    <string name="saving_preferences">Saving preferences…</string>
+    <string name="preferences_saved">Preferences saved</string>
+    <string name="preferences_auto_save">Changes save automatically</string>
+    <string name="settings_write_failed">Could not save that change. Check free storage and try the control again.</string>
+    <string name="interval_title">Check interval</string>
+    <string name="notification_settings_title">Notification settings</string>
+    <string name="notification_settings_unavailable">Could not open Android settings. Open Settings, find Currency Raise, and choose Notifications.</string>
+    <plurals name="choose_interval">
+        <item quantity="one">Check interval: %1$d hour</item>
+        <item quantity="other">Check interval: %1$d hours</item>
+    </plurals>
+    <plurals name="interval_value">
+        <item quantity="one">Every hour</item>
+        <item quantity="other">Every %1$d hours</item>
+    </plurals>
+</resources>

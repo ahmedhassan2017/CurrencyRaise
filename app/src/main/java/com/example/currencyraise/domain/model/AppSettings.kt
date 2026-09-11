@@ -9,6 +9,7 @@ data class AppSettings(
     val automaticChecksEnabled: Boolean = true,
     // App preference only: Android permission/channel state is checked separately.
     val notificationsEnabled: Boolean = true,
+    val notificationPermissionAsked: Boolean = false,
 )
 
 enum class SettingsWriteResult { SAVED, STORAGE_FAILURE }

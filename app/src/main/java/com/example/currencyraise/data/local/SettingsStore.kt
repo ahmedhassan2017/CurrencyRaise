@@ -22,6 +22,7 @@ internal class SettingsStore(private val store: DataStore<Preferences>) {
                 updateInterval = interval,
                 automaticChecksEnabled = prefs[AUTOMATIC] ?: true,
                 notificationsEnabled = prefs[NOTIFICATIONS] ?: true,
+                notificationPermissionAsked = prefs[PERMISSION_ASKED] ?: false,
             )
         } catch (e: ClassCastException) {
             throw IOException("Invalid saved setting type", e)
@@ -40,7 +41,12 @@ internal class SettingsStore(private val store: DataStore<Preferences>) {
         store.edit { it[NOTIFICATIONS] = enabled }
     }
 
+    suspend fun markPermissionAsked() {
+        store.edit { it[PERMISSION_ASKED] = true }
+    }
+
     private companion object {
+        val PERMISSION_ASKED = booleanPreferencesKey("notification_permission_asked")
         val INTERVAL = intPreferencesKey("interval_hours")
         val AUTOMATIC = booleanPreferencesKey("automatic_checks")
         val NOTIFICATIONS = booleanPreferencesKey("notifications")
