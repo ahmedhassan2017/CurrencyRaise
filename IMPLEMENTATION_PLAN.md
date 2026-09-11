@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-11
 Project: C:\Users\ahmed\AndroidStudioProjects\CurrencyRaise
-Status: Phase 1 complete; observable cache and repository are next
+Status: Phase 2 complete; Home screen is next
 Initial audience: personal use
 Implementation strategy: one app module, small phases, observable local cache
 
@@ -29,6 +29,21 @@ During implementation:
 
 Never overwrite unrelated user changes. Do not commit, publish, or deploy automatically.
 A build or unit test cannot substitute for a device check; record those separately.
+
+## Git workflow
+
+Established at the user's request on 2026-09-11:
+
+- master: stable reviewed milestones.
+- dev: integration branch created from master.
+- codex/phase-2-cache-repository: current feature branch created from dev.
+- Merge reviewed feature work into dev, then promote verified milestones into master.
+- Create each subsequent feature branch from an up-to-date dev branch.
+- Commit 0b41ac8 contains Phase 1, the plan, provider notes, and exported wireframes.
+  It was pushed to origin/master; dev and the Phase 2 branch were created and pushed
+  from that same commit. Phase 2 was approved for commit, push, and continued development on 2026-09-11.
+- Future commits/pushes/merges still require the user's instruction; this Git setup
+  does not authorize automatically merging future work into master.
 
 ## Product scope and working defaults
 
@@ -82,7 +97,7 @@ Recommended notification policy:
 
 The starter currently only displays “Hello Android”; Phase 1 adds the provider/foundation underneath it.
 Existing arithmetic/package-name tests do not establish application behavior.
-No Android device tests have been run during the baseline or Phase 1 checks.
+No Android device tests have been run during the baseline, Phase 1, or Phase 2 checks.
 The earlier suspected Kotlin/Compose mismatch was not confirmed by the resolved local dependencies.
 
 ## Architecture and implementation choices
@@ -278,20 +293,52 @@ Validation commands:
 
 ## Phase 2 — observable cache and repository
 
-- [ ] Add a single DataStore instance per file and inject it.
-- [ ] Implement settings defaults and atomic quote storage.
-- [ ] Persist the entire quote metadata, not just two numbers.
-- [ ] Implement observeLatestUsdEgpRate and refreshUsdEgpRate.
-- [ ] Coordinate simultaneous refresh calls.
-- [ ] Distinguish unchanged quotes from failed fetches and changed quotes.
-- [ ] Keep prior valid data on HTTP, parse, or storage errors.
-- [ ] Surface a recoverable storage problem instead of crashing or silently erasing valid data.
-- [ ] Preserve cancellation propagation.
-- [ ] Add tests for cache persistence, observable updates, failure preservation, numeric comparison, and refresh concurrency.
-- [ ] Run assembly and local tests.
-- [ ] Update this file and stop.
+Status: complete on 2026-09-11.
+
+- [x] Add a single DataStore instance per file and inject it.
+- [x] Implement settings defaults and atomic quote storage.
+- [x] Persist the entire quote metadata, not just two numbers.
+- [x] Implement observeLatestUsdEgpRate and refreshUsdEgpRate.
+- [x] Coordinate simultaneous refresh calls.
+- [x] Distinguish unchanged quotes from failed fetches and changed quotes.
+- [x] Keep prior valid data on HTTP, parse, or storage errors.
+- [x] Surface a recoverable storage problem instead of crashing or silently erasing valid data.
+- [x] Preserve cancellation propagation.
+- [x] Add tests for cache persistence, observable updates, failure preservation, numeric comparison, and refresh concurrency.
+- [x] Run assembly and local tests.
+- [x] Update this file and stop.
 
 Exit: a refresh saves valid data and notifies observers; failure preserves the previous quote.
+
+Phase 2 evidence:
+
+- Debug assembly and all 21 new cache/settings/repository tests passed.
+- Full local suite: 49 tests discovered, 48 passed, 0 failures, 1 intentionally skipped
+  optional captured-page probe (already exercised in Phase 1).
+- Android lint: 0 errors, 17 warnings (8 dependency/tool update suggestions, 7 unused
+  starter colors, 1 redundant activity label, 1 target-API suggestion); no suppressions added.
+- Real DataStore files were closed and reopened to verify complete quote metadata,
+  exact decimal precision, settings persistence, and atomic independent settings changes.
+- Tests cover observer updates, malformed/corrupt storage without silent erasure,
+  fetch/read/write failures, unchanged decimal values, duplicate refreshes, and cancellation.
+- A singleton repository lock spans read/fetch/save, preventing competing requests from
+  completing out of order. Fetch timestamps are display metadata, not an ordering lock:
+  a regression test verifies that a backward device-clock correction does not block refresh.
+- Provider publication ordering remains unverified; no ordering is inferred from its unzoned timestamp.
+- Read flows throw StorageReadException instead of emitting empty/default data on failure.
+  Home/Settings must catch it, keep the last displayed value, and re-subscribe on retry.
+  Persistent file corruption is reported; no automatic destructive reset is implemented.
+- Cancellation propagates; failed commits do not report success or erase the prior snapshot.
+- The UI remains the starter greeting. No device/emulator checks were run.
+
+Changed files: version catalog and app dependencies; RateRemoteSource boundary and its
+Banque Misr implementation; RateCache/SettingsStore; settings, refresh and repository domain
+contracts; repository implementations; StorageModule/RepositoryModule; shared test helpers
+and three new test classes.
+
+Validation: .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --console=plain
+and git diff --check. The first test run exposed a JUnit return-type signature error; it was
+fixed and the full check command then passed.
 
 ## Phase 3 — Home screen
 
@@ -305,6 +352,7 @@ Exit: a refresh saves valid data and notifies observers; failure preserves the p
 - [ ] Label source publication time/date separately from last successful check.
 - [ ] Show configured background interval as an approximation, not an exact next-run promise.
 - [ ] Handle loading without cache, refreshing with cache, empty state, and recoverable errors.
+- [ ] Catch storage observation errors, retain displayed data, re-subscribe on retry, and explain persistent corruption recovery.
 - [ ] Show stale/unverified freshness clearly without calling unchanged weekend prices a connection failure.
 - [ ] Provide string resources, accessible controls, locale-aware formatting, and scalable text from the start.
 - [ ] Preserve the existing theme and edge-to-edge padding.
@@ -425,7 +473,8 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 | 2026-09-10 | Source investigation | CBE and Banque Misr access tested; API alternatives reviewed | CBE returned rejection HTML; Banque Misr returned USD buy/sell in HTML | Ongoing-use permission, parser fixture tests, timezone meaning |
 | 2026-09-10 | Planning | Created full phased checklist with personal-use scope | This file | User plan review; no feature implementation |
 | 2026-09-11 | Phase 1 | Added strict cash-rate parser, cancellable bounded HTTPS source, decimal model, Hilt/KSP and desugaring; accepted plan defaults | Debug APK built; 28 tests passed including fresh captured-page probe; lint 0 errors/16 warnings; diff check passed | Phase 2 cache/repository; source timezone/permission limitations; device checks |
-
+| 2026-09-11 | Git workflow | Pushed Phase 1 and wireframes to master as 0b41ac8; created and pushed dev, then codex/phase-2-cache-repository from dev | All three branches tracked their matching origin branches at 0b41ac8 | Phase 2 subsequently approved for push and continued development |
+| 2026-09-11 | Phase 2 | Added observable atomic quote cache, persistent settings, injected repositories, explicit storage errors and refresh coordination | Debug assembly passed; 48 tests passed/1 optional probe skipped; lint 0 errors/17 warnings; diff check passed | Phase 3 Home; UI storage recovery; device checks; provider limitations unchanged |
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 
 ## Sources checked during planning

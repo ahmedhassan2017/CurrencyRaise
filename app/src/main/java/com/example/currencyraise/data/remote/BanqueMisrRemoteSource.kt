@@ -19,9 +19,9 @@ internal class BanqueMisrRemoteSource @Inject constructor(
     private val calls: Call.Factory,
     private val parser: BanqueMisrParser,
     private val clock: Clock,
-) {
+) : RateRemoteSource {
     /** OkHttp owns the IO thread; cancellation cancels the actual HTTP call. */
-    suspend fun fetchLatest(): RateFetchResult = suspendCancellableCoroutine { continuation ->
+    override suspend fun fetchLatest(): RateFetchResult = suspendCancellableCoroutine { continuation ->
         val request = Request.Builder()
             .url(BANQUE_MISR_URL)
             .header("Accept", "text/html")
