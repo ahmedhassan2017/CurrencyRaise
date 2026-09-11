@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-11
 Project: C:\Users\ahmed\AndroidStudioProjects\CurrencyRaise
-Status: Phase 3 complete and user reviewed; Settings is next
+Status: Phase 4 implementation and automated checks complete; user visual review pending; Phase 5 is next
 Initial audience: personal use
 Implementation strategy: one app module, small phases, observable local cache
 
@@ -41,13 +41,15 @@ Established at the user's request on 2026-09-11:
 
 - master: stable reviewed milestones.
 - dev: integration branch created from master.
-- codex/phase-3-home: Home feature branch created from dev after Phase 2 integration.
+- codex/phase-4-settings: current feature branch created from dev after Home integration.
 - Merge reviewed feature work into dev, then promote verified milestones into master.
 - Create each subsequent feature branch from an up-to-date dev branch.
 - Commit 0b41ac8 contains Phase 1, the plan, provider notes, and exported wireframes.
   It was pushed to origin/master; dev and the Phase 2 branch were created and pushed
   from that same commit. Phase 2 was committed as 8fb3644, pushed, and fast-forwarded into dev.
-  Phase 3 was then created from dev; master remains at 0b41ac8.
+  Home was committed as d0ae23d and pushed to codex/phase-3-home and dev.
+  The Settings branch was created from that dev commit; master remains at 0b41ac8.
+  The user authorized committing and pushing Phase 4 on 2026-09-11; visual review remains separately tracked.
 - Future commits/pushes/merges still require the user's instruction; this Git setup
   does not authorize automatically merging future work into master.
 
@@ -396,23 +398,71 @@ Validation commands:
 - git diff --check
 ## Phase 4 — Settings and notification permission
 
-- [ ] Add Home/Settings navigation without unnecessary destination layers.
-- [ ] Implement SettingsViewModel and immutable SettingsUiState.
-- [ ] Add interval choices: 1, 2, 4, 6, 12, and 24 hours.
-- [ ] Add independent automatic-checks and notifications toggles.
-- [ ] Persist changes immediately.
-- [ ] Explain that scheduling is approximate and notification delivery depends on system permission.
-- [ ] Request Android 13+ notification permission contextually when enabling notifications.
-- [ ] Display system permission/channel blocking separately from the saved app preference.
-- [ ] Provide a route to Android notification settings when appropriate.
-- [ ] Do not repeatedly prompt after denial.
-- [ ] Keep background controls visibly inactive until the scheduler phase is implemented.
-- [ ] Test settings persistence, defaults, and permission-related presentation logic.
-- [ ] Run assembly/local tests and inspect navigation/settings.
-- [ ] Update this file and stop.
+Status: implementation and automated checks complete on 2026-09-11; user visual review pending.
 
-Exit: settings persist and notification permission states are honestly represented.
+- [x] Add Home/Settings navigation without unnecessary destination layers.
+- [x] Implement SettingsViewModel and immutable SettingsUiState.
+- [x] Add interval choices: 1, 2, 4, 6, 12, and 24 hours.
+- [x] Add independent automatic-checks and notifications toggles.
+- [x] Persist changes immediately.
+- [x] Explain that scheduling is approximate and notification delivery depends on system permission.
+- [x] Request Android 13+ notification permission contextually when enabling notifications.
+- [x] Display system permission/channel blocking separately from the saved app preference.
+- [x] Provide a route to Android notification settings when appropriate.
+- [x] Do not repeatedly prompt after denial.
+- [x] Clearly label background execution as inactive; allow saving preferences for the later scheduler.
+- [x] Test settings persistence, defaults, and permission-related presentation logic.
+- [x] Run assembly, local tests, lint, and automated navigation/settings device tests.
+- [ ] User visual review of Settings and the Android permission/settings flow (user-owned by request).
+- [x] Update this file and stop.
 
+Technical exit: settings persist and notification permission states are honestly represented. Visual acceptance belongs to the user.
+
+Phase 4 evidence:
+
+- Added SettingsScreen/SettingsViewModel and an immutable observable state. Saved values
+  remain the source of control state; failed reads/writes preserve prior values and offer retry.
+- Added all six intervals and independent automatic-checks/alert preferences. A visible
+  inactive-background notice distinguishes saved configuration from actual scheduling.
+- Added two-screen navigation using saved destination/scroll state and BackHandler;
+  no extra navigation dependency for two destinations. Activity recreation/back is tested.
+- Added POST_NOTIFICATIONS and separate runtime, app, and channel/group access checks.
+  Access is re-read on resume and after the Android permission result.
+- No permission prompt occurs on opening Settings or toggling a preference. The explicit
+  Allow notifications action is the contextual opt-in. Before the first prompt, a durable
+  permission-request marker is saved. Later attempts direct to Android settings instead
+  of prompting repeatedly; saved alert preference is independent of permission.
+- Request-marker reads/writes are cancellable and storage failures prevent prompting.
+  The marker survives real DataStore recreation. Backup policy remains part of Phase 6:
+  restoring this marker conservatively routes the user to Android settings.
+- Debug assembly passed; 74 local tests passed, 1 optional captured-page probe skipped.
+- All 10 device tests passed in the final full run on Android 16, including navigation
+  recreation/back, interval selection, independent toggles, explicit permission action,
+  and denial routing. The actual system permission dialog is left for user acceptance;
+  automated permission tests exercise app policy without granting permission on the phone.
+- Lint: 0 errors and 17 existing maintenance warnings. No new dependencies or suppressions.
+- The first navigation run was interrupted by a Home-key event in the device log; the
+  isolated test and a subsequent full 10-test run passed without code changes.
+- Installed the debug build on the connected phone. No screenshots or manual layout
+  inspection were performed after the user's visual-review preference changed.
+- Channel creation, notification posting, and WorkManager scheduling remain Phase 5.
+
+Changed files: Home entry/action and MainActivity; new navigation, Settings state/VM/UI,
+notification-access helper/model, settings strings and tests; additive DataStore permission
+history and repository contract; manifest; persistent storage test and Home test fake.
+The Kotlin compiler session directory is ignored; unrelated IDE files are left alone.
+
+Validation:
+- .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:connectedDebugAndroidTest --console=plain
+- .\gradlew.bat :app:connectedDebugAndroidTest --console=plain (final full device run)
+- .\gradlew.bat :app:installDebug --console=plain
+- git diff --check
+
+User review checklist:
+- [ ] Open Settings, choose an interval, change each toggle independently, and reopen the app.
+- [ ] Check large text/theme/layout and return using both Back to Home and Android Back.
+- [ ] Use Allow notifications, then verify denial or grant is reflected correctly.
+- [ ] If denied, verify the action opens Android settings and does not prompt repeatedly.
 ## Phase 5 — notification delivery and background synchronization
 
 - [ ] Add the Exchange Rate Updates notification channel.
@@ -508,6 +558,9 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 | 2026-09-11 | Git workflow | Pushed Phase 1 and wireframes to master as 0b41ac8; created and pushed dev, then codex/phase-2-cache-repository from dev | All three branches tracked their matching origin branches at 0b41ac8 | Phase 2 subsequently approved for push and continued development |
 | 2026-09-11 | Phase 2 | Added observable atomic quote cache, persistent settings, injected repositories, explicit storage errors and refresh coordination | Debug assembly passed; 48 tests passed/1 optional probe skipped; lint 0 errors/17 warnings; diff check passed | Phase 3 Home; UI storage recovery; device checks; provider limitations unchanged |
 | 2026-09-11 | Phase 3 | Added Home, lifecycle state, freshness policy, manual refresh, storage retry and accessible formatting; user accepted visual result | Debug build; 62 local tests passed/1 probe skipped; 5 phone tests passed; lint 0 errors/17 warnings; real refresh and cold restart verified | Phase 4 Settings; future visual reviews belong to the user |
+
+| 2026-09-11 | Phase 3 Git | Committed Home as d0ae23d; pushed its feature branch and fast-forwarded dev; created codex/phase-4-settings | Git pushes succeeded; master remains 0b41ac8 | Phase 4 local changes |
+| 2026-09-11 | Phase 4 | Added saved Settings, two-screen navigation, OS notification access state and durable single-prompt policy | Debug build installed; 74 local tests passed/1 probe skipped; final 10 device tests passed; lint 0 errors/17 warnings | User visual/OS permission review; Phase 5 scheduler and notification delivery |
 
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 

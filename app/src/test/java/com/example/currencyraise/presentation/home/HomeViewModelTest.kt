@@ -213,5 +213,6 @@ class HomeViewModelTest {
         override suspend fun setUpdateInterval(interval: UpdateInterval) = SettingsWriteResult.SAVED
         override suspend fun setAutomaticChecksEnabled(enabled: Boolean) = SettingsWriteResult.SAVED
         override suspend fun setNotificationsEnabled(enabled: Boolean) = SettingsWriteResult.SAVED
+        override suspend fun markNotificationPermissionAsked() = SettingsWriteResult.SAVED
     }
 }
