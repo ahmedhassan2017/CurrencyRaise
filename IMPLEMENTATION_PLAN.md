@@ -41,7 +41,7 @@ Established at the user's request on 2026-09-11:
 
 - master: stable reviewed milestones.
 - dev: integration branch created from master.
-- codex/phase-6-release-readiness: current feature branch, created from dev after the Phase 5 milestone.
+- codex/phase-7-visual-redesign: current feature branch, created from origin/dev after Phase 6 was merged.
 - Merge reviewed feature work into dev, then promote verified milestones into master.
 - Create each subsequent feature branch from an up-to-date dev branch.
 - Commit 0b41ac8 contains Phase 1, the plan, provider notes, and exported wireframes.
@@ -619,6 +619,21 @@ Exit: the personal MVP is usable and its reproducible automated checks pass. Ful
 still requires the unchecked visual, older-Android, backup/restore, notification-access, and
 long-running physical-device acceptance items.
 
+## Phase 7 — screenshot-inspired visual redesign
+
+Status: implementation and automated checks complete; awaiting the user's visual review.
+
+- [x] Extract the reference's visual language without copying its unrelated desktop layout or branding.
+- [x] Replace starter/dynamic colors with a stable navy, slate, amber, gold, and periwinkle palette.
+- [x] Keep an accessible branded light scheme while matching the reference most closely in dark mode.
+- [x] Add a shared branded header, rounded panels, outlined pills, status dots, and consistent spacing.
+- [x] Recompose Home around a layered rate hero while preserving all rate, error, refresh, and source behavior.
+- [x] Recompose Settings into grouped background, notification, and source panels.
+- [x] Preserve semantic headings, switch roles, live regions, safe insets, scrolling, and large-text stacking.
+- [x] Compile, run local tests, lint, assemble, and run the Android 16 interaction suite.
+- [ ] User visual review on the installed phone build.
+
+Exit: the new style is installed for review with no intentional behavior changes.
 ## Optional phases — do not start automatically
 
 - [ ] History: agree retention/sampling rules, then evaluate Room.
@@ -662,6 +677,8 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 | 2026-09-11 | Phase 5 | Added unique periodic checks, Hilt worker, permission-aware change notifications, persistent deduplication and shared provider cooldown; connected real scheduling status to UI | Debug installed; 104 local tests passed/1 probe skipped; final 14 device tests passed; lint 0 errors/17 warnings; diff check passed | User visual/notification review; separate commit/push; Phase 6 acceptance and release readiness |
 
 | 2026-09-11 | Phase 6 | Added optimized release configuration, isolated release smoke build, explicit backup scope, device-only permission history migration, acceptance pipelines, and release documentation | 110 local tests passed/1 optional probe skipped; lint 0 errors; debug and release assembly passed; 21 Android 16 tests ran with 19 passed/2 isolated-only skipped; optimized non-debuggable app fetched live 51.27/51.37, retained it after force-stop, and registered one hourly job | User visual review; API 24/25; actual backup restore; real reboot/battery observation; isolated permission/channel device checks |
+
+| 2026-09-11 | Phase 7 | Translated the supplied dark desktop reference into a mobile Compose design system with branded themes, rate hero, shared chrome, pills, status accents, and grouped settings panels | Debug compilation/assembly and local tests passed; lint passed; Android 16 interaction suite passed with the existing two isolated-only skips | User visual review; commit/push after acceptance |
 
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 
