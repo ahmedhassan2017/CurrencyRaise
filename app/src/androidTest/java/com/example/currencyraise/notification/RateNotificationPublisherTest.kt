@@ -1,5 +1,6 @@
 package com.example.currencyraise.notification
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
@@ -29,5 +30,9 @@ class RateNotificationPublisherTest {
         if (Build.VERSION.SDK_INT >= 31) assertTrue(notification.contentIntent.isImmutable)
         if (Build.VERSION.SDK_INT >= 26) assertEquals(RATE_CHANNEL_ID, notification.channelId)
         assertTrue(notification.extras.getCharSequence("android.text").toString().contains("EGP"))
+        val testNotification = publisher.buildTestNotification(rate)
+        assertEquals("TEST · Currency Raise notification",
+            testNotification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        assertNotEquals(RateNotificationPublisher.RATE_NOTIFICATION_ID, RateNotificationPublisher.TEST_NOTIFICATION_ID)
     }
 }

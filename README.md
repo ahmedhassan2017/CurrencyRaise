@@ -48,6 +48,27 @@ do not uninstall just to fix a signature mismatch without considering saved data
   affect delivery. Notification delivery is not exactly once: a crash in the small
   gap between saving the handled event and posting can miss an alert.
 
+## Testing notifications in a debug build
+
+A debuggable installation shows **Send test notification** in Settings. First allow
+Android notifications, then press the test button. It posts a clearly labeled sample
+through the real Exchange Rate Updates channel with a separate notification ID. Tapping
+it must open Home. The test does not fetch the bank, change saved rates, alter the first-run
+baseline, or replace a real rate-change notification. This control is absent from release
+and releaseSmoke builds.
+
+Manual refresh remains silent. A real alert still requires a later successful background
+check whose buy or sell rate differs from the established baseline.
+
+## Build identities
+
+The production application uses `com.example.currencyraise` and the navy launcher icon.
+Debug uses `com.example.currencyraise.debug`, the name **Currency Raise Debug**, and the
+orange launcher icon with a `D` badge. They can be installed together and keep independent
+rates, preferences, notification permission, channels, and scheduled work. The notification
+itself uses a dedicated monochrome rising-rate icon because Android status bars mask and tint
+small notification icons.
+
 ## Storage and backup
 
 Valid quotes survive network/provider failures; errors never erase the saved quote.

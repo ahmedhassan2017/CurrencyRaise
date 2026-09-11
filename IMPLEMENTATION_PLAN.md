@@ -630,7 +630,11 @@ Status: implementation and automated checks complete; awaiting the user's visual
 - [x] Recompose Home around a layered rate hero while preserving all rate, error, refresh, and source behavior.
 - [x] Recompose Settings into grouped background, notification, and source panels.
 - [x] Preserve semantic headings, switch roles, live regions, safe insets, scrolling, and large-text stacking.
+- [x] Add a debug-only test notification that uses the real channel and tap action without changing saved alert state.
+- [x] Give production and debug distinct branded launcher icons, labels, and package identities.
+- [x] Replace the generic notification artwork with a dedicated monochrome rising-rate icon.
 - [x] Compile, run local tests, lint, assemble, and run the Android 16 interaction suite.
+- [ ] Rerun the Android 16 suite for the new debug package identity when the phone reconnects.
 - [ ] User visual review on the installed phone build.
 
 Exit: the new style is installed for review with no intentional behavior changes.
@@ -678,7 +682,7 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 
 | 2026-09-11 | Phase 6 | Added optimized release configuration, isolated release smoke build, explicit backup scope, device-only permission history migration, acceptance pipelines, and release documentation | 110 local tests passed/1 optional probe skipped; lint 0 errors; debug and release assembly passed; 21 Android 16 tests ran with 19 passed/2 isolated-only skipped; optimized non-debuggable app fetched live 51.27/51.37, retained it after force-stop, and registered one hourly job | User visual review; API 24/25; actual backup restore; real reboot/battery observation; isolated permission/channel device checks |
 
-| 2026-09-11 | Phase 7 | Translated the supplied dark desktop reference into a mobile Compose design system with branded themes, rate hero, shared chrome, pills, status accents, and grouped settings panels | Debug compilation/assembly and local tests passed; lint passed; Android 16 interaction suite passed with the existing two isolated-only skips | User visual review; commit/push after acceptance |
+| 2026-09-11 | Phase 7 | Translated the supplied dark desktop reference into a mobile Compose design system with branded themes, rate hero, shared chrome, pills, status accents, grouped settings panels, isolated debug notification tester, and distinct production/debug icon identities | 111 local tests ran with 110 passed/1 optional probe skipped; lint 0 errors; debug, minified release, and release-smoke assembly passed; the preceding Android 16 suite passed with two isolated-only skips | Reconnect phone and rerun the suite for the new `.debug` identity; user visual review; commit/push after acceptance |
 
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 

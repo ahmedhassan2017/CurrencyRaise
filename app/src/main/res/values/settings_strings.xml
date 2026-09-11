@@ -25,6 +25,13 @@
     <string name="interval_title">Check interval</string>
     <string name="notification_settings_title">Notification settings</string>
     <string name="notification_settings_unavailable">Could not open Android settings. Open Settings, find Currency Raise, and choose Notifications.</string>
+    <string name="debug_notification_section">Debug notification test</string>
+    <string name="debug_notification_help">Available only in debug builds. Sends a labeled sample through the real alert channel without changing saved rates or alert history.</string>
+    <string name="debug_notification_allow_first">Allow Android notifications before sending a test.</string>
+    <string name="send_test_notification">Send test notification</string>
+    <string name="debug_test_notification_title">TEST · Currency Raise notification</string>
+    <string name="debug_notification_sent">Test notification sent. Tap it to confirm that it opens Home.</string>
+    <string name="debug_notification_failed">The notification could not be posted. Check Android permission and the Exchange Rate Updates channel.</string>
     <plurals name="choose_interval">
         <item quantity="one">Check interval: %1$d hour</item>
         <item quantity="other">Check interval: %1$d hours</item>

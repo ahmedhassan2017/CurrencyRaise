@@ -2,6 +2,7 @@ package com.example.currencyraise.presentation.settings
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.pm.ApplicationInfo
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,15 +31,20 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.currencyraise.R
+import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.NotificationAccess
 import com.example.currencyraise.domain.model.NotificationAccessStatus
+import com.example.currencyraise.domain.model.QuoteKind
 import com.example.currencyraise.domain.model.UpdateInterval
+import com.example.currencyraise.notification.RateNotificationPublisher
 import com.example.currencyraise.notification.SystemNotificationAccess
 import com.example.currencyraise.presentation.background.BackgroundStatusRoute
 import com.example.currencyraise.presentation.background.BackgroundStatusSection
 import com.example.currencyraise.presentation.components.CurrencyPanel
 import com.example.currencyraise.presentation.components.CurrencyRaiseHeader
 import com.example.currencyraise.presentation.components.SectionLabel
+import java.math.BigDecimal
+import java.time.Instant
 import kotlinx.coroutines.launch
 
 @Composable
@@ -49,6 +55,11 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
     var access by remember { mutableStateOf(systemAccess.read()) }
     var settingsOpenFailed by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val testNotificationPublisher = remember(context) {
+        if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            RateNotificationPublisher(context.applicationContext)
+        } else null
+    }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         access = systemAccess.read()
     }
@@ -62,6 +73,10 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
         onNotifications = viewModel::setNotifications,
         onRetry = viewModel::retryRead,
         backgroundStatus = { BackgroundStatusRoute(showTitle = false) },
+        showTestNotification = testNotificationPublisher != null,
+        onSendTestNotification = {
+            testNotificationPublisher?.publishTest(debugNotificationRate()) == true
+        },
         onPermissionAction = {
             access = systemAccess.read()
             when (notificationAction(viewModel.uiState.value.settings, access)) {
@@ -108,8 +123,11 @@ fun SettingsScreen(
     onRetry: () -> Unit,
     onPermissionAction: () -> Unit,
     backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection(showTitle = false) },
+    showTestNotification: Boolean = false,
+    onSendTestNotification: () -> Boolean = { false },
 ) {
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
+    var testNotificationSent by rememberSaveable { mutableStateOf<Boolean?>(null) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -245,6 +263,46 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
+                    }
+                    if (showTestNotification) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        SectionLabel(stringResource(R.string.debug_notification_section))
+                        Text(
+                            stringResource(R.string.debug_notification_help),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (access.status != NotificationAccessStatus.ALLOWED) {
+                            Text(
+                                stringResource(R.string.debug_notification_allow_first),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                        testNotificationSent?.let { sent ->
+                            Text(
+                                stringResource(
+                                    if (sent) R.string.debug_notification_sent
+                                    else R.string.debug_notification_failed,
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (sent) MaterialTheme.colorScheme.secondary
+                                else MaterialTheme.colorScheme.error,
+                                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = { testNotificationSent = onSendTestNotification() },
+                            enabled = state.editable && access.status == NotificationAccessStatus.ALLOWED,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                        ) {
+                            Text(stringResource(R.string.send_test_notification))
+                        }
                     }
                 }
 
@@ -405,3 +463,17 @@ private fun SaveStatus(state: SettingsUiState) {
             .semantics { liveRegion = LiveRegionMode.Polite },
     )
 }
+
+private fun debugNotificationRate() = ExchangeRate(
+    baseCurrency = "USD",
+    quoteCurrency = "EGP",
+    buyRate = BigDecimal("51.27"),
+    sellRate = BigDecimal("51.37"),
+    sourceId = "debug_notification_test",
+    sourceName = "Currency Raise test",
+    sourceUrl = "https://www.banquemisr.com/",
+    quoteKind = QuoteKind.CASH,
+    sourceDisplayedAt = null,
+    sourceQuoteId = "debug-notification-test",
+    fetchedAt = Instant.now(),
+)
