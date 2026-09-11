@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-11
 Project: C:\Users\ahmed\AndroidStudioProjects\CurrencyRaise
-Status: Phase 2 complete; Home screen is next
+Status: Phase 3 complete and user reviewed; Settings is next
 Initial audience: personal use
 Implementation strategy: one app module, small phases, observable local cache
 
@@ -30,18 +30,24 @@ During implementation:
 Never overwrite unrelated user changes. Do not commit, publish, or deploy automatically.
 A build or unit test cannot substitute for a device check; record those separately.
 
+Review preference, updated 2026-09-11: the user owns visual review from Phase 4 onward.
+Continue compilation, local tests, lint, and useful automated device tests, but do not
+spend time taking screenshots or manually inspecting layouts unless the user requests it.
+Record user visual review separately; it does not block completing the implementation
+and handing over a build for review. The user accepted the Phase 3 Home screen.
 ## Git workflow
 
 Established at the user's request on 2026-09-11:
 
 - master: stable reviewed milestones.
 - dev: integration branch created from master.
-- codex/phase-2-cache-repository: current feature branch created from dev.
+- codex/phase-3-home: Home feature branch created from dev after Phase 2 integration.
 - Merge reviewed feature work into dev, then promote verified milestones into master.
 - Create each subsequent feature branch from an up-to-date dev branch.
 - Commit 0b41ac8 contains Phase 1, the plan, provider notes, and exported wireframes.
   It was pushed to origin/master; dev and the Phase 2 branch were created and pushed
-  from that same commit. Phase 2 was approved for commit, push, and continued development on 2026-09-11.
+  from that same commit. Phase 2 was committed as 8fb3644, pushed, and fast-forwarded into dev.
+  Phase 3 was then created from dev; master remains at 0b41ac8.
 - Future commits/pushes/merges still require the user's instruction; this Git setup
   does not authorize automatically merging future work into master.
 
@@ -95,9 +101,9 @@ Recommended notification policy:
 - [x] Direct computer request to Banque Misr returned a page containing separate USD buy/sell values.
 - [x] Direct computer request to CBE returned a rejection page despite HTTP 200.
 
-The starter currently only displays “Hello Android”; Phase 1 adds the provider/foundation underneath it.
+Home now displays saved and fetched USD/EGP cash rates, manual refresh, and separate timestamps.
 Existing arithmetic/package-name tests do not establish application behavior.
-No Android device tests have been run during the baseline, Phase 1, or Phase 2 checks.
+Phase 3 added and passed device tests on an Android 16 phone; earlier baseline/Phase 1/Phase 2 checks were local only.
 The earlier suspected Kotlin/Compose mismatch was not confirmed by the resolved local dependencies.
 
 ## Architecture and implementation choices
@@ -342,26 +348,52 @@ fixed and the full check command then passed.
 
 ## Phase 3 — Home screen
 
-- [ ] Replace the greeting with HomeScreen and HomeViewModel.
-- [ ] Expose one immutable HomeUiState via StateFlow.
-- [ ] Collect state with lifecycle awareness.
-- [ ] Show cached data immediately.
-- [ ] Trigger an initial refresh using a clear freshness rule.
-- [ ] Add manual refresh with duplicate-tap protection.
-- [ ] Display USD/EGP, bank name, cash quote type, buy/sell, and source attribution link.
-- [ ] Label source publication time/date separately from last successful check.
-- [ ] Show configured background interval as an approximation, not an exact next-run promise.
-- [ ] Handle loading without cache, refreshing with cache, empty state, and recoverable errors.
-- [ ] Catch storage observation errors, retain displayed data, re-subscribe on retry, and explain persistent corruption recovery.
-- [ ] Show stale/unverified freshness clearly without calling unchanged weekend prices a connection failure.
-- [ ] Provide string resources, accessible controls, locale-aware formatting, and scalable text from the start.
-- [ ] Preserve the existing theme and edge-to-edge padding.
-- [ ] Test initial cache display, refresh success/failure, and incoming background-style cache updates.
-- [ ] Run assembly/local tests and inspect Home on an emulator or device.
-- [ ] Update this file and stop.
+Status: complete on 2026-09-11; user accepted the visual result.
+
+- [x] Replace the greeting with HomeScreen and HomeViewModel.
+- [x] Expose one immutable HomeUiState via StateFlow.
+- [x] Collect state with lifecycle awareness.
+- [x] Show cached data immediately.
+- [x] Trigger an initial refresh using a clear freshness rule.
+- [x] Add manual refresh with duplicate-tap protection.
+- [x] Display USD/EGP, bank name, cash quote type, buy/sell, and source attribution link.
+- [x] Label source publication time/date separately from last successful check.
+- [x] Show configured background interval as an approximation, not an exact next-run promise.
+- [x] Handle loading without cache, refreshing with cache, empty state, and recoverable errors.
+- [x] Catch storage observation errors, retain displayed data, re-subscribe on retry, and explain persistent corruption recovery.
+- [x] Show stale/unverified freshness clearly without calling unchanged weekend prices a connection failure.
+- [x] Provide string resources, accessible controls, locale-aware formatting, and scalable text from the start.
+- [x] Preserve the existing theme and edge-to-edge padding.
+- [x] Test initial cache display, refresh success/failure, and incoming background-style cache updates.
+- [x] Run assembly/local tests and inspect Home on an emulator or device.
+- [x] Update this file and stop.
 
 Exit: the app can show a real saved quote, refresh it, and remain useful offline.
 
+Phase 3 evidence:
+
+- Added HomeScreen, HomeViewModel, immutable HomeUiState, locale-aware number/time
+  formatting, and lifecycle-aware Compose collection using the existing Lifecycle version.
+- Show cache first; initial refresh only for missing, expired, or future-dated cache.
+  The selected interval defines expiry (one hour if settings cannot be read). Display
+  clock ticks only while Home is visible and never trigger network polling.
+- Manual retry reconnects failed storage observations, retains displayed data on errors,
+  and prevents duplicate taps. Storage help explains explicit recovery without auto-reset.
+- Preserved the Material 3 theme and safe screen insets. Cards stack for narrow screens
+  or large fonts. Refresh was moved above timestamps following the visual check.
+- Debug build passed; 62 local tests passed, 1 optional captured-page probe skipped.
+- All 5 device tests passed on Android 16: 4 Home interaction tests plus the starter
+  package test. Coverage includes cached-error retry, loading, dark mode with 2x text,
+  source-link action, and storage help. Lint: 0 errors, 17 existing maintenance warnings.
+- Real app fetch and manual refresh succeeded on the phone; unchanged rates were
+  reported correctly. Cold restart retained the quote and last-check time.
+- App build installed and launched on the connected phone. User accepted the result.
+- Settings, notification delivery, and background scheduling remain future work.
+
+Validation commands:
+- .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:connectedDebugAndroidTest --console=plain
+- After the final layout-only change: .\gradlew.bat :app:assembleDebug :app:lintDebug :app:connectedDebugAndroidTest --console=plain
+- git diff --check
 ## Phase 4 — Settings and notification permission
 
 - [ ] Add Home/Settings navigation without unnecessary destination layers.
@@ -475,6 +507,8 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 | 2026-09-11 | Phase 1 | Added strict cash-rate parser, cancellable bounded HTTPS source, decimal model, Hilt/KSP and desugaring; accepted plan defaults | Debug APK built; 28 tests passed including fresh captured-page probe; lint 0 errors/16 warnings; diff check passed | Phase 2 cache/repository; source timezone/permission limitations; device checks |
 | 2026-09-11 | Git workflow | Pushed Phase 1 and wireframes to master as 0b41ac8; created and pushed dev, then codex/phase-2-cache-repository from dev | All three branches tracked their matching origin branches at 0b41ac8 | Phase 2 subsequently approved for push and continued development |
 | 2026-09-11 | Phase 2 | Added observable atomic quote cache, persistent settings, injected repositories, explicit storage errors and refresh coordination | Debug assembly passed; 48 tests passed/1 optional probe skipped; lint 0 errors/17 warnings; diff check passed | Phase 3 Home; UI storage recovery; device checks; provider limitations unchanged |
+| 2026-09-11 | Phase 3 | Added Home, lifecycle state, freshness policy, manual refresh, storage retry and accessible formatting; user accepted visual result | Debug build; 62 local tests passed/1 probe skipped; 5 phone tests passed; lint 0 errors/17 warnings; real refresh and cold restart verified | Phase 4 Settings; future visual reviews belong to the user |
+
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 
 ## Sources checked during planning
