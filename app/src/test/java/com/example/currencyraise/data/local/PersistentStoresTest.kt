@@ -41,6 +41,32 @@ class PersistentStoresTest {
     }
     @After fun closeStores() = runBlocking { jobs.forEach { it.cancelAndJoin() } }
 
+    @Test fun backgroundDeadlineAndHandledEventSurviveRecreation() = runBlocking {
+        val (first, job) = open("background")
+        val state = SyncStateStore(first)
+        val deadline = java.time.Instant.parse("2026-09-11T12:00:00Z")
+        assertNull(state.retryNotBefore())
+        assertNull(state.recordHandledQuote("first-event"))
+        state.deferRequestsUntil(deadline)
+        job.cancelAndJoin()
+        val (reopened, _) = open("background")
+        val restored = SyncStateStore(reopened)
+        assertEquals(deadline, restored.retryNotBefore())
+        assertEquals("first-event", restored.recordHandledQuote("next-event"))
+        assertEquals("next-event", restored.recordHandledQuote("next-event"))
+    }
+
+    @Test fun invalidBackgroundDeadlineIsNotSilentlyReset() = runBlocking {
+        val (store, _) = open("background")
+        store.edit { it[stringPreferencesKey("retry_not_before")] = "broken" }
+        try {
+            SyncStateStore(store).retryNotBefore()
+            fail("Expected storage failure")
+        } catch (_: IOException) {
+            assertEquals("broken", store.data.first()[stringPreferencesKey("retry_not_before")])
+        }
+    }
+
     @Test fun quoteSurvivesStoreRecreationWithAllMetadataAndDecimalScale() = runBlocking {
         val (first, job) = open("quote")
         assertNull(RateCache(first).read())

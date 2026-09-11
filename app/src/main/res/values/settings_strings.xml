@@ -2,10 +2,9 @@
     <string name="settings_title">Settings</string>
     <string name="back_home">Back to Home</string>
     <string name="settings_subtitle">Choose your update and alert preferences.</string>
-    <string name="preferences_preview">You can save preferences now. Background checks and alerts will become active in a later version.</string>
     <string name="background_section">Background updates</string>
     <string name="automatic_checks">Automatic checks</string>
-    <string name="automatic_preference_help">Save your preference for checking while the app is closed.</string>
+    <string name="automatic_preference_help">Check for new rates while the app is closed.</string>
     <string name="interval_approximate">Android may delay checks to save battery or wait for a connection. Intervals are approximate.</string>
     <string name="notifications_section">Notifications</string>
     <string name="rate_alerts">Rate change alerts</string>
@@ -14,7 +13,7 @@
     <string name="android_permission_needed">Android notification permission is needed.</string>
     <string name="android_notifications_blocked">Android has blocked this app’s notifications.</string>
     <string name="android_channel_blocked">The rate alert channel or its group is blocked in Android settings.</string>
-    <string name="permission_context">Allow notifications to receive rate alerts once automatic checks are available. Your choice here does not start background checks.</string>
+    <string name="permission_context">Allow notifications to receive alerts when an automatic check finds changed prices. The first background check is silent; manual refresh never sends alerts.</string>
     <string name="allow_notifications">Allow notifications</string>
     <string name="open_notification_settings">Open Android notification settings</string>
     <string name="alerts_paused">Automatic checks are off. Background alerts will stay paused until they are enabled.</string>

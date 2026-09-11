@@ -1,0 +1,13 @@
+<resources>
+    <string name="rate_channel_name">Exchange Rate Updates</string>
+    <string name="rate_channel_description">Alerts when the bank’s USD/EGP cash prices change.</string>
+    <string name="rate_notification_title">%1$s: USD/EGP changed</string>
+    <string name="rate_notification_body">Bank buys: %1$s · Bank sells: %2$s EGP per 1 USD. Open for source and check times.</string>
+    <string name="background_starting">Applying your background preferences…</string>
+    <string name="background_schedule_error">Could not apply background preferences. Retrying automatically; check available storage if this continues.</string>
+    <string name="error_deferred">The bank asked us to wait before checking again. Your saved rates are still available.</string>
+    <plurals name="scheduled_interval">
+        <item quantity="one">Automatic checks scheduled approximately every hour</item>
+        <item quantity="other">Automatic checks scheduled approximately every %1$d hours</item>
+    </plurals>
+</resources>

@@ -27,6 +27,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.currencyraise.R
+import com.example.currencyraise.presentation.background.BackgroundStatusRoute
+import com.example.currencyraise.presentation.background.BackgroundStatusSection
 import com.example.currencyraise.domain.model.NotificationAccess
 import com.example.currencyraise.domain.model.NotificationAccessStatus
 import com.example.currencyraise.domain.model.UpdateInterval
@@ -49,6 +51,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
     SettingsScreen(
         state, access, onBack, viewModel::setInterval, viewModel::setAutomatic,
         viewModel::setNotifications, viewModel::retryRead,
+        backgroundStatus = { BackgroundStatusRoute() },
         onPermissionAction = {
             access = systemAccess.read()
             when (notificationAction(viewModel.uiState.value.settings, access)) {
@@ -94,6 +97,7 @@ fun SettingsScreen(
     onNotifications: (Boolean) -> Unit,
     onRetry: () -> Unit,
     onPermissionAction: () -> Unit,
+    backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection() },
 ) {
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
     Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { insets ->
@@ -116,8 +120,7 @@ fun SettingsScreen(
             state.settings?.let { settings ->
                 Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.background_inactive), style = MaterialTheme.typography.titleSmall)
-                        Text(stringResource(R.string.preferences_preview), style = MaterialTheme.typography.bodySmall)
+                        backgroundStatus()
                     }
                 }
                 SectionTitle(stringResource(R.string.background_section))

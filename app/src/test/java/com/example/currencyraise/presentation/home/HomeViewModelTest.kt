@@ -204,7 +204,7 @@ class HomeViewModelTest {
             RefreshOutcome.Success(quote(), RateChange.FIRST_QUOTE)
         }
         override fun observeLatestUsdEgpRate() = saved.map { it.getOrThrow() }
-        override suspend fun refreshUsdEgpRate(): RefreshOutcome { calls++; return action() }
+        override suspend fun refreshUsdEgpRate(minimumAge: java.time.Duration): RefreshOutcome { calls++; return action() }
     }
 
     private class FakeSettings : SettingsRepository {

@@ -13,7 +13,7 @@ import androidx.core.net.toUri
 import com.example.currencyraise.domain.model.NotificationAccess
 import com.example.currencyraise.domain.model.NotificationAccessStatus
 
-// Shared with the future notification publisher. Reading status does not create a channel.
+// Shared with the notification publisher. Reading status does not create a channel.
 internal const val RATE_CHANNEL_ID = "exchange_rate_updates"
 
 internal class SystemNotificationAccess(private val context: Context) {

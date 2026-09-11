@@ -27,8 +27,11 @@ internal abstract class ProviderModule {
 internal object RepositoryModule {
     @Provides
     @Singleton
-    fun provideRateRepository(source: RateRemoteSource, cache: RateCache): ExchangeRateRepository =
-        DefaultExchangeRateRepository(source, cache)
+    fun provideRateRepository(
+        source: RateRemoteSource, cache: RateCache,
+        state: com.example.currencyraise.domain.repository.SyncStateRepository, clock: java.time.Clock,
+    ): ExchangeRateRepository =
+        DefaultExchangeRateRepository(source, cache, state, clock)
 
     @Provides
     @Singleton

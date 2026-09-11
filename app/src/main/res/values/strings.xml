@@ -29,13 +29,7 @@
     <string name="check_already_running">Another check is running. Saved rates will update when it finishes.</string>
     <string name="checked_unchanged">Checked successfully · Prices unchanged</string>
     <string name="checked_saved">Checked successfully · Rates saved</string>
-    <string name="background_inactive">Background checks are not active yet</string>
-    <string name="background_explanation">Use Refresh rates for now. Automatic checks and alerts will be added in a later version.</string>
     <string name="automatic_disabled">Automatic checks are disabled in your saved preferences.</string>
-    <plurals name="configured_interval">
-        <item quantity="one">Saved interval: about every %1$d hour, once enabled</item>
-        <item quantity="other">Saved interval: about every %1$d hours, once enabled</item>
-    </plurals>
     <string name="open_source">View Banque Misr rate source</string>
     <string name="source_open_failed_title">Could not open the source</string>
     <string name="source_open_failed">A browser may not be available. Try opening the Banque Misr exchange rates page in your browser.</string>

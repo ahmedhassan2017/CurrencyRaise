@@ -1,0 +1,33 @@
+package com.example.currencyraise.notification
+
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import androidx.test.core.app.ApplicationProvider
+import com.example.currencyraise.domain.model.ExchangeRate
+import com.example.currencyraise.domain.model.QuoteKind
+import java.math.BigDecimal
+import java.time.Instant
+import org.junit.Assert.*
+import org.junit.Test
+
+class RateNotificationPublisherTest {
+    @Test fun createsChannelAndBuildsImmutableAppOwnedTapActionWithoutPosting() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val publisher = RateNotificationPublisher(context)
+        publisher.createChannel()
+        if (Build.VERSION.SDK_INT >= 26) {
+            val channel = context.getSystemService(NotificationManager::class.java).getNotificationChannel(RATE_CHANNEL_ID)
+            assertNotNull(channel)
+            assertEquals("Exchange Rate Updates", channel.name.toString())
+        }
+        val rate = ExchangeRate("USD", "EGP", BigDecimal("51.27"), BigDecimal("51.37"),
+            "banque_misr", "Banque Misr", "https://www.banquemisr.com/", QuoteKind.CASH,
+            null, null, Instant.parse("2026-09-11T10:00:00Z"))
+        val notification = publisher.buildNotification(rate)
+        assertEquals(context.packageName, notification.contentIntent.creatorPackage)
+        if (Build.VERSION.SDK_INT >= 31) assertTrue(notification.contentIntent.isImmutable)
+        if (Build.VERSION.SDK_INT >= 26) assertEquals(RATE_CHANNEL_ID, notification.channelId)
+        assertTrue(notification.extras.getCharSequence("android.text").toString().contains("EGP"))
+    }
+}

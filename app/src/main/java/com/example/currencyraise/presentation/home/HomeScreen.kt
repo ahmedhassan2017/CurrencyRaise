@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -28,6 +27,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.currencyraise.R
+import com.example.currencyraise.presentation.background.BackgroundStatusRoute
+import com.example.currencyraise.presentation.background.BackgroundStatusSection
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
@@ -49,7 +50,9 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
     }
     val handler = LocalUriHandler.current
     var linkFailed by rememberSaveable { mutableStateOf(false) }
-    HomeScreen(state, viewModel::refresh, onOpenSettings = onOpenSettings, onOpenSource = { url ->
+    HomeScreen(state, viewModel::refresh, onOpenSettings = onOpenSettings,
+        backgroundStatus = { BackgroundStatusRoute() },
+        onOpenSource = { url ->
         try {
             require(url.toUri().scheme == "https")
             handler.openUri(url)
@@ -78,6 +81,7 @@ fun HomeScreen(
     onOpenSource: (String) -> Unit,
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
+    backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection() },
 ) {
     val configuration = LocalConfiguration.current
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
@@ -183,18 +187,7 @@ fun HomeScreen(
             }
             feedback?.let { Notice(stringResource(it)) }
             HorizontalDivider()
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.background_inactive), style = MaterialTheme.typography.titleSmall)
-                state.settings?.let {
-                    Text(
-                        if (!it.automaticChecksEnabled) stringResource(R.string.automatic_disabled)
-                        else pluralStringResource(R.plurals.configured_interval, it.updateInterval.hours, it.updateInterval.hours),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-                Text(stringResource(R.string.background_explanation), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            backgroundStatus()
             TextButton(onClick = { onOpenSource(sourceUrl) }, modifier = Modifier.align(Alignment.Start)) {
                 Text(stringResource(R.string.open_source))
             }
@@ -263,6 +256,7 @@ private fun Notice(message: String, isError: Boolean = false) {
 }
 
 private fun HomeError.messageResource(): Int = when (this) {
+    HomeError.DEFERRED -> R.string.error_deferred
     HomeError.NETWORK -> R.string.error_network
     HomeError.TIMEOUT -> R.string.error_timeout
     HomeError.PROVIDER -> R.string.error_provider

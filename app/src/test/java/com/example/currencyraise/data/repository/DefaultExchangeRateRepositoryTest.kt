@@ -17,10 +17,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DefaultExchangeRateRepositoryTest {
+    private fun repository(source: RateRemoteSource, cache: RateCache) =
+        DefaultExchangeRateRepository(source, cache,
+            com.example.currencyraise.data.local.SyncStateStore(FaultablePreferences()), java.time.Clock.systemUTC())
+
     @Test fun firstRefreshPersistsAndReportsFirstQuote() = runTest {
         val cache = RateCache(FaultablePreferences())
         val rate = quote()
-        val repository = DefaultExchangeRateRepository({ RateFetchResult.Success(rate) }, cache)
+        val repository = repository({ RateFetchResult.Success(rate) }, cache)
         assertNull(repository.observeLatestUsdEgpRate().first())
         assertEquals(RefreshOutcome.Success(rate, RateChange.FIRST_QUOTE), repository.refreshUsdEgpRate())
         assertEquals(rate, repository.observeLatestUsdEgpRate().first())
@@ -30,7 +34,7 @@ class DefaultExchangeRateRepositoryTest {
         val cache = RateCache(FaultablePreferences())
         cache.save(quote())
         val latest = quote("51.27", "51.37", "2026-09-11T11:00:00Z")
-        val repository = DefaultExchangeRateRepository({ RateFetchResult.Success(latest) }, cache)
+        val repository = repository({ RateFetchResult.Success(latest) }, cache)
         assertEquals(RefreshOutcome.Success(latest, RateChange.UNCHANGED), repository.refreshUsdEgpRate())
         assertEquals(latest, cache.read())
     }
@@ -39,7 +43,7 @@ class DefaultExchangeRateRepositoryTest {
         for (latest in listOf(quote(buy = "51.28"), quote(sell = "51.38"))) {
             val cache = RateCache(FaultablePreferences())
             cache.save(quote(fetchedAt = "2026-09-11T09:00:00Z"))
-            val repository = DefaultExchangeRateRepository({ RateFetchResult.Success(latest) }, cache)
+            val repository = repository({ RateFetchResult.Success(latest) }, cache)
             assertEquals(RefreshOutcome.Success(latest, RateChange.CHANGED), repository.refreshUsdEgpRate())
         }
     }
@@ -49,8 +53,8 @@ class DefaultExchangeRateRepositoryTest {
         val saved = quote()
         cache.save(saved)
         for (error in listOf(RateFetchError.Network, RateFetchError.Timeout,
-            RateFetchError.InvalidResponse, RateFetchError.Http(429, "120"))) {
-            val repository = DefaultExchangeRateRepository({ RateFetchResult.Failure(error) }, cache)
+            RateFetchError.InvalidResponse, RateFetchError.Http(429))) {
+            val repository = repository({ RateFetchResult.Failure(error) }, cache)
             assertEquals(RefreshOutcome.Failure(RefreshError.Fetch(error)), repository.refreshUsdEgpRate())
             assertEquals(saved, cache.read())
         }
@@ -62,7 +66,7 @@ class DefaultExchangeRateRepositoryTest {
         val saved = quote()
         cache.save(saved)
         store.writeFailure = IOException("disk full")
-        val repository = DefaultExchangeRateRepository({ RateFetchResult.Success(quote(buy = "51.30")) }, cache)
+        val repository = repository({ RateFetchResult.Success(quote(buy = "51.30")) }, cache)
         assertEquals(RefreshOutcome.Failure(RefreshError.StorageWrite), repository.refreshUsdEgpRate())
         assertEquals(saved, cache.read())
     }
@@ -71,7 +75,7 @@ class DefaultExchangeRateRepositoryTest {
         val store = FaultablePreferences()
         val cache = RateCache(store)
         var calls = 0
-        val repository = DefaultExchangeRateRepository({ calls++; RateFetchResult.Success(quote()) }, cache)
+        val repository = repository({ calls++; RateFetchResult.Success(quote()) }, cache)
         store.readFailure = IOException("temporarily unavailable")
         assertEquals(RefreshOutcome.Failure(RefreshError.StorageRead), repository.refreshUsdEgpRate())
         assertEquals(0, calls)
@@ -90,7 +94,7 @@ class DefaultExchangeRateRepositoryTest {
         val cache = RateCache(FaultablePreferences())
         cache.save(quote())
         val next = quote(buy = "51.28", fetchedAt = "2026-09-11T09:00:00Z")
-        val repository = DefaultExchangeRateRepository({ RateFetchResult.Success(next) }, cache)
+        val repository = repository({ RateFetchResult.Success(next) }, cache)
         assertEquals(RefreshOutcome.Success(next, RateChange.CHANGED), repository.refreshUsdEgpRate())
         assertEquals(next, cache.read())
     }
@@ -100,7 +104,7 @@ class DefaultExchangeRateRepositoryTest {
         val response = CompletableDeferred<RateFetchResult>()
         var calls = 0
         val source = RateRemoteSource { calls++; started.complete(Unit); response.await() }
-        val repository = DefaultExchangeRateRepository(source, RateCache(FaultablePreferences()))
+        val repository = repository(source, RateCache(FaultablePreferences()))
         val first = async { repository.refreshUsdEgpRate() }
         started.await()
         assertEquals(RefreshOutcome.AlreadyRefreshing, repository.refreshUsdEgpRate())
@@ -119,7 +123,7 @@ class DefaultExchangeRateRepositoryTest {
             if (++calls == 1) { started.complete(Unit); awaitCancellation() }
             RateFetchResult.Success(quote(fetchedAt = "2026-09-11T11:00:00Z"))
         }
-        val repository = DefaultExchangeRateRepository(source, cache)
+        val repository = repository(source, cache)
         val pending = async { repository.refreshUsdEgpRate() }
         started.await()
         pending.cancelAndJoin()
@@ -132,7 +136,7 @@ class DefaultExchangeRateRepositoryTest {
     @Test fun cancellationDuringStorageWriteIsNotConvertedToFailure() = runTest {
         val store = FaultablePreferences()
         store.writeFailure = CancellationException("cancel write")
-        val repository = DefaultExchangeRateRepository({ RateFetchResult.Success(quote()) }, RateCache(store))
+        val repository = repository({ RateFetchResult.Success(quote()) }, RateCache(store))
         try {
             repository.refreshUsdEgpRate()
             fail("Cancellation should propagate")

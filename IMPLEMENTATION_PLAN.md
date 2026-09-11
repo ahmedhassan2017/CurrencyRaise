@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-11
 Project: C:\Users\ahmed\AndroidStudioProjects\CurrencyRaise
-Status: Phase 4 implementation and automated checks complete; user visual review pending; Phase 5 is next
+Status: Phase 5 implementation and automated checks complete; debug build installed for user review; Phase 6 is next
 Initial audience: personal use
 Implementation strategy: one app module, small phases, observable local cache
 
@@ -41,15 +41,17 @@ Established at the user's request on 2026-09-11:
 
 - master: stable reviewed milestones.
 - dev: integration branch created from master.
-- codex/phase-4-settings: current feature branch created from dev after Home integration.
+- codex/phase-5-background-alerts: current feature branch, created from dev at 4fa2778 after Settings integration.
 - Merge reviewed feature work into dev, then promote verified milestones into master.
 - Create each subsequent feature branch from an up-to-date dev branch.
 - Commit 0b41ac8 contains Phase 1, the plan, provider notes, and exported wireframes.
   It was pushed to origin/master; dev and the Phase 2 branch were created and pushed
   from that same commit. Phase 2 was committed as 8fb3644, pushed, and fast-forwarded into dev.
   Home was committed as d0ae23d and pushed to codex/phase-3-home and dev.
-  The Settings branch was created from that dev commit; master remains at 0b41ac8.
+  Settings was committed and pushed as 29216cd, then merged into dev as 4fa2778.
+  At the Phase 5 start, origin/master was 118391e (the user's merge of dev).
   The user authorized committing and pushing Phase 4 on 2026-09-11; visual review remains separately tracked.
+  Phase 5 changes remain local and uncommitted on their feature branch.
 - Future commits/pushes/merges still require the user's instruction; this Git setup
   does not authorize automatically merging future work into master.
 
@@ -465,27 +467,27 @@ User review checklist:
 - [ ] If denied, verify the action opens Android settings and does not prompt repeatedly.
 ## Phase 5 — notification delivery and background synchronization
 
-- [ ] Add the Exchange Rate Updates notification channel.
-- [ ] Implement a small notification helper with app/system/channel permission checks.
-- [ ] Use an explicit immutable PendingIntent that opens Home.
-- [ ] Apply the selected first-fetch, change-only, and manual-refresh notification policies.
-- [ ] Persist the last handled notification quote state sufficiently to reduce duplicates after process restart.
-- [ ] Implement CoroutineWorker using the existing repository.
-- [ ] Configure HiltWorkerFactory correctly and verify worker creation.
-- [ ] Enqueue one unique periodic request named exchange_rate_periodic_sync.
-- [ ] Use a network-connected constraint and the selected interval.
-- [ ] Use ExistingPeriodicWorkPolicy.UPDATE for interval changes.
-- [ ] Cancel periodic work when automatic checks are disabled; recreate it when enabled.
-- [ ] Reconcile saved settings and scheduler state on startup so interruption cannot leave them permanently inconsistent.
-- [ ] Read current notification preferences when the worker runs.
-- [ ] Prevent notification failure/denial from causing another rate fetch.
-- [ ] Add bounded retry/backoff for temporary network/server failures and respect Retry-After.
-- [ ] Avoid repeated retries for invalid data, access denial, or invalid configuration.
-- [ ] Remember that Result.failure does not permanently stop periodic work; cancel explicitly if suspension is needed.
-- [ ] Avoid unnecessary immediate duplicate fetching when scheduling after a recent manual/initial refresh.
-- [ ] Test worker outcomes, unique scheduling, interval changes, disabling, retry policy, and notification decisions.
-- [ ] Run assembly/local tests and exercise a worker through testing tools.
-- [ ] Update this file and stop.
+- [x] Add the Exchange Rate Updates notification channel.
+- [x] Implement a small notification helper with app/system/channel permission checks.
+- [x] Use an explicit immutable PendingIntent that opens Home.
+- [x] Apply the selected first-fetch, change-only, and manual-refresh notification policies.
+- [x] Persist the last handled notification quote state sufficiently to reduce duplicates after process restart.
+- [x] Implement CoroutineWorker using the existing repository.
+- [x] Configure HiltWorkerFactory correctly and verify worker creation.
+- [x] Enqueue one unique periodic request named exchange_rate_periodic_sync.
+- [x] Use a network-connected constraint and the selected interval.
+- [x] Use ExistingPeriodicWorkPolicy.UPDATE for interval changes.
+- [x] Cancel periodic work when automatic checks are disabled; recreate it when enabled.
+- [x] Reconcile saved settings and scheduler state on startup so interruption cannot leave them permanently inconsistent.
+- [x] Read current notification preferences when the worker runs.
+- [x] Prevent notification failure/denial from causing another rate fetch.
+- [x] Add bounded retry/backoff for temporary network/server failures and respect Retry-After.
+- [x] Avoid repeated retries for invalid data, access denial, or invalid configuration.
+- [x] Remember that Result.failure does not permanently stop periodic work; cancel explicitly if suspension is needed.
+- [x] Avoid unnecessary immediate duplicate fetching when scheduling after a recent manual/initial refresh.
+- [x] Test worker outcomes, unique scheduling, interval changes, disabling, retry policy, and notification decisions.
+- [x] Run assembly/local tests and exercise a worker through testing tools.
+- [x] Update this file and stop.
 
 Exit: one schedule performs refresh -> persistence -> optional notification and respects settings.
 
@@ -496,6 +498,70 @@ Background expectations:
 - Force-stop suspends normal background work until user action takes the app out of the stopped state.
 - “Every 24 hours” is an interval, not a guaranteed local clock time.
 - UPDATE changes the schedule specification; it does not force an immediate fetch or interrupt the active run.
+
+### Phase 5 implementation notes — 2026-09-11
+
+- WorkManager 2.11.2 and AndroidX Hilt 1.4.0 are integrated with the existing Dagger
+  Hilt setup. Application supplies HiltWorkerFactory; only the default WorkManager
+  Startup metadata is removed, preserving other initializers.
+- One unique network-connected periodic request follows the saved 1/2/4/6/12/24-hour
+  interval. UPDATE preserves the request identity. Automatic checks off cancels it;
+  enabling them creates a request again. Notification preferences do not change scheduling.
+- Application startup reconciles persisted preferences with WorkManager, and observes
+  later changes. Scheduling/storage failures display an error and retry reconciliation
+  with delays from 5 seconds to 5 minutes. Home and Settings show the applied scheduling
+  state, not just the requested preference.
+- A new schedule initially waits the selected interval. Background refresh also checks
+  cache age inside the repository mutex and skips HTTP for successful checks less than
+  five minutes old. Manual refresh bypasses that freshness guard. Neither path bypasses
+  the bank's valid Retry-After deadline.
+- Retry-After supports delta seconds and HTTP dates. Its deadline is stored in a
+  no-backup DataStore and shared by foreground/background requests. Requests resume on
+  a later eligible check; no exact wake-up time or long-running delay is promised.
+- Temporary network/timeouts and selected HTTP failures get at most two retries
+  after the initial attempt, using exponential backoff starting at one minute.
+  Invalid responses, access denial, and storage failures do not trigger immediate
+  retries. Periodic work remains eligible at its next interval.
+- The first successful background result, including a recent cached result, establishes
+  the notification baseline. Only changed background prices alert afterward. Manual
+  refresh never calls the notification helper. Preferences are read again after fetching.
+- The handled event is claimed durably before posting. A process crash between claiming
+  and posting may miss an alert; exactly-once delivery is not guaranteed. Blocked or
+  failed notifications are not replayed, and never cause another HTTP request.
+- The Exchange Rate Updates channel respects runtime/app/channel/group permission.
+  The explicit immutable notification action starts Home with a fresh activity task.
+  A stable notification ID replaces the prior rate alert.
+- Notification event and provider deadline state live in noBackupFilesDir. Full backup
+  policy and restore acceptance remain Phase 6 work.
+
+Verification:
+- Debug assembly passed.
+- 105 local tests discovered: 104 passed, one optional captured-page probe skipped.
+  New coverage includes notification decisions, preference changes during refresh,
+  bounded retry policy, request coordination, Retry-After, and real DataStore reopen.
+- Final full device run: 14 tests passed on RMX5106 / Android 16. Tests exercise Hilt
+  worker creation, real CoroutineWorker outcomes with fake HTTP inputs, every interval,
+  unique UPDATE/cancel/re-enable, channel creation, immutable notification action,
+  and existing Home/Settings/navigation behavior.
+- The first device run had five "No compose hierarchies" failures in Home/navigation.
+  Logs showed those activities reaching RESUMED then PAUSED/STOPPED shortly after
+  launch. The final full suite passed without changes to those UI tests; the initial
+  failure is recorded rather than treated as a pass or assigned an unproven cause.
+- Lint: zero errors, 17 existing warnings (dependency/tool versions, starter colors,
+  redundant activity label, and target SDK). Obsolete background-preview resources removed.
+- Commands: :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+  :app:connectedDebugAndroidTest, followed by :app:installDebug. git diff --check passed.
+- The verified debug APK is installed on the connected phone. No screenshots or manual
+  visual review were performed, as requested.
+
+User review and remaining acceptance:
+- [ ] Review the background status shown on Home and Settings.
+- [ ] Review notification appearance and tap-to-Home behavior when a real change alert arrives.
+- [ ] Complete longer-running closure/reboot/battery/force-stop checks in Phase 6.
+- The first background check is intentionally silent; checks are approximate and require
+  a connection. A real changed-price notification was not forced using fake bank prices.
+- Phase 5 is ready for user review and a separate commit/push instruction. Phase 6 has
+  not been started.
 
 ## Phase 6 — personal-use acceptance and release readiness
 
@@ -562,6 +628,8 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 | 2026-09-11 | Phase 3 Git | Committed Home as d0ae23d; pushed its feature branch and fast-forwarded dev; created codex/phase-4-settings | Git pushes succeeded; master remains 0b41ac8 | Phase 4 local changes |
 | 2026-09-11 | Phase 4 | Added saved Settings, two-screen navigation, OS notification access state and durable single-prompt policy | Debug build installed; 74 local tests passed/1 probe skipped; final 10 device tests passed; lint 0 errors/17 warnings | User visual/OS permission review; Phase 5 scheduler and notification delivery |
 
+| 2026-09-11 | Phase 5 | Added unique periodic checks, Hilt worker, permission-aware change notifications, persistent deduplication and shared provider cooldown; connected real scheduling status to UI | Debug installed; 104 local tests passed/1 probe skipped; final 14 device tests passed; lint 0 errors/17 warnings; diff check passed | User visual/notification review; separate commit/push; Phase 6 acceptance and release readiness |
+
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 
 ## Sources checked during planning
@@ -576,6 +644,10 @@ References are evidence of the reviewed information, not guarantees of future av
 - DataStore: https://developer.android.com/topic/libraries/architecture/datastore
 - Periodic work: https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work
 - Work states: https://developer.android.com/develop/background-work/background-tasks/persistent/how-to/states
+- WorkManager releases: https://developer.android.com/jetpack/androidx/releases/work
+- AndroidX Hilt releases: https://developer.android.com/jetpack/androidx/releases/hilt
+- Hilt and WorkManager: https://developer.android.com/training/dependency-injection/hilt-jetpack#workmanager
+- Worker tests: https://developer.android.com/develop/background-work/background-tasks/testing/persistent/worker-impl
 - Work UPDATE policy: https://developer.android.com/reference/androidx/work/ExistingPeriodicWorkPolicy
 - Notification permission: https://developer.android.com/develop/ui/compose/notifications/notification-permission
 - AllRatesToday CBE data: https://allratestoday.com/central-bank-rates-api/cbe/

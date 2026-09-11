@@ -95,6 +95,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 when (val result = rates.refreshUsdEgpRate()) {
+                    is RefreshOutcome.Cached -> Unit
                     is RefreshOutcome.Success ->
                         mutableState.update { it.copy(lastChange = result.change) }
                     is RefreshOutcome.Failure ->
@@ -115,6 +116,7 @@ class HomeViewModel @Inject constructor(
 }
 
 private fun RefreshError.toHomeError(): HomeError = when (this) {
+    is RefreshError.Deferred -> HomeError.DEFERRED
     RefreshError.StorageRead -> HomeError.STORAGE_READ
     RefreshError.StorageWrite -> HomeError.STORAGE_WRITE
     is RefreshError.Fetch -> when (error) {
