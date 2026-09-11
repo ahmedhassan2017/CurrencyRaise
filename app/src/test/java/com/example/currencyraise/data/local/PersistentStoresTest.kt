@@ -105,7 +105,8 @@ class PersistentStoresTest {
 
     @Test fun settingsDefaultsAndIndependentChangesSurviveRecreation() = runBlocking {
         val (store, job) = open("settings")
-        val repository = DefaultSettingsRepository(SettingsStore(store))
+        val (deviceState, deviceJob) = open("permission")
+        val repository = DefaultSettingsRepository(SettingsStore(store, deviceState))
         assertEquals(AppSettings(), repository.observeSettings().first())
         coroutineScope {
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setUpdateInterval(UpdateInterval.SIX_HOURS)) }
@@ -114,16 +115,18 @@ class PersistentStoresTest {
             launch { assertEquals(SettingsWriteResult.SAVED, repository.markNotificationPermissionAsked()) }
         }
         job.cancelAndJoin()
+        deviceJob.cancelAndJoin()
+        val (restoredDevice, _) = open("permission")
         val (reopened, _) = open("settings")
         assertEquals(
             AppSettings(UpdateInterval.SIX_HOURS, false, false, notificationPermissionAsked = true),
-            DefaultSettingsRepository(SettingsStore(reopened)).observeSettings().first(),
+            DefaultSettingsRepository(SettingsStore(reopened, restoredDevice)).observeSettings().first(),
         )
     }
 
     @Test fun allAllowedIntervalsRoundTrip() = runBlocking {
         val (store, _) = open("settings")
-        val settings = SettingsStore(store)
+        val settings = SettingsStore(store, open("permission").first)
         for (interval in UpdateInterval.entries) {
             settings.setInterval(interval)
             assertEquals(interval, settings.observe().first().updateInterval)

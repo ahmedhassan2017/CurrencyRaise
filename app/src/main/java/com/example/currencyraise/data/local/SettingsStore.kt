@@ -10,10 +10,13 @@ import com.example.currencyraise.domain.model.UpdateInterval
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
-internal class SettingsStore(private val store: DataStore<Preferences>) {
-    fun observe(): Flow<AppSettings> = store.data.map { prefs ->
+internal class SettingsStore(
+    private val store: DataStore<Preferences>,
+    private val deviceState: DataStore<Preferences>,
+) {
+    fun observe(): Flow<AppSettings> = combine(store.data, deviceState.data) { prefs, device ->
         try {
             val hours = prefs[INTERVAL] ?: UpdateInterval.ONE_HOUR.hours
             val interval = UpdateInterval.entries.singleOrNull { it.hours == hours }
@@ -22,7 +25,7 @@ internal class SettingsStore(private val store: DataStore<Preferences>) {
                 updateInterval = interval,
                 automaticChecksEnabled = prefs[AUTOMATIC] ?: true,
                 notificationsEnabled = prefs[NOTIFICATIONS] ?: true,
-                notificationPermissionAsked = prefs[PERMISSION_ASKED] ?: false,
+                notificationPermissionAsked = device[PERMISSION_ASKED] ?: false,
             )
         } catch (e: ClassCastException) {
             throw IOException("Invalid saved setting type", e)
@@ -42,11 +45,10 @@ internal class SettingsStore(private val store: DataStore<Preferences>) {
     }
 
     suspend fun markPermissionAsked() {
-        store.edit { it[PERMISSION_ASKED] = true }
+        deviceState.edit { it[PERMISSION_ASKED] = true }
     }
 
     private companion object {
-        val PERMISSION_ASKED = booleanPreferencesKey("notification_permission_asked")
         val INTERVAL = intPreferencesKey("interval_hours")
         val AUTOMATIC = booleanPreferencesKey("automatic_checks")
         val NOTIFICATIONS = booleanPreferencesKey("notifications")

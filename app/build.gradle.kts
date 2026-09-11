@@ -21,11 +21,27 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+        }
+        create("releaseSmoke") {
+            initWith(getByName("release"))
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "src/releaseSmoke/proguard-rules.pro",
+            )
+            applicationIdSuffix = ".smoke"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            testProguardFile("src/releaseSmoke/test-proguard-rules.pro")
         }
     }
+    // Opt in to instrumenting the optimized, isolated build; debug remains the default.
+    testBuildType = providers.gradleProperty("testBuildType").orElse("debug").get().also {
+        require(it in setOf("debug", "releaseSmoke")) { "testBuildType must be debug or releaseSmoke" }
+    }
+    sourceSets.getByName("androidTest").assets.directories.add("src/test/resources")
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
@@ -67,8 +83,15 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    add("releaseSmokeImplementation", libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+// Espresso brings compiler annotations that reference JDK-only compiler model types.
+// Keep them on the compile classpath; the Android test APK does not execute them.
+configurations.matching { it.name == "releaseSmokeAndroidTestRuntimeClasspath" }.configureEach {
+    exclude(group = "com.google.errorprone", module = "error_prone_annotations")
+}
+
 hilt {
     enableAggregatingTask = true
 }

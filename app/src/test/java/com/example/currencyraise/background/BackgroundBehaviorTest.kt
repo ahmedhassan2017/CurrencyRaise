@@ -17,7 +17,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BackgroundBehaviorTest {
-    private val settings = DefaultSettingsRepository(SettingsStore(FaultablePreferences()))
+    private val settings = DefaultSettingsRepository(SettingsStore(FaultablePreferences(), FaultablePreferences()))
     private val state = SyncStateStore(FaultablePreferences())
     private var posts = 0
     private var sinkFailure: RuntimeException? = null

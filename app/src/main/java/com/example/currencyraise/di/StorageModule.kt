@@ -3,6 +3,8 @@ package com.example.currencyraise.di
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.example.currencyraise.data.local.PermissionHistoryMigration
+import java.io.File
 import com.example.currencyraise.data.local.RateCache
 import com.example.currencyraise.data.local.SettingsStore
 import dagger.Module
@@ -25,7 +27,13 @@ internal object StorageModule {
 
     @Provides
     @Singleton
-    fun provideSettingsStore(@ApplicationContext context: Context): SettingsStore = SettingsStore(
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("settings") }
-    )
+    fun provideSettingsStore(@ApplicationContext context: Context): SettingsStore {
+        val deviceState = PreferenceDataStoreFactory.create {
+            File(context.noBackupFilesDir, "permission_history.preferences_pb")
+        }
+        val preferences = PreferenceDataStoreFactory.create(
+            migrations = listOf(PermissionHistoryMigration(deviceState)),
+        ) { context.preferencesDataStoreFile("settings") }
+        return SettingsStore(preferences, deviceState)
+    }
 }
