@@ -25,6 +25,8 @@ internal class DefaultSettingsRepository(
     override suspend fun setNotificationsEnabled(enabled: Boolean) =
         write { settings.setNotifications(enabled) }
 
+    override suspend fun markNotificationPermissionAsked() = write { settings.markPermissionAsked() }
+
     private suspend fun write(block: suspend () -> Unit): SettingsWriteResult = try {
         block()
         SettingsWriteResult.SAVED

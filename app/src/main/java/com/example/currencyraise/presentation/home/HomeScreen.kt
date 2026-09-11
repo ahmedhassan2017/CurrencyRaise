@@ -36,7 +36,7 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
-fun HomeRoute(viewModel: HomeViewModel) {
+fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val owner = LocalLifecycleOwner.current
     LaunchedEffect(owner, viewModel) {
@@ -49,7 +49,7 @@ fun HomeRoute(viewModel: HomeViewModel) {
     }
     val handler = LocalUriHandler.current
     var linkFailed by rememberSaveable { mutableStateOf(false) }
-    HomeScreen(state, viewModel::refresh, onOpenSource = { url ->
+    HomeScreen(state, viewModel::refresh, onOpenSettings = onOpenSettings, onOpenSource = { url ->
         try {
             require(url.toUri().scheme == "https")
             handler.openUri(url)
@@ -77,6 +77,7 @@ fun HomeScreen(
     onRefresh: () -> Unit,
     onOpenSource: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
@@ -93,7 +94,10 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.settings_title)) }
+                }
                 Spacer(Modifier.height(12.dp))
                 Text(
                     stringResource(R.string.source_cash, state.rate?.sourceName ?: stringResource(R.string.bank_name)),

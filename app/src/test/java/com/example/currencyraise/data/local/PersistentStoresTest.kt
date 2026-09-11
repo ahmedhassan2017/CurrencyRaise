@@ -85,11 +85,12 @@ class PersistentStoresTest {
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setUpdateInterval(UpdateInterval.SIX_HOURS)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setAutomaticChecksEnabled(false)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setNotificationsEnabled(false)) }
+            launch { assertEquals(SettingsWriteResult.SAVED, repository.markNotificationPermissionAsked()) }
         }
         job.cancelAndJoin()
         val (reopened, _) = open("settings")
         assertEquals(
-            AppSettings(UpdateInterval.SIX_HOURS, false, false),
+            AppSettings(UpdateInterval.SIX_HOURS, false, false, notificationPermissionAsked = true),
             DefaultSettingsRepository(SettingsStore(reopened)).observeSettings().first(),
         )
     }
