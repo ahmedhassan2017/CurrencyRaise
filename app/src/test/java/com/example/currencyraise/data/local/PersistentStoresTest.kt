@@ -1,0 +1,131 @@
+package com.example.currencyraise.data.local
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.currencyraise.data.quote
+import com.example.currencyraise.data.repository.DefaultSettingsRepository
+import com.example.currencyraise.domain.model.AppSettings
+import com.example.currencyraise.domain.model.SettingsWriteResult
+import com.example.currencyraise.domain.model.UpdateInterval
+import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import org.junit.After
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+
+class PersistentStoresTest {
+    @get:Rule val temporary = TemporaryFolder()
+    private val jobs = mutableListOf<Job>()
+    private fun open(name: String): Pair<DataStore<Preferences>, Job> {
+        val job = SupervisorJob().also(jobs::add)
+        return PreferenceDataStoreFactory.create(
+            scope = CoroutineScope(job + Dispatchers.IO),
+            produceFile = { File(temporary.root, "$name.preferences_pb") },
+        ) to job
+    }
+    @After fun closeStores() = runBlocking { jobs.forEach { it.cancelAndJoin() } }
+
+    @Test fun quoteSurvivesStoreRecreationWithAllMetadataAndDecimalScale() = runBlocking {
+        val (first, job) = open("quote")
+        assertNull(RateCache(first).read())
+        val original = quote()
+        RateCache(first).save(original)
+        job.cancelAndJoin()
+        val (reopened, _) = open("quote")
+        assertEquals(original, RateCache(reopened).read())
+        assertEquals("51.2700", RateCache(reopened).read()!!.buyRate.toPlainString())
+    }
+
+    @Test fun clearsOptionalFieldsWhenNextQuoteDoesNotSupplyThem() = runBlocking {
+        val (store, _) = open("quote")
+        val cache = RateCache(store)
+        cache.save(quote())
+        val next = quote(fetchedAt = "2026-09-11T11:00:00Z")
+            .copy(sourceDisplayedAt = null, sourceQuoteId = null)
+        cache.save(next)
+        assertEquals(next, cache.read())
+    }
+
+    @Test fun existingObserverReceivesWholeSavedSnapshot() = runBlocking<Unit> {
+        withTimeout(5_000) {
+            val (store, _) = open("quote")
+            val cache = RateCache(store)
+            val received = Channel<com.example.currencyraise.domain.model.ExchangeRate?>(Channel.UNLIMITED)
+            val observer = launch { cache.observe().collect { received.send(it) } }
+            assertNull(received.receive())
+            val saved = quote()
+            cache.save(saved)
+            assertEquals(saved, received.receive())
+            observer.cancelAndJoin()
+            received.close()
+        }
+    }
+
+    @Test fun settingsDefaultsAndIndependentChangesSurviveRecreation() = runBlocking {
+        val (store, job) = open("settings")
+        val repository = DefaultSettingsRepository(SettingsStore(store))
+        assertEquals(AppSettings(), repository.observeSettings().first())
+        coroutineScope {
+            launch { assertEquals(SettingsWriteResult.SAVED, repository.setUpdateInterval(UpdateInterval.SIX_HOURS)) }
+            launch { assertEquals(SettingsWriteResult.SAVED, repository.setAutomaticChecksEnabled(false)) }
+            launch { assertEquals(SettingsWriteResult.SAVED, repository.setNotificationsEnabled(false)) }
+        }
+        job.cancelAndJoin()
+        val (reopened, _) = open("settings")
+        assertEquals(
+            AppSettings(UpdateInterval.SIX_HOURS, false, false),
+            DefaultSettingsRepository(SettingsStore(reopened)).observeSettings().first(),
+        )
+    }
+
+    @Test fun allAllowedIntervalsRoundTrip() = runBlocking {
+        val (store, _) = open("settings")
+        val settings = SettingsStore(store)
+        for (interval in UpdateInterval.entries) {
+            settings.setInterval(interval)
+            assertEquals(interval, settings.observe().first().updateInterval)
+        }
+    }
+
+    @Test fun malformedSavedQuoteIsReportedAndNotErased() = runBlocking {
+        val (store, _) = open("quote")
+        val cache = RateCache(store)
+        cache.save(quote())
+        store.edit { it[stringPreferencesKey("buy")] = "broken" }
+        try {
+            cache.read()
+            fail("Expected read failure")
+        } catch (_: IOException) {
+            assertEquals("broken", store.data.first()[stringPreferencesKey("buy")])
+        }
+    }
+
+    @Test fun corruptBinaryFileIsNotSilentlyReset() = runBlocking {
+        val file = File(temporary.root, "broken.preferences_pb")
+        val original = byteArrayOf(-1, -1, -1, -1)
+        file.writeBytes(original)
+        val (store, _) = open("broken")
+        try {
+            RateCache(store).read()
+            fail("Expected corruption failure")
+        } catch (_: IOException) {
+            assertArrayEquals(original, file.readBytes())
+        }
+    }
+}
