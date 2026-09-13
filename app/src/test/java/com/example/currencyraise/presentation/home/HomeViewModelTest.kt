@@ -47,6 +47,39 @@ class HomeViewModelTest {
         assertEquals(0, rates.calls)
     }
 
+    @Test fun chartHistorySwitchesBanksWithoutLeakingPreviousSeries() = runTest(dispatcher) {
+        val misrPoints = listOf(quote().toObservation())
+        val cibPoints = listOf(quote(buy = "51.31", sell = "51.41").toObservation())
+        rates.history.value = Result.success(misrPoints)
+        cib.history.value = Result.success(cibPoints)
+        val vm = create()
+        runCurrent()
+        assertEquals(misrPoints, vm.uiState.value.history)
+        vm.selectBank(Bank.CIB)
+        assertTrue(vm.uiState.value.history.isEmpty())
+        runCurrent()
+        assertEquals(cibPoints, vm.uiState.value.history)
+        rates.history.value = Result.success(emptyList())
+        runCurrent()
+        assertEquals(cibPoints, vm.uiState.value.history)
+    }
+
+    @Test fun historyReadFailureKeepsQuoteAndRetryDoesNotFetch() = runTest(dispatcher) {
+        rates.saved.value = Result.success(quote())
+        rates.history.value = Result.failure(StorageReadException(IOException("history unreadable")))
+        val vm = create()
+        runCurrent()
+        assertTrue(vm.uiState.value.historyReadFailed)
+        assertFalse(vm.uiState.value.loadingHistory)
+        assertEquals(quote(), vm.uiState.value.rate)
+        rates.history.value = Result.success(listOf(quote().toObservation()))
+        vm.retryHistory()
+        runCurrent()
+        assertFalse(vm.uiState.value.historyReadFailed)
+        assertEquals(1, vm.uiState.value.history.size)
+        assertEquals(0, rates.calls)
+    }
+
     @Test fun bankSwitchClearsOldQuoteImmediatelyAndUsesIndependentCache() = runTest(dispatcher) {
         rates.saved.value = Result.success(quote())
         val vm = create()
@@ -285,6 +318,8 @@ class HomeViewModelTest {
     }
 
     private class FakeRates : ExchangeRateRepository {
+        val history = MutableStateFlow<Result<List<RateObservation>>>(Result.success(emptyList()))
+        override fun observeUsdEgpHistory() = history.map { it.getOrThrow() }
         val saved = MutableStateFlow<Result<ExchangeRate?>>(Result.success(null))
         var calls = 0
         var action: suspend () -> RefreshOutcome = {

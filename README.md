@@ -12,6 +12,26 @@ of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference. These prefe
 apply to both banks. Bank selection survives Android screen/process restoration;
 a fresh launch defaults to CIB, which is the first tab. Notification taps open the relevant bank.
 
+## Rate history
+
+Home includes a **Daily** chart covering the last 24 hours and a **Weekly** chart
+covering the last 7 days for the selected bank. Buy and sell have separate line
+styles and markers. Tap a point, or use Previous point / Next point, to inspect its
+exact prices and local device check time. The change summary compares the first
+and last observations actually shown, not an assumed midnight or market close.
+
+Every successful fetch saves an observation, including unchanged prices. Cached
+background checks and failed requests do not create observations. Each bank keeps
+at most 2,048 observations within eight days of its newest stored observation.
+The latest quote and history are saved atomically in the same DataStore file and
+follow the existing quote backup rules. No new runtime dependency was added.
+
+Existing installations begin with the actual saved quote, then collect new history.
+No earlier prices are backfilled. Lines stop across gaps longer than twice the
+configured checking interval, and nothing is extrapolated beyond the observations.
+Chart windows use elapsed time (24 hours / 168 hours); labels use the device timezone.
+Provider publication timestamps are not used as chart positions.
+
 ## Build and install
 
 Open this folder in Android Studio. Let Gradle sync with the committed wrapper and

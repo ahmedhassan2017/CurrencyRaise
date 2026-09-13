@@ -64,6 +64,7 @@ class BackgroundIntegrationTest {
         var fetches = 0
         var outcome: RefreshOutcome = RefreshOutcome.Failure(RefreshError.Fetch(RateFetchError.Network))
         val rates = object : ExchangeRateRepository {
+            override fun observeUsdEgpHistory() = flowOf(emptyList<RateObservation>())
             override fun observeLatestUsdEgpRate() = flowOf<ExchangeRate?>(null)
             override suspend fun refreshUsdEgpRate(minimumAge: Duration): RefreshOutcome {
                 fetches++

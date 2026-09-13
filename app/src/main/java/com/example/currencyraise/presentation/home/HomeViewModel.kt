@@ -35,6 +35,7 @@ class HomeViewModel @Inject constructor(
     val uiState = mutableState.asStateFlow()
     private var rateObservation: Job? = null
     private var settingsObservation: Job? = null
+    private var historyObservation: Job? = null
     private var refreshJob: Job? = null
     private var rateSession = 0
     private var initialCheckPending = true
@@ -42,6 +43,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeRates()
+        observeHistory()
         observeSettings()
     }
 
@@ -50,6 +52,7 @@ class HomeViewModel @Inject constructor(
         rateSession++
         refreshJob?.cancel()
         rateObservation?.cancel()
+        historyObservation?.cancel()
         savedState["bank"] = bank.name
         initialCheckPending = true
         mutableState.update { old -> HomeUiState(
@@ -57,6 +60,28 @@ class HomeViewModel @Inject constructor(
             settingsReadFailed = old.settingsReadFailed, now = clock.instant(),
         ) }
         observeRates()
+        observeHistory()
+    }
+
+    fun retryHistory() = observeHistory()
+
+    private fun observeHistory() {
+        historyObservation?.cancel()
+        val bank = mutableState.value.bank
+        val session = rateSession
+        historyObservation = viewModelScope.launch {
+            try {
+                banks[bank].observeUsdEgpHistory().collect { history ->
+                    if (rateSession == session) mutableState.update {
+                        it.copy(history = history, loadingHistory = false, historyReadFailed = false)
+                    }
+                }
+            } catch (_: StorageReadException) {
+                if (rateSession == session) mutableState.update {
+                    it.copy(loadingHistory = false, historyReadFailed = true)
+                }
+            }
+        }
     }
 
     private fun observeRates() {
@@ -119,6 +144,7 @@ class HomeViewModel @Inject constructor(
             it.copy(refreshing = true, refreshError = null, lastChange = null, alreadyRefreshing = false)
         }
         if (state.rateReadFailed) observeRates()
+        if (state.historyReadFailed) observeHistory()
         if (state.settingsReadFailed) observeSettings()
         val bank = state.bank
         val session = rateSession

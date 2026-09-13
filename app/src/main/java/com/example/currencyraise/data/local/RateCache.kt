@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.QuoteKind
+import com.example.currencyraise.domain.model.RateObservation
+import com.example.currencyraise.domain.model.toObservation
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDateTime
@@ -19,10 +21,18 @@ import kotlinx.coroutines.flow.map
 internal class RateCache(private val store: DataStore<Preferences>) {
     fun observe(): Flow<ExchangeRate?> = store.data.map(::decode).distinctUntilChanged()
     suspend fun read(): ExchangeRate? = observe().first()
+    fun observeHistory(): Flow<List<RateObservation>> = store.data.map(::decodeHistory).distinctUntilChanged()
+    suspend fun readHistory(): List<RateObservation> = observeHistory().first()
 
     /** All fields commit together; a failed commit preserves the previous snapshot. */
     suspend fun save(rate: ExchangeRate) {
         store.edit { prefs ->
+            val previous = decode(prefs)
+            val comparable = previous != null && previous.sourceId == rate.sourceId &&
+                previous.baseCurrency == rate.baseCurrency && previous.quoteCurrency == rate.quoteCurrency &&
+                previous.quoteKind == rate.quoteKind
+            val history = if (comparable) decodeHistory(prefs) else emptyList()
+            prefs[HISTORY] = RateHistory.encode(RateHistory.append(history, rate.toObservation()))
             prefs[VERSION] = 1
             prefs[BASE] = rate.baseCurrency
             prefs[QUOTE] = rate.quoteCurrency
@@ -35,6 +45,17 @@ internal class RateCache(private val store: DataStore<Preferences>) {
             prefs[FETCHED] = rate.fetchedAt.toString()
             rate.sourceDisplayedAt?.let { prefs[DISPLAYED] = it.toString() } ?: prefs.remove(DISPLAYED)
             rate.sourceQuoteId?.let { prefs[QUOTE_ID] = it } ?: prefs.remove(QUOTE_ID)
+        }
+    }
+
+    private fun decodeHistory(prefs: Preferences): List<RateObservation> {
+        val latest = decode(prefs) ?: return emptyList()
+        try {
+            // Existing installations start with their actual saved quote; no historical backfill.
+            val history = prefs[HISTORY] ?: return listOf(latest.toObservation())
+            return RateHistory.decode(history)
+        } catch (error: ClassCastException) {
+            throw IOException("Invalid saved history field type", error)
         }
     }
 
@@ -69,6 +90,7 @@ internal class RateCache(private val store: DataStore<Preferences>) {
 
     private companion object {
         val VERSION = intPreferencesKey("schema_version")
+        val HISTORY = stringPreferencesKey("observed_history_v1")
         val BASE = stringPreferencesKey("base_currency")
         val QUOTE = stringPreferencesKey("quote_currency")
         val BUY = stringPreferencesKey("buy")
