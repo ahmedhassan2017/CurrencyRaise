@@ -6,13 +6,12 @@ import com.example.currencyraise.domain.repository.SettingsRepository
 import com.example.currencyraise.notification.RateChangeAlerts
 import java.io.IOException
 import java.time.Duration
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
 internal enum class BackgroundResult { COMPLETED, RETRY, FAILED }
 
-internal class BackgroundRefreshRunner @Inject constructor(
+internal class BackgroundRefreshRunner(
     private val settings: SettingsRepository,
     private val rates: ExchangeRateRepository,
     private val alerts: RateChangeAlerts,

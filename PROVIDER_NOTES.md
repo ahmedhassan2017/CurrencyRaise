@@ -65,3 +65,43 @@ Android lint passed with 0 errors and 16 warnings (dependency update suggestions
 existing starter resources/label, and target SDK). Versions are compatible tested
 pins, not a claim that every dependency is the newest available.
 Device execution and real Android network access remain untested.
+
+# CIB via Ta3weem
+
+Source: https://ta3weem.com/en/banks/commercial-international-bank-cib
+Inspection date: 2026-09-13. Third-party sourcing was explicitly approved by the user.
+
+The official CIB page required an Imperva/hCaptcha check. Ta3weem returned HTTP 200
+HTML (approximately 275 KiB) containing a server-rendered CIB currency table without
+login, credentials, or CAPTCHA. This is an observed HTML contract, not a supported API.
+
+The parser requires the CIB page heading, exactly one table with Currency / Buy Rate /
+Sell Rate / Last Updated headers, exactly one US Dollar (USD) row, and the USD-EGP
+link in that row. It reads the price spans, not the adjacent daily percentage changes
+or the separate highlights cards. Prices use bounded positive decimal syntax and
+sell must be at least buy. Duplicate, missing, reordered, malformed, and ambiguous
+data is rejected rather than guessed.
+
+The row displays HH:mm and dd/MM/yyyy with no verified timezone. Preserve this as
+sourceDisplayedAt without converting to an instant; fetchedAt records the device
+check time. Do not claim that source time is CIB's own publication time.
+
+Source identity is `cib_ta3weem`, displayed as `CIB via Ta3weem`. The table does not
+distinguish cash from transfer prices, so QuoteKind.BANK_RATE and the UI label Bank
+rates are used. Third-party rates may lag CIB; the source link points to Ta3weem.
+
+Both providers use the same bounded HTTPS transport: 512 KiB decompressed maximum,
+HTML content type validation, normal TLS validation, no redirects or implicit
+retries, bounded timeouts, cancellation propagation, and no request/body logging.
+CIB has separate quote and device-only sync-state files; Banque Misr's existing
+files are retained unchanged. Only the two public quotes and settings are backed up.
+
+Normal tests use the reduced historical fixture under `cib-ta3weem/`. To probe a
+separately captured real page using the production parser:
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest "-PcibRateProbeFile=C:/path/to/captured-cib-page.html" --console=plain
+```
+
+The fixture is test input only; it is never used as production fallback data.
+No paid service, API key, backend, or new runtime dependency was introduced.

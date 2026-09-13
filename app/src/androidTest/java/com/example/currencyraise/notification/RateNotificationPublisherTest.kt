@@ -26,6 +26,12 @@ class RateNotificationPublisherTest {
             "banque_misr", "Banque Misr", "https://www.banquemisr.com/", QuoteKind.CASH,
             null, null, Instant.parse("2026-09-11T10:00:00Z"))
         val notification = publisher.buildNotification(rate)
+        val cibRate = rate.copy(sourceId = "cib_ta3weem", sourceName = "CIB via Ta3weem")
+        val cibNotification = publisher.buildNotification(cibRate)
+        assertNotEquals(publisher.notificationId(rate), publisher.notificationId(cibRate))
+        assertNotEquals(RateNotificationPublisher.TEST_NOTIFICATION_ID, publisher.notificationId(cibRate))
+        assertNotEquals(notification.contentIntent, cibNotification.contentIntent)
+        assertTrue(cibNotification.extras.getCharSequence(Notification.EXTRA_TITLE).toString().contains("CIB via Ta3weem"))
         assertEquals(context.packageName, notification.contentIntent.creatorPackage)
         if (Build.VERSION.SDK_INT >= 31) assertTrue(notification.contentIntent.isImmutable)
         if (Build.VERSION.SDK_INT >= 26) assertEquals(RATE_CHANNEL_ID, notification.channelId)

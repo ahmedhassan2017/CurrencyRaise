@@ -102,7 +102,12 @@ hilt {
 
 // Opt-in verification of a separately captured page; normal tests stay offline.
 val rateProbeFile = providers.gradleProperty("rateProbeFile")
+val cibRateProbeFile = providers.gradleProperty("cibRateProbeFile")
 tasks.withType<Test>().configureEach {
+    cibRateProbeFile.orNull?.let { path ->
+        inputs.file(path)
+        systemProperty("cibRateProbeFile", path)
+    }
     rateProbeFile.orNull?.let { path ->
         inputs.file(path)
         systemProperty("rateProbeFile", path)

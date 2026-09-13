@@ -1,11 +1,16 @@
 # Currency Raise
 
-A personal Android app for Banque Misr USD/EGP cash buy and sell prices.
+A personal Android app for Banque Misr and CIB USD/EGP buy and sell prices.
+Banque Misr cash quotes come from the bank; CIB quotes come from Ta3weem and are
+labeled **CIB via Ta3weem**. The CIB table does not distinguish cash and transfer
+prices, and third-party quotes may lag the bank.
 
-The Home screen shows the last successfully saved quote, a manual refresh action,
+The Home screen has a bank selector and shows that bank's last successfully saved quote, a manual refresh action,
 the last successful check time, and the bank's displayed timestamp. Buy/sell labels
 are from the bank's perspective. Settings controls approximate background intervals
-of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference.
+of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference. These preferences
+apply to both banks. Bank selection survives Android screen/process restoration;
+a fresh launch defaults to CIB, which is the first tab. Notification taps open the relevant bank.
 
 ## Build and install
 
@@ -42,9 +47,14 @@ do not uninstall just to fix a signature mismatch without considering saved data
   exponential backoff. Other failures wait for a later check or explicit manual retry.
 - Turning automatic checks off cancels scheduled checks. Turning notifications off
   leaves enabled checking active.
-- The first successful background check establishes a silent baseline. Later
+- Both banks are checked independently. Each has its own cache, request deadline,
+  refresh lock, and notification baseline. A provider failure preserves its saved
+  quote and does not prevent the other provider from updating.
+- The first successful background check for each bank establishes a silent baseline. Later
   background checks alert only when a buy or sell price changes. Manual refresh is silent.
-- An alert tap opens Home. App permission, channel settings, and Android policy all
+- An alert tap opens Home with the corresponding bank selected. Each bank has a
+  separate notification ID so one bank's alert does not overwrite the other's.
+  App permission, channel settings, and Android policy all
   affect delivery. Notification delivery is not exactly once: a crash in the small
   gap between saving the handled event and posting can miss an alert.
 
@@ -78,6 +88,7 @@ Corruption is reported; the app does not silently clear data.
 Android backup and device transfer are restricted to:
 - files/datastore/settings.preferences_pb
 - files/datastore/latest_rate.preferences_pb
+- files/datastore/cib_latest_rate.preferences_pb
 
 Permission prompt history, handled notification events, provider waiting periods,
 and WorkManager state are device-only. Permission history from the previous app
@@ -150,13 +161,19 @@ separate Android installation.
 
 ## Source and limitations
 
-The app reads the bank's public HTML page over HTTPS:
+The app reads public HTML pages over HTTPS:
 [Banque Misr exchange rates](https://www.banquemisr.com/en/CAPITAL-MARKETS/Exchange-Rates-and-Currencies?sc_lang=en).
+[CIB rates via Ta3weem](https://ta3weem.com/en/banks/commercial-international-bank-cib).
 
-Cash notes prices are used, not transfer prices. HTML can change or be blocked;
-an unusable response retains the saved quote. The bank's timestamp has no verified
-timezone, so it is shown as published. Device check time is stored separately.
+Banque Misr uses cash notes prices. Ta3weem's CIB table supplies bank buy/sell prices
+without a cash/transfer distinction. HTML can change or be blocked;
+an unusable response retains that bank's saved quote. Source timestamps have no verified
+timezone, so they are shown as published. Device check time is stored separately.
 These prices can stay unchanged for long periods and are not a live trading feed.
+
+CIB's official page presented a security challenge during integration, so the user
+approved a third-party source. See [provider notes](PROVIDER_NOTES.md) for the
+verified table contract and limitations. No fallback substitutes another bank's prices.
 
 There is no paid API subscription, backend, account, or API key in this app.
 Network access uses your normal connection. Public page access does not establish

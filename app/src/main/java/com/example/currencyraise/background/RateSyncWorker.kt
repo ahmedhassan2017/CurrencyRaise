@@ -11,7 +11,7 @@ import dagger.assisted.AssistedInject
 internal class RateSyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted parameters: WorkerParameters,
-    private val runner: BackgroundRefreshRunner,
+    private val runner: BankBackgroundRefreshRunner,
 ) : CoroutineWorker(context, parameters) {
     override suspend fun doWork(): Result = when (runner.run(runAttemptCount)) {
         BackgroundResult.COMPLETED -> Result.success()

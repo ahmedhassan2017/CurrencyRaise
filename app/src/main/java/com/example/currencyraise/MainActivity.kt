@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import com.example.currencyraise.presentation.navigation.CurrencyRaiseApp
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
 import dagger.hilt.android.AndroidEntryPoint
+import com.example.currencyraise.domain.model.Bank
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -14,7 +15,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CurrencyRaiseTheme { CurrencyRaiseApp() }
+            val initialBank = Bank.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_BANK) }
+            CurrencyRaiseTheme { CurrencyRaiseApp(initialBank) }
         }
     }
+
+    companion object { const val EXTRA_BANK = "com.example.currencyraise.BANK" }
 }

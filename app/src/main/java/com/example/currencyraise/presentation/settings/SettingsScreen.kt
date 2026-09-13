@@ -309,7 +309,7 @@ fun SettingsScreen(
                 SectionLabel(stringResource(R.string.source_section))
                 CurrencyPanel {
                     Text(
-                        stringResource(R.string.source_cash, stringResource(R.string.bank_name)),
+                        stringResource(R.string.supported_sources),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(

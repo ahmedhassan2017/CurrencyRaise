@@ -76,8 +76,8 @@ internal class DefaultExchangeRateRepository(
                 previous.baseCurrency != fetched.baseCurrency ||
                     previous.quoteCurrency != fetched.quoteCurrency ||
                     previous.sourceId != fetched.sourceId ||
-                    previous.quoteKind != fetched.quoteKind ||
-                    previous.buyRate.compareTo(fetched.buyRate) != 0 ||
+                    previous.quoteKind != fetched.quoteKind -> RateChange.FIRST_QUOTE
+                previous.buyRate.compareTo(fetched.buyRate) != 0 ||
                     previous.sellRate.compareTo(fetched.sellRate) != 0 -> RateChange.CHANGED
                 else -> RateChange.UNCHANGED
             }

@@ -33,6 +33,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.ExchangeRate
+import com.example.currencyraise.domain.model.Bank
+import com.example.currencyraise.domain.model.QuoteKind
 import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.presentation.background.BackgroundStatusRoute
 import com.example.currencyraise.presentation.background.BackgroundStatusSection
@@ -61,6 +63,7 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
         state = state,
         onRefresh = viewModel::refresh,
         onOpenSettings = onOpenSettings,
+        onSelectBank = viewModel::selectBank,
         backgroundStatus = { BackgroundStatusRoute() },
         onOpenSource = { url ->
             try {
@@ -93,12 +96,13 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
     backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection() },
+    onSelectBank: (Bank) -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
     val zone = ZoneId.systemDefault()
     var storageHelp by rememberSaveable { mutableStateOf(false) }
-    val sourceUrl = state.rate?.sourceUrl ?: stringResource(R.string.bank_url)
+    val sourceUrl = state.rate?.sourceUrl ?: state.bank.sourceUrl
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -119,7 +123,20 @@ fun HomeScreen(
                 onAction = onOpenSettings,
             )
 
-            RateHero(state.rate, locale)
+            Text(stringResource(R.string.select_bank), style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.banks.forEach { bank ->
+                    FilterChip(
+                        selected = state.bank == bank,
+                        onClick = { onSelectBank(bank) },
+                        label = { Text(bank.displayName) },
+                    )
+                }
+            }
+            RateHero(state.rate, state.bank, locale)
+            if (state.bank == Bank.CIB) {
+                Notice(stringResource(R.string.cib_source_note))
+            }
 
             if (state.rateReadFailed || state.settingsReadFailed) {
                 Notice(
@@ -235,7 +252,7 @@ fun HomeScreen(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
             ) {
-                Text(stringResource(R.string.open_source))
+                Text(stringResource(R.string.open_source, state.bank.sourceName))
             }
         }
     }
@@ -253,7 +270,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun RateHero(rate: ExchangeRate?, locale: Locale) {
+private fun RateHero(rate: ExchangeRate?, bank: Bank, locale: Locale) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -283,8 +300,9 @@ private fun RateHero(rate: ExchangeRate?, locale: Locale) {
                 ) {
                     Text(
                         stringResource(
-                            R.string.source_cash,
-                            rate?.sourceName ?: stringResource(R.string.bank_name),
+                            if (rate?.quoteKind == QuoteKind.BANK_RATE || bank == Bank.CIB)
+                                R.string.source_bank_rates else R.string.source_cash,
+                            rate?.sourceName ?: bank.sourceName,
                         ),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                         style = MaterialTheme.typography.labelMedium,
@@ -304,7 +322,7 @@ private fun RateHero(rate: ExchangeRate?, locale: Locale) {
                     Spacer(Modifier.height(2.dp))
                     RatePair(it, locale)
                     Text(
-                        stringResource(R.string.cash_note),
+                        stringResource(if (it.quoteKind == QuoteKind.CASH) R.string.cash_note else R.string.bank_rate_note),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
