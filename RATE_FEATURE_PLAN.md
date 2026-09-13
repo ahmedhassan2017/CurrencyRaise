@@ -41,6 +41,14 @@ Source investigation on 2026-09-13:
 
 Planned branch: `codex/daily-weekly-rate-charts`
 
+Chosen views: Daily = rolling 24 hours; Weekly = rolling 7 days. Plot all retained
+observations in the chosen range, without averaging or inventing closing prices.
+Retention is eight days, capped at 2,048 points per bank. Quote and history save
+atomically in that bank's existing DataStore file. A changed source, pair, or
+quote kind starts new history. Old installations seed only their actual saved quote.
+Tap a point or use Previous/Next to inspect its timestamp and exact prices.
+Buy/sell line styles and markers differ, and accessible text describes the chart.
+
 - Save real observed quotes per bank with a defined retention bound.
 - Provide daily and weekly chart views for both buy and sell rates.
 - Use observation times for chart positions unless a provider's publication
@@ -80,6 +88,10 @@ and notifications opening the relevant bank. CIB is the first tab and the defaul
 on fresh launches; restored screen selection and notification targets are respected.
 The user approved committing and pushing Step 1 after this default-tab adjustment,
 then starting Step 2. Later commits still require separate user approval.
+
+Step 1 committed and pushed as `4ed9dfb` on `codex/cib-rate-tracking`.
+Step 2 is implemented on `codex/daily-weekly-rate-charts`; final validation is in
+progress. No Step 2 commit or push is authorized yet.
 
 Validation on 2026-09-13:
 

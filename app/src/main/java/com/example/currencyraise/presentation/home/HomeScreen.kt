@@ -64,6 +64,7 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
         onRefresh = viewModel::refresh,
         onOpenSettings = onOpenSettings,
         onSelectBank = viewModel::selectBank,
+        onRetryHistory = viewModel::retryHistory,
         backgroundStatus = { BackgroundStatusRoute() },
         onOpenSource = { url ->
             try {
@@ -97,6 +98,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit = {},
     backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection() },
     onSelectBank: (Bank) -> Unit = {},
+    onRetryHistory: () -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
@@ -198,6 +200,12 @@ fun HomeScreen(
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
+
+            RateHistoryChart(
+                history = state.history, now = state.now, locale = locale, zone = zone,
+                intervalHours = state.settings?.updateInterval?.hours ?: 1,
+                loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
+            )
 
             state.rate?.let { rate ->
                 if (state.refreshError != null || state.rateReadFailed) {

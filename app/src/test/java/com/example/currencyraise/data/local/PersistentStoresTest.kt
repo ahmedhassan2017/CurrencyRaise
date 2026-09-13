@@ -75,6 +75,8 @@ class PersistentStoresTest {
         job.cancelAndJoin()
         val (reopened, _) = open("quote")
         assertEquals(original, RateCache(reopened).read())
+        assertEquals(listOf(com.example.currencyraise.domain.model.RateObservation(
+            original.fetchedAt, original.buyRate, original.sellRate)), RateCache(reopened).readHistory())
         assertEquals("51.2700", RateCache(reopened).read()!!.buyRate.toPlainString())
     }
 

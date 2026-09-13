@@ -32,6 +32,11 @@ internal class DefaultExchangeRateRepository(
         throw error
     }
 
+    override fun observeUsdEgpHistory() = cache.observeHistory().catch { error ->
+        if (error is IOException) throw StorageReadException(error)
+        throw error
+    }
+
     override suspend fun refreshUsdEgpRate(minimumAge: Duration): RefreshOutcome {
         require(!minimumAge.isNegative)
         if (!refreshMutex.tryLock()) return RefreshOutcome.AlreadyRefreshing

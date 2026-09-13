@@ -1,0 +1,29 @@
+<resources>
+    <string name="history_title">Rate history</string>
+    <string name="history_daily">Daily</string>
+    <string name="history_weekly">Weekly</string>
+    <string name="history_24_hours">Last 24 hours</string>
+    <string name="history_7_days">Last 7 days</string>
+    <string name="history_loading">Loading saved history…</string>
+    <string name="history_empty">No observations in this period yet. Refresh to start collecting history.</string>
+    <string name="history_single">One observation saved. Another successful check is needed to show a change.</string>
+    <string name="history_read_failed">Saved history could not be read. Your latest quote is shown separately.</string>
+    <string name="history_retry">Retry history</string>
+    <string name="history_axis_unit">EGP per USD · Local check time</string>
+    <string name="history_change_label">Change between first and last observations shown</string>
+    <string name="history_buy_change">Buy: %1$s EGP</string>
+    <string name="history_sell_change">Sell: %1$s EGP</string>
+    <plurals name="history_coverage">
+        <item quantity="one">%1$d observation · %2$s to %3$s</item>
+        <item quantity="other">%1$d observations · %2$s to %3$s</item>
+    </plurals>
+    <plurals name="history_chart_description">
+        <item quantity="one">%1$d observation. Bank buy rate: %2$s to %3$s. Bank sell rate: %4$s to %5$s EGP per USD.</item>
+        <item quantity="other">%1$d observations. Bank buy rate: %2$s to %3$s. Bank sell rate: %4$s to %5$s EGP per USD.</item>
+    </plurals>
+    <string name="history_selected_check">Selected check: %1$s</string>
+    <string name="history_selected_prices">Buy %1$s · Sell %2$s EGP</string>
+    <string name="history_previous">Previous point</string>
+    <string name="history_next">Next point</string>
+    <string name="history_observed_note">Recorded on this device when checks succeed. Lines join observations; gaps longer than twice your check interval are left open. Earlier prices are not backfilled.</string>
+</resources>

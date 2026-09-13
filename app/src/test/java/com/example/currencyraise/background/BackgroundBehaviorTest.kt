@@ -156,6 +156,7 @@ class BackgroundBehaviorTest {
     }
 
     private class FakeRates : ExchangeRateRepository {
+        override fun observeUsdEgpHistory() = flowOf(emptyList<RateObservation>())
         var calls = 0
         var minimumAge: Duration? = null
         var result: RefreshOutcome = RefreshOutcome.Success(quote(), RateChange.FIRST_QUOTE)
