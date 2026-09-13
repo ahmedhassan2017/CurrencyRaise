@@ -25,6 +25,9 @@ data class HomeUiState(
     val alreadyRefreshing: Boolean = false,
     val now: Instant = Instant.EPOCH,
 ) {
+    val rateComparison: RateComparison?
+        get() = if (loadingHistory || historyReadFailed || rateReadFailed) null else compareLatestRate(rate, history)
+
     val freshness: Freshness
         get() {
             val saved = rate ?: return Freshness.UNKNOWN

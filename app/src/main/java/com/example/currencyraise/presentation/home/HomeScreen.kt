@@ -18,6 +18,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -36,6 +39,8 @@ import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.model.QuoteKind
 import com.example.currencyraise.domain.model.RateChange
+import com.example.currencyraise.domain.model.RateMovement
+import com.example.currencyraise.domain.model.RateDirection
 import com.example.currencyraise.presentation.background.BackgroundStatusRoute
 import com.example.currencyraise.presentation.background.BackgroundStatusSection
 import com.example.currencyraise.presentation.components.CurrencyPanel
@@ -135,7 +140,7 @@ fun HomeScreen(
                     )
                 }
             }
-            RateHero(state.rate, state.bank, locale)
+            RateHero(state, locale, zone)
             if (state.bank == Bank.CIB) {
                 Notice(stringResource(R.string.cib_source_note))
             }
@@ -278,7 +283,15 @@ fun HomeScreen(
 }
 
 @Composable
-private fun RateHero(rate: ExchangeRate?, bank: Bank, locale: Locale) {
+private fun RateHero(state: HomeUiState, locale: Locale, zone: ZoneId) {
+    val rate = state.rate
+    val bank = state.bank
+    val comparison = state.rateComparison
+    val unavailable = stringResource(when {
+        state.historyReadFailed || state.rateReadFailed -> R.string.rate_direction_read_failed
+        state.loadingHistory -> R.string.rate_direction_loading
+        else -> R.string.rate_direction_unavailable
+    })
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -328,7 +341,14 @@ private fun RateHero(rate: ExchangeRate?, bank: Bank, locale: Locale) {
                 )
                 rate?.let {
                     Spacer(Modifier.height(2.dp))
-                    RatePair(it, locale)
+                    RatePair(it, locale, comparison, unavailable)
+                    comparison?.let { change ->
+                        Text(
+                            stringResource(R.string.rate_direction_since, formatFetchTime(change.previousCheck, locale, zone)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Text(
                         stringResource(if (it.quoteKind == QuoteKind.CASH) R.string.cash_note else R.string.bank_rate_note),
                         style = MaterialTheme.typography.bodySmall,
@@ -341,20 +361,20 @@ private fun RateHero(rate: ExchangeRate?, bank: Bank, locale: Locale) {
 }
 
 @Composable
-private fun RatePair(rate: ExchangeRate, locale: Locale) {
+private fun RatePair(rate: ExchangeRate, locale: Locale, comparison: RateComparison?, unavailable: String) {
     val buy = formatRate(rate.buyRate, locale)
     val sell = formatRate(rate.sellRate, locale)
     val fontScale = LocalDensity.current.fontScale
     BoxWithConstraints {
         if (maxWidth < 340.dp || fontScale > 1.2f || maxOf(buy.length, sell.length) > 8) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.fillMaxWidth())
-                RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.fillMaxWidth())
+                RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.fillMaxWidth(), comparison?.buy, unavailable, locale)
+                RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.fillMaxWidth(), comparison?.sell, unavailable, locale)
             }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.weight(1f))
-                RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.weight(1f))
+                RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.weight(1f), comparison?.buy, unavailable, locale)
+                RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.weight(1f), comparison?.sell, unavailable, locale)
             }
         }
     }
@@ -367,6 +387,9 @@ private fun RateCard(
     explanation: String,
     emphasized: Boolean,
     modifier: Modifier,
+    movement: RateMovement?,
+    unavailable: String,
+    locale: Locale,
 ) {
     val container = if (emphasized) MaterialTheme.colorScheme.primaryContainer
     else MaterialTheme.colorScheme.surfaceContainerHigh
@@ -398,8 +421,33 @@ private fun RateCard(
                 Text(label, style = MaterialTheme.typography.labelLarge)
             }
             Text(value, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+            RateDirectionLabel(label, movement, unavailable, locale)
             Text(explanation, style = MaterialTheme.typography.bodySmall, color = content.copy(alpha = 0.78f))
         }
+    }
+}
+
+@Composable
+internal fun RateDirectionLabel(label: String, movement: RateMovement?, unavailable: String, locale: Locale) {
+    val message = when (movement?.direction) {
+        RateDirection.UP -> stringResource(R.string.rate_direction_up, formatRate(movement.difference.abs(), locale))
+        RateDirection.DOWN -> stringResource(R.string.rate_direction_down, formatRate(movement.difference.abs(), locale))
+        RateDirection.UNCHANGED -> stringResource(R.string.rate_direction_unchanged)
+        null -> unavailable
+    }
+    val description = stringResource(R.string.rate_direction_accessibility, label, message)
+    Row(
+        modifier = Modifier.clearAndSetSemantics { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        val icon = when (movement?.direction) {
+            RateDirection.UP -> R.drawable.ic_rate_up
+            RateDirection.DOWN -> R.drawable.ic_rate_down
+            else -> null
+        }
+        icon?.let { Icon(painterResource(it), contentDescription = null, modifier = Modifier.size(20.dp)) }
+        Text(message, style = MaterialTheme.typography.labelLarge)
     }
 }
 

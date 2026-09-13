@@ -32,6 +32,19 @@ configured checking interval, and nothing is extrapolated beyond the observation
 Chart windows use elapsed time (24 hours / 168 hours); labels use the device timezone.
 Provider publication timestamps are not used as chart positions.
 
+## Rate direction
+
+Each buy/sell card compares its price with the preceding saved observation for
+that bank. Up/down arrows include the exact EGP change and a spoken direction;
+unchanged prices show "No change" without an arrow. The comparison timestamp is
+shown below the cards. A later unchanged check clears the previous arrow.
+
+Comparisons use persisted history, so they survive restarts and reflect both
+manual and background checks. First quotes, expired comparison history (eight-day
+retention), and unavailable history have no direction. The cards wait for matching
+quote/history data before displaying a change. Failed refreshes retain the comparison
+for the last saved quote. Notification direction indicators are a separate step.
+
 ## Build and install
 
 Open this folder in Android Studio. Let Gradle sync with the committed wrapper and
