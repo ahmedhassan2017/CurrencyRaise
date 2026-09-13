@@ -48,6 +48,20 @@ class DefaultExchangeRateRepositoryTest {
         }
     }
 
+    @Test fun differentSourcePairOrQuoteKindEstablishesNewBaseline() = runTest {
+        for (latest in listOf(
+            quote().copy(sourceId = "cib_ta3weem"),
+            quote().copy(baseCurrency = "EUR"),
+            quote().copy(quoteCurrency = "GBP"),
+            quote().copy(quoteKind = QuoteKind.BANK_RATE),
+        )) {
+            val cache = RateCache(FaultablePreferences())
+            cache.save(quote())
+            val repository = repository({ RateFetchResult.Success(latest) }, cache)
+            assertEquals(RefreshOutcome.Success(latest, RateChange.FIRST_QUOTE), repository.refreshUsdEgpRate())
+        }
+    }
+
     @Test fun providerFailuresPreserveLastValidSnapshot() = runTest {
         val cache = RateCache(FaultablePreferences())
         val saved = quote()

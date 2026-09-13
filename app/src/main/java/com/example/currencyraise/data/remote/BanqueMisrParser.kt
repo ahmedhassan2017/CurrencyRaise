@@ -17,7 +17,7 @@ internal data class BanqueMisrQuote(
     val quoteId: String?,
 )
 
-internal class InvalidRatePageException : Exception("Unrecognized or invalid Banque Misr rate page")
+internal class InvalidRatePageException : Exception("Unrecognized or invalid rate page")
 
 internal class BanqueMisrParser @Inject constructor() {
     fun parse(html: String): BanqueMisrQuote {

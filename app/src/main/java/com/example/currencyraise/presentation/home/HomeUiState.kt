@@ -1,12 +1,15 @@
 package com.example.currencyraise.presentation.home
 
 import com.example.currencyraise.domain.model.AppSettings
+import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.RateChange
 import java.time.Duration
 import java.time.Instant
 
 data class HomeUiState(
+    val bank: Bank = Bank.CIB,
+    val banks: List<Bank> = Bank.entries,
     val rate: ExchangeRate? = null,
     val settings: AppSettings? = null,
     val loadingCache: Boolean = true,

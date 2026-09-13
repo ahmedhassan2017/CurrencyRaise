@@ -1,11 +1,16 @@
 # Currency Raise
 
-A personal Android app for Banque Misr USD/EGP cash buy and sell prices.
+A personal Android app for Banque Misr and CIB USD/EGP buy and sell prices.
+Banque Misr cash quotes come from the bank; CIB quotes come from Ta3weem and are
+labeled **CIB via Ta3weem**. The CIB table does not distinguish cash and transfer
+prices, and third-party quotes may lag the bank.
 
-The Home screen shows the last successfully saved quote, a manual refresh action,
+The Home screen has a bank selector and shows that bank's last successfully saved quote, a manual refresh action,
 the last successful check time, and the bank's displayed timestamp. Buy/sell labels
 are from the bank's perspective. Settings controls approximate background intervals
-of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference.
+of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference. These preferences
+apply to both banks. Bank selection survives Android screen/process restoration;
+a fresh launch defaults to CIB, which is the first tab. Notification taps open the relevant bank.
 
 ## Build and install
 
@@ -42,11 +47,37 @@ do not uninstall just to fix a signature mismatch without considering saved data
   exponential backoff. Other failures wait for a later check or explicit manual retry.
 - Turning automatic checks off cancels scheduled checks. Turning notifications off
   leaves enabled checking active.
-- The first successful background check establishes a silent baseline. Later
+- Both banks are checked independently. Each has its own cache, request deadline,
+  refresh lock, and notification baseline. A provider failure preserves its saved
+  quote and does not prevent the other provider from updating.
+- The first successful background check for each bank establishes a silent baseline. Later
   background checks alert only when a buy or sell price changes. Manual refresh is silent.
-- An alert tap opens Home. App permission, channel settings, and Android policy all
+- An alert tap opens Home with the corresponding bank selected. Each bank has a
+  separate notification ID so one bank's alert does not overwrite the other's.
+  App permission, channel settings, and Android policy all
   affect delivery. Notification delivery is not exactly once: a crash in the small
   gap between saving the handled event and posting can miss an alert.
+
+## Testing notifications in a debug build
+
+A debuggable installation shows **Send test notification** in Settings. First allow
+Android notifications, then press the test button. It posts a clearly labeled sample
+through the real Exchange Rate Updates channel with a separate notification ID. Tapping
+it must open Home. The test does not fetch the bank, change saved rates, alter the first-run
+baseline, or replace a real rate-change notification. This control is absent from release
+and releaseSmoke builds.
+
+Manual refresh remains silent. A real alert still requires a later successful background
+check whose buy or sell rate differs from the established baseline.
+
+## Build identities
+
+The production application uses `com.example.currencyraise` and the navy launcher icon.
+Debug uses `com.example.currencyraise.debug`, the name **Currency Raise Debug**, and the
+orange launcher icon with a `D` badge. They can be installed together and keep independent
+rates, preferences, notification permission, channels, and scheduled work. The notification
+itself uses a dedicated monochrome rising-rate icon because Android status bars mask and tint
+small notification icons.
 
 ## Storage and backup
 
@@ -57,6 +88,7 @@ Corruption is reported; the app does not silently clear data.
 Android backup and device transfer are restricted to:
 - files/datastore/settings.preferences_pb
 - files/datastore/latest_rate.preferences_pb
+- files/datastore/cib_latest_rate.preferences_pb
 
 Permission prompt history, handled notification events, provider waiting periods,
 and WorkManager state are device-only. Permission history from the previous app
@@ -77,17 +109,22 @@ Normal checks:
 .\gradlew.bat :app:connectedDebugAndroidTest --console=plain
 ```
 
-Optimized device checks use a separate, non-debuggable application ID
-(com.example.currencyraise.smoke), displayed as Currency Raise Release Check:
+The optimized device check uses a separate, non-debuggable application ID
+(`com.example.currencyraise.smoke`), displayed as Currency Raise Release Check:
 
 ```powershell
-.\gradlew.bat -PtestBuildType=releaseSmoke :app:connectedReleaseSmokeAndroidTest --console=plain
+.\gradlew.bat :app:assembleReleaseSmoke --console=plain
+android run --device=<serial> --apks=app\build\outputs\apk\releaseSmoke\app-releaseSmoke.apk --activity=com.example.currencyraise.MainActivity
 ```
 
 This variant inherits release optimization and uses the local debug certificate.
-It is for local verification only. It can coexist with the usual app. Connected
-instrumentation runs can reinstall/remove their target app; use the isolated
-variant for acceptance runs when you want to preserve your personal installation.
+It can coexist with the usual app. Verify a fresh online launch, a cold restart,
+the persisted quote, and its WorkManager job on the disposable installation.
+
+Instrumentation behavior is exercised against debug. The two tests that change
+notification permission/channel state stay isolated-only and are currently pending:
+the optimized AndroidJUnitRunner test APK is not reliable with this AGP/R8 setup.
+This does not affect the normal release APK or the standalone optimized app smoke test.
 
 Tests use historical fixtures as test inputs, never as fallback production rates.
 The parser/cache/repository/Home pipeline is exercised with deterministic online
@@ -103,7 +140,9 @@ The optional local parser probe accepts a separately saved provider page:
 ## Release artifacts and signing
 
 Release builds enable code and resource shrinking with the optimized Android
-default rules. No broad app-specific keep rules are added.
+default rules. The normal release uses no app-specific keep rules. The isolated
+releaseSmoke setup has narrow AndroidX test-runner rules under review; they do not
+apply to the normal release artifact.
 
 The normal artifact is app/build/outputs/apk/release/app-release-unsigned.apk.
 It requires a separate signing step before installation or distribution.
@@ -122,13 +161,19 @@ separate Android installation.
 
 ## Source and limitations
 
-The app reads the bank's public HTML page over HTTPS:
+The app reads public HTML pages over HTTPS:
 [Banque Misr exchange rates](https://www.banquemisr.com/en/CAPITAL-MARKETS/Exchange-Rates-and-Currencies?sc_lang=en).
+[CIB rates via Ta3weem](https://ta3weem.com/en/banks/commercial-international-bank-cib).
 
-Cash notes prices are used, not transfer prices. HTML can change or be blocked;
-an unusable response retains the saved quote. The bank's timestamp has no verified
-timezone, so it is shown as published. Device check time is stored separately.
+Banque Misr uses cash notes prices. Ta3weem's CIB table supplies bank buy/sell prices
+without a cash/transfer distinction. HTML can change or be blocked;
+an unusable response retains that bank's saved quote. Source timestamps have no verified
+timezone, so they are shown as published. Device check time is stored separately.
 These prices can stay unchanged for long periods and are not a live trading feed.
+
+CIB's official page presented a security challenge during integration, so the user
+approved a third-party source. See [provider notes](PROVIDER_NOTES.md) for the
+verified table contract and limitations. No fallback substitutes another bank's prices.
 
 There is no paid API subscription, backend, account, or API key in this app.
 Network access uses your normal connection. Public page access does not establish

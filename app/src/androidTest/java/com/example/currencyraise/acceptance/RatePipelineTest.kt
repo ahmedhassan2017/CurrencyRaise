@@ -2,6 +2,8 @@ package com.example.currencyraise.acceptance
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.SavedStateHandle
+import com.example.currencyraise.domain.repository.BankRateRepositories
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import android.content.Context
@@ -48,7 +50,8 @@ class RatePipelineTest {
 
     private suspend fun model(rates: DefaultExchangeRateRepository, settings: DefaultSettingsRepository) =
         withContext(Dispatchers.Main) {
-            HomeViewModel(rates, settings, clock).also { viewModels.put("home", it) }
+            HomeViewModel(BankRateRepositories(mapOf(Bank.BANQUE_MISR to rates)), settings, clock,
+                SavedStateHandle()).also { viewModels.put("home", it) }
         }
 
     @After fun close() = runBlocking {

@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-11
 Project: C:\Users\ahmed\AndroidStudioProjects\CurrencyRaise
-Status: Phase 5 implementation and automated checks complete; debug build installed for user review; Phase 6 is next
+Status: MVP implementation and available automated release checks complete; manual and environment-specific acceptance remains
 Initial audience: personal use
 Implementation strategy: one app module, small phases, observable local cache
 
@@ -41,7 +41,7 @@ Established at the user's request on 2026-09-11:
 
 - master: stable reviewed milestones.
 - dev: integration branch created from master.
-- codex/phase-5-background-alerts: current feature branch, created from dev at 4fa2778 after Settings integration.
+- codex/phase-7-visual-redesign: current feature branch, created from origin/dev after Phase 6 was merged.
 - Merge reviewed feature work into dev, then promote verified milestones into master.
 - Create each subsequent feature branch from an up-to-date dev branch.
 - Commit 0b41ac8 contains Phase 1, the plan, provider notes, and exported wireframes.
@@ -51,7 +51,8 @@ Established at the user's request on 2026-09-11:
   Settings was committed and pushed as 29216cd, then merged into dev as 4fa2778.
   At the Phase 5 start, origin/master was 118391e (the user's merge of dev).
   The user authorized committing and pushing Phase 4 on 2026-09-11; visual review remains separately tracked.
-  Phase 5 changes remain local and uncommitted on their feature branch.
+  Phase 5 was committed as ae2a94c and pushed to its feature branch and dev.
+  Phase 6 preparation was committed as ec76219 and pushed to codex/phase-6-release-readiness.
 - Future commits/pushes/merges still require the user's instruction; this Git setup
   does not authorize automatically merging future work into master.
 
@@ -560,34 +561,83 @@ User review and remaining acceptance:
 - [ ] Complete longer-running closure/reboot/battery/force-stop checks in Phase 6.
 - The first background check is intentionally silent; checks are approximate and require
   a connection. A real changed-price notification was not forced using fake bank prices.
-- Phase 5 is ready for user review and a separate commit/push instruction. Phase 6 has
-  not been started.
+- Phase 5 was committed and pushed as ae2a94c. Phase 6 automated acceptance and
+  release preparation are recorded below; user visual review remains separate.
 
 ## Phase 6 — personal-use acceptance and release readiness
 
-- [ ] Verify cold launch with no cache, online and offline.
-- [ ] Verify launch with cache and failed refresh.
-- [ ] Verify process restart retains settings and quote.
-- [ ] Verify background updates reach an already-open Home screen.
-- [ ] Verify one periodic schedule after repeated launches/interval changes.
-- [ ] Verify automatic-checks off cancels polling.
-- [ ] Verify notifications off still permits enabled polling.
-- [ ] Verify denied app permission and blocked notification channel.
-- [ ] Verify changed and unchanged quote behavior and notification tap navigation.
+Status: release implementation and available automated/device checks complete. The remaining
+items require the user's visual review, unavailable Android versions, or disruptive/long-running
+real-device conditions. They remain unchecked and are not reported as passes.
+
+- [x] Verify cold launch with no cache, online and offline.
+  A fresh optimized install fetched and parsed the live source on the Android 16 phone;
+  deterministic device coverage verifies the offline state and recovery path.
+- [x] Verify launch with cache and failed refresh.
+- [x] Verify process restart retains settings and quote.
+  The device pipeline reopens real DataStore files, and the optimized app retained its live
+  quote after force-stop followed by a cold activity start.
+- [x] Verify background updates reach an already-open Home screen.
+- [x] Verify one periodic schedule after repeated launches/interval changes.
+  Device tests cover UPDATE/cancel/re-enable behavior. JobScheduler showed one persisted
+  hourly job for the optimized app with timing and connectivity constraints.
+- [x] Verify automatic-checks off cancels polling.
+- [x] Verify notifications off still permits enabled polling.
+- [ ] Verify denied app permission and blocked notification channel on an isolated device build.
+  Local coverage verifies both guards. The optimized AndroidJUnitRunner test APK is not a
+  reliable route with the current AGP/R8 combination, so this device-only pair remains pending.
+- [x] Verify changed and unchanged quote behavior and notification tap navigation.
+  Deterministic notification-policy tests passed and the real PendingIntent returned Settings
+  to Home on the phone. Appearance of a naturally occurring real alert remains user review.
 - [ ] Verify normal closure, reboot recovery, battery restrictions, and force-stop expectations on a physical device.
+  Force-stop and cold restart passed. A real reboot and longer-running manufacturer battery
+  behavior were not performed; Android may delay work and force-stop suspends it until launch.
 - [ ] Verify supported Android versions, including API 24/25 time handling where test devices/emulators are available.
+  Core-library desugaring and local time tests pass. Available targets are API 36 and API 37;
+  no API 24/25 device or emulator is installed.
 - [ ] Check large fonts, light/dark mode, screen insets, and RTL layout behavior.
-- [ ] Decide whether to retain the placeholder application ID for personal testing or choose a permanent identity.
-- [ ] Define backup behavior: restore suitable preferences; exclude transient scheduling/notification state and secrets.
-- [ ] Enable release optimization and verify the optimized build, including provider parsing.
-- [ ] Run local tests, Android lint, debug assembly, and release assembly.
-- [ ] Complete a release-build device smoke test; handle signing material outside source control.
-- [ ] Record any unavailable device checks as limitations, not passes.
-- [ ] Document install steps, provider limitations, background behavior, and known issues.
-- [ ] Update this file and stop.
+  Automated Compose checks cover selected large-font and dark-theme behavior. The user owns
+  the remaining visual review by prior instruction.
+- [x] Decide whether to retain the placeholder application ID for personal testing or choose a permanent identity.
+  Retain com.example.currencyraise for personal use; choose a permanent ID before public release.
+- [x] Define backup behavior: restore suitable preferences; exclude transient scheduling/notification state and secrets.
+  Settings and the latest valid quote are included. Permission history, alert deduplication,
+  provider cooldown, and WorkManager state are device-only. An actual restore remains pending.
+- [x] Enable release optimization and verify the optimized build, including provider parsing.
+  The non-debuggable optimized app launched and parsed the live Banque Misr cash quote on-device.
+- [x] Run local tests, Android lint, debug assembly, and release assembly.
+  110 local tests passed, one optional live-page probe was skipped, lint had zero errors, and
+  debug/release/releaseSmoke APK assembly succeeded.
+- [x] Complete a release-build device smoke test; handle signing material outside source control.
+  The isolated debug-certificate releaseSmoke APK installed, cold-started, fetched rates,
+  persisted them, and scheduled one hourly job. The distributable release remains unsigned.
+- [x] Record any unavailable device checks as limitations, not passes.
+- [x] Document install steps, provider limitations, background behavior, and known issues.
+- [x] Update this file and stop.
 
-Exit: a usable personal MVP with reproducible checks and explicit remaining limitations.
+Exit: the personal MVP is usable and its reproducible automated checks pass. Full plan closure
+still requires the unchecked visual, older-Android, backup/restore, notification-access, and
+long-running physical-device acceptance items.
 
+## Phase 7 — screenshot-inspired visual redesign
+
+Status: implementation and automated checks complete; awaiting the user's visual review.
+
+- [x] Extract the reference's visual language without copying its unrelated desktop layout or branding.
+- [x] Replace starter/dynamic colors with a stable navy, slate, amber, gold, and periwinkle palette.
+- [x] Keep an accessible branded light scheme while matching the reference most closely in dark mode.
+- [x] Add a shared branded header, rounded panels, outlined pills, status dots, and consistent spacing.
+- [x] Recompose Home around a layered rate hero while preserving all rate, error, refresh, and source behavior.
+- [x] Recompose Settings into grouped background, notification, and source panels.
+- [x] Preserve semantic headings, switch roles, live regions, safe insets, scrolling, and large-text stacking.
+- [x] Add a debug-only test notification that uses the real channel and tap action without changing saved alert state.
+- [x] Give production and debug distinct branded launcher icons, labels, and package identities.
+- [x] Replace the generic notification artwork with a dedicated monochrome rising-rate icon.
+- [x] Compile, run local tests, lint, assemble, and run the Android 16 interaction suite.
+- [ ] Rerun the Android 16 suite for the new debug package identity when the phone reconnects.
+- [ ] User visual review on the installed phone build.
+
+Exit: the new style is installed for review with no intentional behavior changes.
 ## Optional phases — do not start automatically
 
 - [ ] History: agree retention/sampling rules, then evaluate Room.
@@ -629,6 +679,10 @@ Use deterministic fixtures and injected time; do not make routine unit tests dep
 | 2026-09-11 | Phase 4 | Added saved Settings, two-screen navigation, OS notification access state and durable single-prompt policy | Debug build installed; 74 local tests passed/1 probe skipped; final 10 device tests passed; lint 0 errors/17 warnings | User visual/OS permission review; Phase 5 scheduler and notification delivery |
 
 | 2026-09-11 | Phase 5 | Added unique periodic checks, Hilt worker, permission-aware change notifications, persistent deduplication and shared provider cooldown; connected real scheduling status to UI | Debug installed; 104 local tests passed/1 probe skipped; final 14 device tests passed; lint 0 errors/17 warnings; diff check passed | User visual/notification review; separate commit/push; Phase 6 acceptance and release readiness |
+
+| 2026-09-11 | Phase 6 | Added optimized release configuration, isolated release smoke build, explicit backup scope, device-only permission history migration, acceptance pipelines, and release documentation | 110 local tests passed/1 optional probe skipped; lint 0 errors; debug and release assembly passed; 21 Android 16 tests ran with 19 passed/2 isolated-only skipped; optimized non-debuggable app fetched live 51.27/51.37, retained it after force-stop, and registered one hourly job | User visual review; API 24/25; actual backup restore; real reboot/battery observation; isolated permission/channel device checks |
+
+| 2026-09-11 | Phase 7 | Translated the supplied dark desktop reference into a mobile Compose design system with branded themes, rate hero, shared chrome, pills, status accents, grouped settings panels, isolated debug notification tester, and distinct production/debug icon identities | 111 local tests ran with 110 passed/1 optional probe skipped; lint 0 errors; debug, minified release, and release-smoke assembly passed; the preceding Android 16 suite passed with two isolated-only skips | Reconnect phone and rerun the suite for the new `.debug` identity; user visual review; commit/push after acceptance |
 
 Append a row after every implementation phase. Include a short explanation for any changed requirement.
 

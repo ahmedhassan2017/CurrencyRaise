@@ -1,11 +1,13 @@
 package com.example.currencyraise.presentation.home
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
 import com.example.currencyraise.domain.model.AppSettings
+import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.QuoteKind
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
@@ -25,9 +27,29 @@ class HomeScreenTest {
         "2026091015", Instant.parse("2026-09-11T10:00:00Z"),
     )
     private fun saved() = HomeUiState(
+        bank = Bank.BANQUE_MISR,
         rate = sample, settings = AppSettings(), loadingCache = false,
         now = Instant.parse("2026-09-11T10:30:00Z"),
     )
+
+    @Test fun bankSelectorUpdatesSelectionAndCibAttributionAndSourceLink() {
+        val state = mutableStateOf(saved())
+        var opened = ""
+        compose.setContent {
+            CurrencyRaiseTheme {
+                HomeScreen(state.value, {}, { opened = it }, onSelectBank = { bank ->
+                    state.value = HomeUiState(bank = bank, loadingCache = false)
+                })
+            }
+        }
+        compose.onNodeWithText("CIB", useUnmergedTree = false).performClick()
+        compose.onNodeWithText("CIB").assertIsSelected()
+        compose.onNodeWithText("CIB via Ta3weem · Bank rates").assertExists()
+        compose.onNodeWithText("CIB rates supplied by Ta3weem", substring = true).assertExists()
+        compose.onNodeWithText("51.27").assertDoesNotExist()
+        compose.onNodeWithText("View CIB via Ta3weem rate source").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(Bank.CIB.sourceUrl, opened) }
+    }
 
     @Test fun failedRefreshRetainsRatesAndRetryWorks() {
         var clicks = 0

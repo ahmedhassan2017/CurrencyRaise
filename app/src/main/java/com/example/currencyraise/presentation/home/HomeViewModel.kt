@@ -1,12 +1,14 @@
 package com.example.currencyraise.presentation.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.currencyraise.domain.model.RateFetchError
 import com.example.currencyraise.domain.model.RefreshError
 import com.example.currencyraise.domain.model.RefreshOutcome
 import com.example.currencyraise.domain.model.StorageReadException
-import com.example.currencyraise.domain.repository.ExchangeRateRepository
+import com.example.currencyraise.domain.repository.BankRateRepositories
+import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -19,14 +21,22 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val rates: ExchangeRateRepository,
+    private val banks: BankRateRepositories,
     private val settings: SettingsRepository,
     private val clock: Clock,
+    private val savedState: SavedStateHandle,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(HomeUiState(now = clock.instant()))
+    private val restoredBank = Bank.entries.firstOrNull {
+        it.name == savedState.get<String>("bank") && it in banks.banks
+    } ?: banks.banks.first()
+    private val mutableState = MutableStateFlow(HomeUiState(
+        bank = restoredBank, banks = banks.banks, now = clock.instant(),
+    ))
     val uiState = mutableState.asStateFlow()
     private var rateObservation: Job? = null
     private var settingsObservation: Job? = null
+    private var refreshJob: Job? = null
+    private var rateSession = 0
     private var initialCheckPending = true
     private var settingsLoaded = false
 
@@ -35,11 +45,28 @@ class HomeViewModel @Inject constructor(
         observeSettings()
     }
 
+    fun selectBank(bank: Bank) {
+        if (bank == mutableState.value.bank || bank !in banks.banks) return
+        rateSession++
+        refreshJob?.cancel()
+        rateObservation?.cancel()
+        savedState["bank"] = bank.name
+        initialCheckPending = true
+        mutableState.update { old -> HomeUiState(
+            bank = bank, banks = banks.banks, settings = old.settings,
+            settingsReadFailed = old.settingsReadFailed, now = clock.instant(),
+        ) }
+        observeRates()
+    }
+
     private fun observeRates() {
         rateObservation?.cancel()
+        val bank = mutableState.value.bank
+        val session = rateSession
         rateObservation = viewModelScope.launch {
             try {
-                rates.observeLatestUsdEgpRate().collect { rate ->
+                banks[bank].observeLatestUsdEgpRate().collect { rate ->
+                    if (rateSession != session) return@collect
                     mutableState.update {
                         it.copy(
                             rate = rate, loadingCache = false, rateReadFailed = false,
@@ -51,6 +78,7 @@ class HomeViewModel @Inject constructor(
                     maybeInitialRefresh()
                 }
             } catch (_: StorageReadException) {
+                if (rateSession != session) return@launch
                 mutableState.update { it.copy(loadingCache = false, rateReadFailed = true) }
                 maybeInitialRefresh()
             }
@@ -92,9 +120,13 @@ class HomeViewModel @Inject constructor(
         }
         if (state.rateReadFailed) observeRates()
         if (state.settingsReadFailed) observeSettings()
-        viewModelScope.launch {
+        val bank = state.bank
+        val session = rateSession
+        refreshJob = viewModelScope.launch {
             try {
-                when (val result = rates.refreshUsdEgpRate()) {
+                val result = banks[bank].refreshUsdEgpRate()
+                if (rateSession != session) return@launch
+                when (result) {
                     is RefreshOutcome.Cached -> Unit
                     is RefreshOutcome.Success ->
                         mutableState.update { it.copy(lastChange = result.change) }
@@ -104,7 +136,9 @@ class HomeViewModel @Inject constructor(
                         mutableState.update { it.copy(alreadyRefreshing = true) }
                 }
             } finally {
-                mutableState.update { it.copy(refreshing = false, now = clock.instant()) }
+                mutableState.update {
+                    if (rateSession == session) it.copy(refreshing = false, now = clock.instant()) else it
+                }
             }
         }
     }

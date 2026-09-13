@@ -1,6 +1,8 @@
 package com.example.currencyraise.presentation.home
 
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.SavedStateHandle
+import com.example.currencyraise.domain.repository.BankRateRepositories
 import com.example.currencyraise.data.quote
 import com.example.currencyraise.domain.model.*
 import com.example.currencyraise.domain.repository.ExchangeRateRepository
@@ -26,10 +28,96 @@ class HomeViewModelTest {
     private val owner = ViewModelStore()
     private val clock = MutableClock(Instant.parse("2026-09-11T10:30:00Z"))
     private val rates = FakeRates()
+    private val cib = FakeRates().apply {
+        saved.value = Result.success(quote().copy(sourceId = "cib_ta3weem", sourceName = "CIB via Ta3weem"))
+    }
     private val settings = FakeSettings()
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { owner.clear(); Dispatchers.resetMain() }
-    private fun create(): HomeViewModel = HomeViewModel(rates, settings, clock).also { owner.put("home", it) }
+    private fun create(savedState: SavedStateHandle = SavedStateHandle(mapOf("bank" to Bank.BANQUE_MISR.name))): HomeViewModel = HomeViewModel(
+        BankRateRepositories(mapOf(Bank.BANQUE_MISR to rates, Bank.CIB to cib)), settings, clock, savedState,
+    ).also { owner.put("home", it) }
+
+    @Test fun freshLaunchPutsCibFirstAndLandsOnItsQuote() = runTest(dispatcher) {
+        val vm = create(SavedStateHandle())
+        runCurrent()
+        assertEquals(listOf(Bank.CIB, Bank.BANQUE_MISR), vm.uiState.value.banks)
+        assertEquals(Bank.CIB, vm.uiState.value.bank)
+        assertEquals("cib_ta3weem", vm.uiState.value.rate?.sourceId)
+        assertEquals(0, rates.calls)
+    }
+
+    @Test fun bankSwitchClearsOldQuoteImmediatelyAndUsesIndependentCache() = runTest(dispatcher) {
+        rates.saved.value = Result.success(quote())
+        val vm = create()
+        runCurrent()
+        vm.selectBank(Bank.CIB)
+        assertNull(vm.uiState.value.rate)
+        assertTrue(vm.uiState.value.loadingCache)
+        runCurrent()
+        assertEquals("cib_ta3weem", vm.uiState.value.rate?.sourceId)
+        assertEquals(0, cib.calls)
+        rates.saved.value = Result.success(quote(buy = "51.30"))
+        runCurrent()
+        assertEquals("cib_ta3weem", vm.uiState.value.rate?.sourceId)
+        vm.selectBank(Bank.BANQUE_MISR)
+        runCurrent()
+        assertEquals(quote(buy = "51.30"), vm.uiState.value.rate)
+    }
+
+    @Test fun bankSelectionSurvivesSavedStateRestoration() = runTest(dispatcher) {
+        val state = SavedStateHandle()
+        val vm = create(state)
+        runCurrent()
+        rates.saved.value = Result.success(quote())
+        vm.selectBank(Bank.BANQUE_MISR)
+        runCurrent()
+        owner.clear()
+        val restored = create(SavedStateHandle(mapOf("bank" to state.get<String>("bank"))))
+        runCurrent()
+        assertEquals(Bank.BANQUE_MISR, restored.uiState.value.bank)
+        assertEquals("banque_misr", restored.uiState.value.rate?.sourceId)
+    }
+
+    @Test fun cancelledOtherBankRefreshCannotClearNewBanksSpinner() = runTest(dispatcher) {
+        rates.saved.value = Result.success(quote())
+        val oldRequest = CompletableDeferred<RefreshOutcome>()
+        rates.action = { oldRequest.await() }
+        val newRequest = CompletableDeferred<RefreshOutcome>()
+        cib.action = { newRequest.await() }
+        val vm = create()
+        runCurrent()
+        vm.refresh()
+        runCurrent()
+        vm.selectBank(Bank.CIB)
+        runCurrent()
+        vm.refresh()
+        runCurrent()
+        assertTrue(vm.uiState.value.refreshing)
+        oldRequest.complete(RefreshOutcome.Failure(RefreshError.Fetch(RateFetchError.Network)))
+        runCurrent()
+        assertTrue(vm.uiState.value.refreshing)
+        assertNull(vm.uiState.value.refreshError)
+        newRequest.complete(RefreshOutcome.Failure(RefreshError.Fetch(RateFetchError.Timeout)))
+        runCurrent()
+        assertEquals(HomeError.TIMEOUT, vm.uiState.value.refreshError)
+    }
+
+    @Test fun rapidRoundTripBankSwitchDoesNotAcceptOldRefreshCleanup() = runTest(dispatcher) {
+        rates.saved.value = Result.success(quote())
+        val oldRequest = CompletableDeferred<RefreshOutcome>()
+        rates.action = { oldRequest.await() }
+        val vm = create()
+        runCurrent()
+        vm.refresh()
+        runCurrent()
+        vm.selectBank(Bank.CIB)
+        vm.selectBank(Bank.BANQUE_MISR)
+        runCurrent()
+        assertFalse(vm.uiState.value.refreshing)
+        assertNull(vm.uiState.value.refreshError)
+        assertEquals(quote(), vm.uiState.value.rate)
+    }
 
     @Test fun recentCacheDisplaysWithoutNetworkRequest() = runTest(dispatcher) {
         rates.saved.value = Result.success(quote())

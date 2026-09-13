@@ -78,6 +78,32 @@ class PersistentStoresTest {
         assertEquals("51.2700", RateCache(reopened).read()!!.buyRate.toPlainString())
     }
 
+    @Test fun bankQuotesAndBaselinesRemainSeparateAfterRecreation() = runBlocking {
+        val misr = quote()
+        val cib = quote(buy = "51.31", sell = "51.41").copy(
+            sourceId = "cib_ta3weem", sourceName = "CIB via Ta3weem",
+            sourceUrl = com.example.currencyraise.domain.model.Bank.CIB.sourceUrl,
+            quoteKind = com.example.currencyraise.domain.model.QuoteKind.BANK_RATE,
+            sourceQuoteId = null,
+        )
+        val (misrStore, misrJob) = open("latest_rate")
+        val (cibStore, cibJob) = open("cib_latest_rate")
+        RateCache(misrStore).save(misr)
+        RateCache(cibStore).save(cib)
+        misrJob.cancelAndJoin()
+        cibJob.cancelAndJoin()
+        assertEquals(misr, RateCache(open("latest_rate").first).read())
+        assertEquals(cib, RateCache(open("cib_latest_rate").first).read())
+        val (misrState, misrStateJob) = open("background_state")
+        val (cibState, cibStateJob) = open("cib_background_state")
+        SyncStateStore(misrState).recordHandledQuote("misr-event")
+        SyncStateStore(cibState).recordHandledQuote("cib-event")
+        misrStateJob.cancelAndJoin()
+        cibStateJob.cancelAndJoin()
+        assertEquals("misr-event", SyncStateStore(open("background_state").first).recordHandledQuote("next"))
+        assertEquals("cib-event", SyncStateStore(open("cib_background_state").first).recordHandledQuote("next"))
+    }
+
     @Test fun clearsOptionalFieldsWhenNextQuoteDoesNotSupplyThem() = runBlocking {
         val (store, _) = open("quote")
         val cache = RateCache(store)

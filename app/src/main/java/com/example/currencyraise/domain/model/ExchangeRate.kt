@@ -27,4 +27,4 @@ data class ExchangeRate(
     }
 }
 
-enum class QuoteKind { CASH }
+enum class QuoteKind { CASH, BANK_RATE }

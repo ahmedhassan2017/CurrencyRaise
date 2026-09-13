@@ -81,7 +81,7 @@ class BackgroundIntegrationTest {
         val runner = BackgroundRefreshRunner(settings, rates, RateChangeAlerts(state) { posts++; true })
         val factory = object : WorkerFactory() {
             override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker =
-                RateSyncWorker(appContext, workerParameters, runner)
+                RateSyncWorker(appContext, workerParameters, BankBackgroundRefreshRunner(listOf(runner)))
         }
         suspend fun run(attempt: Int = 0) = TestListenableWorkerBuilder<RateSyncWorker>(context)
             .setWorkerFactory(factory).setRunAttemptCount(attempt).build().doWork()

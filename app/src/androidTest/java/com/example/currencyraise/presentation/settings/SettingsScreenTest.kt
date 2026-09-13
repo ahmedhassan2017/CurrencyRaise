@@ -24,6 +24,7 @@ class SettingsScreenTest {
         compose.runOnIdle { assertEquals(0, requests) }
         compose.onNodeWithText("Allow notifications").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(1, requests) }
+        compose.onNodeWithText("Send test notification").assertDoesNotExist()
     }
 
     @Test fun denialOffersSettingsAndDoesNotRepeatPrompt() {
@@ -66,5 +67,23 @@ class SettingsScreenTest {
             assertTrue(selected.notificationsEnabled)
         }
         compose.onNodeWithText("Check interval: 1 hour").assertIsNotEnabled()
+    }
+
+    @Test fun debugNotificationToolReportsSuccessfulDelivery() {
+        var sends = 0
+        compose.setContent {
+            CurrencyRaiseTheme {
+                SettingsScreen(
+                    state = SettingsUiState(AppSettings(), loading = false),
+                    access = NotificationAccess(true, true, true),
+                    onBack = {}, onInterval = {}, onAutomatic = {}, onNotifications = {},
+                    onRetry = {}, onPermissionAction = {}, showTestNotification = true,
+                    onSendTestNotification = { sends++; true },
+                )
+            }
+        }
+        compose.onNodeWithText("Send test notification").performScrollTo().performClick()
+        compose.onNodeWithText("Test notification sent.", substring = true).assertIsDisplayed()
+        compose.runOnIdle { assertEquals(1, sends) }
     }
 }
