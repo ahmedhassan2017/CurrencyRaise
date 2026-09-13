@@ -21,7 +21,7 @@ internal class BackgroundRefreshRunner(
             catch (_: StorageReadException) { return BackgroundResult.FAILED }
         if (!initial.automaticChecksEnabled) return BackgroundResult.COMPLETED
         return when (val result = rates.refreshUsdEgpRate(Duration.ofMinutes(5))) {
-            is RefreshOutcome.Success -> finish(result.rate, result.change)
+            is RefreshOutcome.Success -> finish(result.rate, result.change, result.previousRate)
             is RefreshOutcome.Cached -> finish(result.rate, RateChange.UNCHANGED)
             RefreshOutcome.AlreadyRefreshing ->
                 if (attempt < MAX_RETRIES) BackgroundResult.RETRY else BackgroundResult.COMPLETED
@@ -34,11 +34,11 @@ internal class BackgroundRefreshRunner(
         }
     }
 
-    private suspend fun finish(rate: ExchangeRate, change: RateChange): BackgroundResult {
+    private suspend fun finish(rate: ExchangeRate, change: RateChange, previousRate: ExchangeRate? = null): BackgroundResult {
         // A saved quote is already success. Alert failure must never trigger another HTTP request.
         try {
             val latest = settings.observeSettings().first()
-            alerts.handle(rate, change, latest.automaticChecksEnabled && latest.notificationsEnabled)
+            alerts.handle(rate, change, latest.automaticChecksEnabled && latest.notificationsEnabled, previousRate)
         } catch (error: CancellationException) {
             throw error
         } catch (_: StorageReadException) {

@@ -43,7 +43,15 @@ Comparisons use persisted history, so they survive restarts and reflect both
 manual and background checks. First quotes, expired comparison history (eight-day
 retention), and unavailable history have no direction. The cards wait for matching
 quote/history data before displaying a change. Failed refreshes retain the comparison
-for the last saved quote. Notification direction indicators are a separate step.
+for the last saved quote.
+
+Rate-change notifications show independent up/down arrows and decimal changes for
+buy and sell, with "No change" for an unchanged side. Expanded notifications put
+the prices on separate lines. Direction comes from the previous comparable quote
+captured during that refresh, including a preceding silent manual check; it is not
+compared with an older notification or re-read from a potentially newer cache.
+Bank-specific titles, tap targets, silent first baselines, preferences, and duplicate
+suppression are preserved. The labeled debug sample has no comparison or arrows.
 
 ## Build and install
 

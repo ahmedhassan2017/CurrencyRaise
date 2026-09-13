@@ -25,6 +25,24 @@ class BackgroundBehaviorTest {
     private val rates = FakeRates()
     private val runner = BackgroundRefreshRunner(settings, rates, alerts)
 
+    @Test fun notificationUsesRefreshSnapshotAfterManualChangeAndOnlyPostsOnce() = runTest {
+        val captured = mutableListOf<com.example.currencyraise.notification.RateAlert>()
+        val snapshotAlerts = RateChangeAlerts(state) { captured.add(it); true }
+        val initial = quote(buy = "51.20", sell = "51.40")
+        snapshotAlerts.handle(initial, RateChange.FIRST_QUOTE, true)
+        // The manual quote is silent, but must be the comparison for the next background change.
+        val manual = quote(buy = "51.30", sell = "51.40", fetchedAt = "2026-09-11T11:00:00Z")
+        val next = quote(buy = "51.20", sell = "51.41", fetchedAt = "2026-09-11T12:00:00Z")
+        rates.result = RefreshOutcome.Success(next, RateChange.CHANGED, manual)
+        val snapshotRunner = BackgroundRefreshRunner(settings, rates, snapshotAlerts)
+        snapshotRunner.run(0)
+        snapshotRunner.run(0)
+        assertEquals(1, captured.size)
+        assertEquals(manual, captured.single().previousRate)
+        assertEquals(RateDirection.DOWN, captured.single().buyMovement!!.direction)
+        assertEquals(RateDirection.UP, captured.single().sellMovement!!.direction)
+    }
+
     @Test fun firstBackgroundResultIsBaselineEvenIfRepositoryReportsChange() = runTest {
         rates.result = RefreshOutcome.Success(quote(), RateChange.CHANGED)
         assertEquals(BackgroundResult.COMPLETED, runner.run(0))

@@ -108,6 +108,24 @@ dark theme. `git diff --check` passed. Visual design review remains with the use
 The user approved committing and pushing Step 3 after reviewing these results.
 Notification arrows remain Step 4 and require their own commit approval.
 
+Step 3 committed and pushed as `95af3f8` on `codex/rate-direction-arrows`.
+Step 4 is implemented on `codex/notification-direction-arrows`, based on that commit.
+Refresh results carry their previous comparable quote into an immutable notification
+snapshot. Buy and sell reuse decimal direction rules; notification text includes
+arrows, words, and change amounts, with separate expanded lines. First baselines,
+event claiming, preferences, bank identities, tap routing, and manual-refresh silence
+retain their existing behavior. No comparison is invented for debug samples or
+incompatible quotes. The user approved committing and pushing Step 4 after reviewing
+the validation results below.
+
+Step 4 validation: 165 unit tests (163 passed, two optional probes skipped), zero
+failures/errors. Debug lint passed with zero errors and 18 existing warnings.
+Debug app and Android test APK builds passed. All 12 focused device tests passed
+on RMX5106 (Android 16): notification text for both banks, immutable tap actions,
+bank routing, background worker behavior, and the persisted-rate pipeline.
+Content tests cover rises, falls, mixed directions, unchanged sides, and decimal
+precision without posting historical test prices as real alerts.
+
 Earlier Step 1 validation on 2026-09-13:
 
 - Unit suite: 139 tests, 138 passed, 1 skipped, zero failures/errors. The skipped

@@ -17,6 +17,8 @@ import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.model.NotificationAccessStatus
+import com.example.currencyraise.domain.model.RateMovement
+import com.example.currencyraise.domain.model.RateDirection
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.NumberFormat
 import java.util.Locale
@@ -38,8 +40,8 @@ internal class RateNotificationPublisher @Inject constructor(
         }
     }
 
-    override fun publish(rate: ExchangeRate): Boolean =
-        post(notificationId(rate), buildNotification(rate))
+    override fun publish(alert: RateAlert): Boolean =
+        post(notificationId(alert.rate), buildNotification(alert.rate, alert.previousRate))
 
     internal fun notificationId(rate: ExchangeRate): Int =
         if (rate.sourceId == "cib_ta3weem") CIB_NOTIFICATION_ID else RATE_NOTIFICATION_ID
@@ -58,20 +60,33 @@ internal class RateNotificationPublisher @Inject constructor(
         } catch (_: SecurityException) { false } // Permission can change between check and post.
     }
 
-    internal fun buildNotification(rate: ExchangeRate): android.app.Notification =
-        buildNotification(rate, context.getString(R.string.rate_notification_title, rate.sourceName))
+    internal fun buildNotification(rate: ExchangeRate, previousRate: ExchangeRate? = null): android.app.Notification =
+        buildNotification(RateAlert(rate, previousRate), context.getString(R.string.rate_notification_title, rate.sourceName))
 
     internal fun buildTestNotification(rate: ExchangeRate): android.app.Notification =
-        buildNotification(rate, context.getString(R.string.debug_test_notification_title))
+        buildNotification(RateAlert(rate), context.getString(R.string.debug_test_notification_title))
 
-    private fun buildNotification(rate: ExchangeRate, title: String): android.app.Notification {
+    private fun buildNotification(alert: RateAlert, title: String): android.app.Notification {
+        val rate = alert.rate
         val locale = ConfigurationCompat.getLocales(context.resources.configuration)[0] ?: Locale.US
         val formatter = NumberFormat.getNumberInstance(locale).apply {
             minimumFractionDigits = 2
             maximumFractionDigits = 9
         }
-        val body = context.getString(R.string.rate_notification_body,
-            formatter.format(rate.buyRate), formatter.format(rate.sellRate))
+        fun price(value: java.math.BigDecimal, movement: RateMovement?): String {
+            val direction = when (movement?.direction) {
+                RateDirection.UP -> context.getString(R.string.notification_direction_up, formatter.format(movement.difference.abs()))
+                RateDirection.DOWN -> context.getString(R.string.notification_direction_down, formatter.format(movement.difference.abs()))
+                RateDirection.UNCHANGED -> context.getString(R.string.rate_direction_unchanged)
+                null -> return formatter.format(value)
+            }
+            return context.getString(R.string.notification_price_direction, formatter.format(value), direction)
+        }
+        val buy = price(rate.buyRate, alert.buyMovement)
+        val sell = price(rate.sellRate, alert.sellMovement)
+        val body = context.getString(R.string.rate_notification_body, buy, sell)
+        val expandedBody = if (alert.buyMovement != null && alert.sellMovement != null)
+            context.getString(R.string.rate_notification_expanded, buy, sell) else body
         val bank = if (rate.sourceId == "cib_ta3weem") Bank.CIB else Bank.BANQUE_MISR
         val openHome = PendingIntent.getActivity(context, notificationId(rate),
             Intent(context, MainActivity::class.java)
@@ -83,7 +98,7 @@ internal class RateNotificationPublisher @Inject constructor(
             .setContentTitle(title)
             .setContentText(body)
             .setColor(ContextCompat.getColor(context, R.color.notification_accent))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(expandedBody))
             .setContentIntent(openHome)
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_STATUS)

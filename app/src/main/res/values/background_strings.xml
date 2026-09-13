@@ -3,6 +3,10 @@
     <string name="rate_channel_description">Alerts when Banque Misr or CIB USD/EGP prices change.</string>
     <string name="rate_notification_title">%1$s: USD/EGP changed</string>
     <string name="rate_notification_body">Bank buys: %1$s · Bank sells: %2$s EGP per 1 USD. Open for source and check times.</string>
+    <string name="rate_notification_expanded">Bank buys: %1$s EGP\nBank sells: %2$s EGP\nPer 1 USD. Change since the preceding saved check. Open for source and check times.</string>
+    <string name="notification_direction_up">↑ Up %1$s</string>
+    <string name="notification_direction_down">↓ Down %1$s</string>
+    <string name="notification_price_direction">%1$s (%2$s)</string>
     <string name="background_starting">Applying your background preferences…</string>
     <string name="background_schedule_error">Could not apply background preferences. Retrying automatically; check available storage if this continues.</string>
     <string name="error_deferred">The rate source asked us to wait before checking again. Your saved rates are still available.</string>

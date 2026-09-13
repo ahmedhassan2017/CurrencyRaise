@@ -35,7 +35,7 @@ class DefaultExchangeRateRepositoryTest {
         cache.save(quote())
         val latest = quote("51.27", "51.37", "2026-09-11T11:00:00Z")
         val repository = repository({ RateFetchResult.Success(latest) }, cache)
-        assertEquals(RefreshOutcome.Success(latest, RateChange.UNCHANGED), repository.refreshUsdEgpRate())
+        assertEquals(RefreshOutcome.Success(latest, RateChange.UNCHANGED, quote()), repository.refreshUsdEgpRate())
         assertEquals(latest, cache.read())
     }
 
@@ -44,7 +44,7 @@ class DefaultExchangeRateRepositoryTest {
             val cache = RateCache(FaultablePreferences())
             cache.save(quote(fetchedAt = "2026-09-11T09:00:00Z"))
             val repository = repository({ RateFetchResult.Success(latest) }, cache)
-            assertEquals(RefreshOutcome.Success(latest, RateChange.CHANGED), repository.refreshUsdEgpRate())
+            assertEquals(RefreshOutcome.Success(latest, RateChange.CHANGED, quote(fetchedAt = "2026-09-11T09:00:00Z")), repository.refreshUsdEgpRate())
         }
     }
 
@@ -109,7 +109,7 @@ class DefaultExchangeRateRepositoryTest {
         cache.save(quote())
         val next = quote(buy = "51.28", fetchedAt = "2026-09-11T09:00:00Z")
         val repository = repository({ RateFetchResult.Success(next) }, cache)
-        assertEquals(RefreshOutcome.Success(next, RateChange.CHANGED), repository.refreshUsdEgpRate())
+        assertEquals(RefreshOutcome.Success(next, RateChange.CHANGED, quote()), repository.refreshUsdEgpRate())
         assertEquals(next, cache.read())
     }
 
