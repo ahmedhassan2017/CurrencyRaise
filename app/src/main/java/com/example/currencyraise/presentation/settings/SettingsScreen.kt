@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.os.LocaleListCompat
 import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.NotificationAccess
@@ -55,6 +57,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
     var access by remember { mutableStateOf(systemAccess.read()) }
     var settingsOpenFailed by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val currentLanguage = AppCompatDelegate.getApplicationLocales()[0]?.language.orEmpty()
     val testNotificationPublisher = remember(context) {
         if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             RateNotificationPublisher(context.applicationContext)
@@ -99,6 +102,12 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 PermissionAction.NONE -> Unit
             }
         },
+        languageTag = currentLanguage,
+        onLanguage = { language ->
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(language),
+            )
+        },
     )
     if (settingsOpenFailed) {
         AlertDialog(
@@ -125,8 +134,11 @@ fun SettingsScreen(
     backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection(showTitle = false) },
     showTestNotification: Boolean = false,
     onSendTestNotification: () -> Boolean = { false },
+    languageTag: String = "",
+    onLanguage: (String) -> Unit = {},
 ) {
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
+    var languageDialog by rememberSaveable { mutableStateOf(false) }
     var testNotificationSent by rememberSaveable { mutableStateOf<Boolean?>(null) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -185,6 +197,26 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                     )
                 }
+            }
+
+            SectionLabel(stringResource(R.string.language_section))
+            CurrencyPanel {
+                Text(
+                    stringResource(R.string.language_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                OutlinedButton(
+                    shape = MaterialTheme.shapes.small,
+                    onClick = { languageDialog = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
+                ) {
+                    Text(stringResource(languageNameResource(languageTag)))
+                }
+                Text(
+                    stringResource(R.string.language_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             state.settings?.let { settings ->
@@ -363,6 +395,47 @@ fun SettingsScreen(
             },
         )
     }
+
+    if (languageDialog) {
+        AlertDialog(
+            onDismissRequest = { languageDialog = false },
+            title = { Text(stringResource(R.string.language_title)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    listOf(
+                        "" to R.string.language_system,
+                        "en" to R.string.language_english,
+                        "ar" to R.string.language_arabic,
+                    ).forEach { (tag, label) ->
+                        TextButton(
+                            shape = MaterialTheme.shapes.small,
+                            onClick = {
+                                languageDialog = false
+                                onLanguage(tag)
+                            },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) {
+                            Text(stringResource(label))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    shape = MaterialTheme.shapes.small,
+                    onClick = { languageDialog = false },
+                ) {
+                    Text(stringResource(R.string.close))
+                }
+            },
+        )
+    }
+}
+
+private fun languageNameResource(languageTag: String): Int = when (languageTag) {
+    "ar" -> R.string.language_arabic
+    "en" -> R.string.language_english
+    else -> R.string.language_system
 }
 
 @Composable

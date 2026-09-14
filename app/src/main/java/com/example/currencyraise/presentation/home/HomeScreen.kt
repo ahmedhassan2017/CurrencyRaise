@@ -137,7 +137,9 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.small,
                         selected = state.bank == bank,
                         onClick = { onSelectBank(bank) },
-                        label = { Text(bank.displayName) },
+                        label = {
+                            Text(stringResource(if (bank == Bank.CIB) R.string.bank_cib else R.string.bank_banque_misr))
+                        },
                     )
                 }
             }
@@ -255,7 +257,10 @@ fun HomeScreen(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Text(state.rate?.sourceName ?: state.bank.sourceName, style = MaterialTheme.typography.titleMedium)
+                    val sourceName = stringResource(
+                        if (state.bank == Bank.CIB) R.string.source_cib else R.string.source_banque_misr,
+                    )
+                    Text(sourceName, style = MaterialTheme.typography.titleMedium)
                     if (state.bank == Bank.CIB) {
                         Text(stringResource(R.string.cib_source_note))
                     }
@@ -275,7 +280,7 @@ fun HomeScreen(
                         Text(stringResource(if (rate.quoteKind == QuoteKind.CASH) R.string.cash_note else R.string.bank_rate_note))
                     }
                     TextButton(shape = MaterialTheme.shapes.small, onClick = { onOpenSource(sourceUrl) }) {
-                        Text(stringResource(R.string.open_source, state.bank.sourceName))
+                        Text(stringResource(R.string.open_source, sourceName))
                     }
                 }
             },
@@ -338,7 +343,7 @@ private fun RateHero(state: HomeUiState, locale: Locale, zone: ZoneId) {
                         stringResource(
                             if (rate?.quoteKind == QuoteKind.BANK_RATE || bank == Bank.CIB)
                                 R.string.source_bank_rates else R.string.source_cash,
-                            rate?.sourceName ?: bank.sourceName,
+                            stringResource(if (bank == Bank.CIB) R.string.source_cib else R.string.source_banque_misr),
                         ),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                         style = MaterialTheme.typography.labelMedium,

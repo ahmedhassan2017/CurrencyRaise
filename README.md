@@ -14,6 +14,13 @@ of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference. These prefe
 apply to both banks. Bank selection survives Android screen/process restoration;
 a fresh launch defaults to CIB, which is the first tab. Notification taps open the relevant bank.
 
+## Language
+
+The app supports English and Arabic, including right-to-left layouts and localized
+rate notifications. Choose **Follow system**, **English**, or **العربية** from
+Settings. On Android 13 and newer, the same choice is synchronized with the app's
+language entry in Android Settings.
+
 ## Rate history
 
 **Show rate history** on Home expands a **Daily** chart covering the last 24 hours and a **Weekly** chart

@@ -2,6 +2,12 @@
     <string name="settings_title">Settings</string>
     <string name="back_home">Back to Home</string>
     <string name="settings_subtitle">Choose your update and alert preferences.</string>
+    <string name="language_section">Language</string>
+    <string name="language_title">App language</string>
+    <string name="language_system">Follow system</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_help">The app restarts this screen when you change its language.</string>
     <string name="background_section">Background updates</string>
     <string name="automatic_checks">Automatic checks</string>
     <string name="automatic_preference_help">Check for new rates while the app is closed.</string>

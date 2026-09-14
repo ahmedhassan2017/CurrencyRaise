@@ -52,7 +52,11 @@
     <string name="section_expanded">Expanded</string>
     <string name="section_collapsed">Collapsed</string>
     <string name="home_checked_at">Checked %1$s</string>
-    <string name="home_check_due">Saved rates · Refresh to check for updates</string>
-    <string name="home_check_unknown">Check time unverified · Refresh rates</string>
+    <string name="home_check_due">Saved rates Â· Refresh to check for updates</string>
+    <string name="home_check_unknown">Check time unverified Â· Refresh rates</string>
     <string name="home_no_comparison">No comparison yet</string>
+    <string name="bank_cib">CIB</string>
+    <string name="bank_banque_misr">Banque Misr</string>
+    <string name="source_cib">CIB via Ta3weem</string>
+    <string name="source_banque_misr">Banque Misr</string>
 </resources>

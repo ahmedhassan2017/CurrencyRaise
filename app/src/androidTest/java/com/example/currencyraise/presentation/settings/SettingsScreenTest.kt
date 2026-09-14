@@ -86,4 +86,24 @@ class SettingsScreenTest {
         compose.onNodeWithText("Test notification sent.", substring = true).assertIsDisplayed()
         compose.runOnIdle { assertEquals(1, sends) }
     }
+
+    @Test fun languagePickerOffersSystemEnglishAndArabic() {
+        var selected: String? = null
+        compose.setContent {
+            CurrencyRaiseTheme {
+                SettingsScreen(
+                    state = SettingsUiState(AppSettings(), loading = false),
+                    access = missing,
+                    onBack = {}, onInterval = {}, onAutomatic = {}, onNotifications = {},
+                    onRetry = {}, onPermissionAction = {},
+                    languageTag = "en", onLanguage = { selected = it },
+                )
+            }
+        }
+        compose.onNodeWithText("App language").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("English").performScrollTo().performClick()
+        compose.onNodeWithText("Follow system").assertExists()
+        compose.onNodeWithText("العربية").performClick()
+        compose.runOnIdle { assertEquals("ar", selected) }
+    }
 }
