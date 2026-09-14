@@ -106,4 +106,26 @@ class SettingsScreenTest {
         compose.onNodeWithText("العربية").performClick()
         compose.runOnIdle { assertEquals("ar", selected) }
     }
+
+    @Test fun appearancePickerOffersSystemLightAndDark() {
+        var selected: AppearanceMode? = null
+        compose.setContent {
+            CurrencyRaiseTheme {
+                SettingsScreen(
+                    state = SettingsUiState(
+                        AppSettings(appearanceMode = AppearanceMode.SYSTEM),
+                        loading = false,
+                    ),
+                    access = missing,
+                    onBack = {}, onInterval = {}, onAutomatic = {}, onNotifications = {},
+                    onRetry = {}, onPermissionAction = {},
+                    onAppearance = { selected = it },
+                )
+            }
+        }
+        compose.onNodeWithText("Appearance").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("System").assertIsSelected()
+        compose.onNodeWithText("Dark").performClick()
+        compose.runOnIdle { assertEquals(AppearanceMode.DARK, selected) }
+    }
 }

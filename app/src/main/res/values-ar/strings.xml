@@ -108,6 +108,12 @@
     <string name="settings_title">الإعدادات</string>
     <string name="back_home">العودة للرئيسية</string>
     <string name="settings_subtitle">اختر تفضيلات التحديث والتنبيهات.</string>
+    <string name="appearance_section">المظهر</string>
+    <string name="appearance_title">وضع الألوان</string>
+    <string name="appearance_system">النظام</string>
+    <string name="appearance_light">فاتح</string>
+    <string name="appearance_dark">داكن</string>
+    <string name="appearance_help">اختر مظهر النظام أو ثبّت التطبيق على الوضع الفاتح أو الداكن. يُطبّق التغيير فورًا.</string>
     <string name="language_section">اللغة</string>
     <string name="language_title">لغة التطبيق</string>
     <string name="language_system">اتباع لغة النظام</string>

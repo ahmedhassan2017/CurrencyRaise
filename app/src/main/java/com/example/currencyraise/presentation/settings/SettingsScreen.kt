@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -33,6 +34,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.os.LocaleListCompat
 import com.example.currencyraise.R
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.NotificationAccess
 import com.example.currencyraise.domain.model.NotificationAccessStatus
@@ -74,6 +76,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
         onInterval = viewModel::setInterval,
         onAutomatic = viewModel::setAutomatic,
         onNotifications = viewModel::setNotifications,
+        onAppearance = viewModel::setAppearance,
         onRetry = viewModel::retryRead,
         backgroundStatus = { BackgroundStatusRoute(showTitle = false) },
         showTestNotification = testNotificationPublisher != null,
@@ -136,6 +139,7 @@ fun SettingsScreen(
     onSendTestNotification: () -> Boolean = { false },
     languageTag: String = "",
     onLanguage: (String) -> Unit = {},
+    onAppearance: (AppearanceMode) -> Unit = {},
 ) {
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
     var languageDialog by rememberSaveable { mutableStateOf(false) }
@@ -197,6 +201,34 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                     )
                 }
+            }
+
+            SectionLabel(stringResource(R.string.appearance_section))
+            CurrencyPanel {
+                Text(
+                    stringResource(R.string.appearance_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AppearanceMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = state.settings?.appearanceMode == mode,
+                            onClick = { onAppearance(mode) },
+                            label = { Text(stringResource(appearanceNameResource(mode)), maxLines = 1) },
+                            enabled = state.editable,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        )
+                    }
+                }
+                Text(
+                    stringResource(R.string.appearance_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             SectionLabel(stringResource(R.string.language_section))
@@ -436,6 +468,12 @@ private fun languageNameResource(languageTag: String): Int = when (languageTag) 
     "ar" -> R.string.language_arabic
     "en" -> R.string.language_english
     else -> R.string.language_system
+}
+
+private fun appearanceNameResource(mode: AppearanceMode): Int = when (mode) {
+    AppearanceMode.SYSTEM -> R.string.appearance_system
+    AppearanceMode.LIGHT -> R.string.appearance_light
+    AppearanceMode.DARK -> R.string.appearance_dark
 }
 
 @Composable

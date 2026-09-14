@@ -111,6 +111,7 @@ class BackgroundIntegrationTest {
         override suspend fun setUpdateInterval(interval: UpdateInterval): SettingsWriteResult = error("Unused")
         override suspend fun setAutomaticChecksEnabled(enabled: Boolean): SettingsWriteResult = error("Unused")
         override suspend fun setNotificationsEnabled(enabled: Boolean): SettingsWriteResult = error("Unused")
+        override suspend fun setAppearanceMode(mode: AppearanceMode): SettingsWriteResult = error("Unused")
         override suspend fun markNotificationPermissionAsked(): SettingsWriteResult = error("Unused")
     }
 }

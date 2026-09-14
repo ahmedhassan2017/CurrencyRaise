@@ -21,6 +21,11 @@ rate notifications. Choose **Follow system**, **English**, or **العربية**
 Settings. On Android 13 and newer, the same choice is synchronized with the app's
 language entry in Android Settings.
 
+## Appearance
+
+Choose **System**, **Light**, or **Dark** in Settings. The selected appearance is
+saved and applied across the whole app, while System continues to follow the device.
+
 ## Rate history
 
 **Show rate history** on Home expands a **Daily** chart covering the last 24 hours and a **Weekly** chart

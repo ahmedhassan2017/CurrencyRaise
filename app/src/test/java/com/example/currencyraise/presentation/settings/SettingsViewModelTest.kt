@@ -35,7 +35,12 @@ class SettingsViewModelTest {
         runCurrent()
         vm.setNotifications(false)
         runCurrent()
-        assertEquals(AppSettings(UpdateInterval.SIX_HOURS, false, false), vm.uiState.value.settings)
+        vm.setAppearance(AppearanceMode.DARK)
+        runCurrent()
+        assertEquals(
+            AppSettings(UpdateInterval.SIX_HOURS, false, false, appearanceMode = AppearanceMode.DARK),
+            vm.uiState.value.settings,
+        )
         assertEquals(SettingsMessage.SAVED, vm.uiState.value.message)
     }
 
@@ -147,6 +152,7 @@ class SettingsViewModelTest {
         override suspend fun setUpdateInterval(interval: UpdateInterval) = write { it.copy(updateInterval = interval) }
         override suspend fun setAutomaticChecksEnabled(enabled: Boolean) = write { it.copy(automaticChecksEnabled = enabled) }
         override suspend fun setNotificationsEnabled(enabled: Boolean) = write { it.copy(notificationsEnabled = enabled) }
+        override suspend fun setAppearanceMode(mode: AppearanceMode) = write { it.copy(appearanceMode = mode) }
         override suspend fun markNotificationPermissionAsked() = write { it.copy(notificationPermissionAsked = true) }
     }
 }
