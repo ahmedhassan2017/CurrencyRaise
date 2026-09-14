@@ -1,0 +1,10 @@
+<resources>
+    <string name="rate_direction_up">Up %1$s EGP</string>
+    <string name="rate_direction_down">Down %1$s EGP</string>
+    <string name="rate_direction_unchanged">No change</string>
+    <string name="rate_direction_unavailable">No previous check to compare</string>
+    <string name="rate_direction_loading">Loading comparison…</string>
+    <string name="rate_direction_read_failed">Comparison unavailable</string>
+    <string name="rate_direction_since">Compared with check on %1$s</string>
+    <string name="rate_direction_accessibility">%1$s: %2$s</string>
+</resources>

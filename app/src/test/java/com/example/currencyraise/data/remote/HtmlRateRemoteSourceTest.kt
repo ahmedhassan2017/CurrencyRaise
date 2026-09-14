@@ -1,6 +1,7 @@
 package com.example.currencyraise.data.remote
 
 import com.example.currencyraise.domain.model.RateFetchError
+import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.model.RateFetchResult
 import java.time.Clock
 import java.time.Instant
@@ -21,11 +22,18 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class BanqueMisrRemoteSourceTest {
+@RunWith(Parameterized::class)
+class HtmlRateRemoteSourceTest(private val bank: Bank) {
+    companion object {
+        @JvmStatic @Parameterized.Parameters(name = "{0}")
+        fun banks(): List<Array<Bank>> = Bank.entries.map { arrayOf(it) }
+    }
     private lateinit var server: MockWebServer
     private lateinit var client: OkHttpClient
-    private lateinit var remote: BanqueMisrRemoteSource
+    private lateinit var remote: RateRemoteSource
     private lateinit var lastCall: Call
     private val fetched = Instant.parse("2026-09-10T20:00:00Z")
 
@@ -40,12 +48,16 @@ class BanqueMisrRemoteSourceTest {
         val factory = object : Call.Factory {
             override fun newCall(request: Request): Call {
                 assertEquals("https", request.url.scheme)
-                assertEquals("www.banquemisr.com", request.url.host)
+                assertEquals(if (bank == Bank.CIB) "ta3weem.com" else "www.banquemisr.com", request.url.host)
                 return client.newCall(request.newBuilder().url(server.url("/rates")).build())
                     .also { lastCall = it }
             }
         }
-        remote = BanqueMisrRemoteSource(factory, BanqueMisrParser(), Clock.fixed(fetched, ZoneOffset.UTC))
+        val clock = Clock.fixed(fetched, ZoneOffset.UTC)
+        remote = when (bank) {
+            Bank.BANQUE_MISR -> BanqueMisrRemoteSource(factory, BanqueMisrParser(), clock)
+            Bank.CIB -> CibTa3weemRemoteSource(factory, CibTa3weemParser(), clock)
+        }
     }
 
     @After fun tearDown() {
@@ -56,13 +68,15 @@ class BanqueMisrRemoteSourceTest {
 
     private fun html(body: String) = MockResponse.Builder()
         .addHeader("Content-Type", "text/html; charset=utf-8").body(body).build()
-    private fun fixture() = checkNotNull(javaClass.getResource("/banque-misr/usd-cash.html")).readText()
+    private fun fixture() = checkNotNull(javaClass.getResource(
+        if (bank == Bank.CIB) "/cib-ta3weem/usd-egp.html" else "/banque-misr/usd-cash.html"
+    )).readText()
 
     @Test fun fetchesAndMapsUsingInjectedClock() = runBlocking {
         server.enqueue(html(fixture()))
         val result = remote.fetchLatest() as RateFetchResult.Success
         assertEquals(fetched, result.rate.fetchedAt)
-        assertEquals("51.27", result.rate.buyRate.toPlainString())
+        assertEquals(if (bank == Bank.CIB) "51.34" else "51.27", result.rate.buyRate.toPlainString())
         assertEquals("text/html", server.takeRequest().headers["Accept"])
     }
     @Test fun retainsRateLimitAndRetryAfter() = runBlocking {

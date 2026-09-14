@@ -15,7 +15,7 @@ import org.junit.Test
 class DefaultSettingsRepositoryTest {
     @Test fun failedWriteLeavesExistingSettingsIntact() = runTest {
         val store = FaultablePreferences()
-        val repository = DefaultSettingsRepository(SettingsStore(store))
+        val repository = DefaultSettingsRepository(SettingsStore(store, FaultablePreferences()))
         repository.setUpdateInterval(UpdateInterval.TWO_HOURS)
         store.writeFailure = IOException("disk unavailable")
         assertEquals(SettingsWriteResult.STORAGE_FAILURE, repository.setNotificationsEnabled(false))
@@ -25,7 +25,7 @@ class DefaultSettingsRepositoryTest {
     @Test fun readFailureIsNotMistakenForDefaults() = runTest {
         val store = FaultablePreferences()
         store.readFailure = IOException("unreadable")
-        val repository = DefaultSettingsRepository(SettingsStore(store))
+        val repository = DefaultSettingsRepository(SettingsStore(store, FaultablePreferences()))
         try {
             repository.observeSettings().first()
             fail("Expected explicit storage failure")
@@ -37,7 +37,7 @@ class DefaultSettingsRepositoryTest {
     @Test fun invalidIntervalIsReportedAndExplicitSelectionRepairsIt() = runTest {
         val store = FaultablePreferences()
         store.values.value = mutablePreferencesOf(intPreferencesKey("interval_hours") to 3)
-        val repository = DefaultSettingsRepository(SettingsStore(store))
+        val repository = DefaultSettingsRepository(SettingsStore(store, FaultablePreferences()))
         try {
             repository.observeSettings().first()
             fail("Unknown intervals cannot silently become hourly")
@@ -51,10 +51,10 @@ class DefaultSettingsRepositoryTest {
         val store = FaultablePreferences()
         store.writeFailure = CancellationException("cancel write")
         try {
-            DefaultSettingsRepository(SettingsStore(store)).setNotificationsEnabled(false)
+            DefaultSettingsRepository(SettingsStore(store, FaultablePreferences())).setNotificationsEnabled(false)
             fail("Cancellation should propagate")
         } catch (_: CancellationException) {
-            assertTrue(SettingsStore(store).observe().first().notificationsEnabled)
+            assertTrue(SettingsStore(store, FaultablePreferences()).observe().first().notificationsEnabled)
         }
     }
 }

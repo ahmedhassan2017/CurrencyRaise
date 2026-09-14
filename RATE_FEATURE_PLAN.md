@@ -1,0 +1,146 @@
+# CIB, history, and rate direction
+
+## Agreed workflow
+
+- Add CIB alongside Banque Misr for USD/EGP bank buy and sell rates.
+- Implement and validate one step at a time on a separate branch.
+- Present the completed diff and validation results before every commit.
+- Commit only after the user explicitly confirms that particular commit.
+- Create each subsequent branch from the approved preceding step.
+- Preserve the already staged files under `app/release/`; exclude them from feature commits.
+
+## 1. CIB support and change detection
+
+Branch: `codex/cib-rate-tracking`
+
+- Verify the live source's response contract before implementing its parser.
+- Keep Banque Misr available and add a bank selector.
+- Isolate each bank's persisted quote, refresh coordination, request deadlines,
+  and notification baseline. Refresh and alert for both banks in the background.
+- Treat the first quote for each bank as a silent baseline. Compare only quotes
+  with the same bank, currency pair, and quote kind, using decimal arithmetic.
+- Preserve each bank's last good quote when its source fails. One bank's failure
+  must not prevent the other bank from updating.
+- Keep manual refresh silent and use distinct notification identities for banks.
+- Verify provider parsing, invalid responses, persistence, bank isolation,
+  partial refresh failures, background behavior, and bank selection.
+
+Source investigation on 2026-09-13:
+
+- Official page: https://www.cibeg.com/en/currency-converter
+- A direct HTTPS request returned an Imperva challenge script instead of rates.
+- Normal browser navigation required an hCaptcha security check.
+- No CAPTCHA was solved and no access control was bypassed.
+- A live response contract and suitability for unattended fetching remain
+  unverified. Do not invent an endpoint, parse guessed fixtures, or present
+  historical sample values as current rates.
+- User approved a third-party CIB rate source. Ta3weem's public CIB table was
+  verified and selected; data is labeled CIB via Ta3weem.
+
+## 2. History and charts
+
+Planned branch: `codex/daily-weekly-rate-charts`
+
+Chosen views: Daily = rolling 24 hours; Weekly = rolling 7 days. Plot all retained
+observations in the chosen range, without averaging or inventing closing prices.
+Retention is eight days, capped at 2,048 points per bank. Quote and history save
+atomically in that bank's existing DataStore file. A changed source, pair, or
+quote kind starts new history. Old installations seed only their actual saved quote.
+Tap a point or use Previous/Next to inspect its timestamp and exact prices.
+Buy/sell line styles and markers differ, and accessible text describes the chart.
+
+- Save real observed quotes per bank with a defined retention bound.
+- Provide daily and weekly chart views for both buy and sell rates.
+- Use observation times for chart positions unless a provider's publication
+  timezone is verified. Label the distinction clearly.
+- Begin history with actual stored observations; do not fabricate earlier prices
+  or silently fill periods where the app collected no data.
+- Show useful empty and single-observation states.
+- Validate retention, date boundaries, ordering, bank isolation, and accessible
+  chart summaries. Finalize the chart windows and aggregation before this step.
+
+## 3. Rate arrows
+
+Planned branch: `codex/rate-direction-arrows`
+
+- Compare buy and sell independently with the preceding comparable observation.
+- Display up/down direction and the numeric change with accessible text.
+- First quotes have no direction; unchanged quotes must not indicate movement.
+- Keep saved comparison data available across process restarts.
+- Validate rises, falls, unchanged prices, mixed directions, and first quotes.
+
+## 4. Notification arrows
+
+Planned branch: `codex/notification-direction-arrows`
+
+- Reuse the same decimal comparison rules for notification buy/sell lines.
+- Include the bank name and independently correct direction for each rate.
+- Preserve silent first baselines, duplicate suppression, notification
+  preferences, permission handling, and silent manual refresh behavior.
+- Verify notification content, separate bank identities, duplicate handling,
+  and notification taps.
+
+## Status
+
+Step 1 implemented on `codex/cib-rate-tracking`: third-party CIB parser, separate
+storage and alert baselines, Home bank selection, both-bank background checks,
+and notifications opening the relevant bank. CIB is the first tab and the default
+on fresh launches; restored screen selection and notification targets are respected.
+The user approved committing and pushing Step 1 after this default-tab adjustment,
+then starting Step 2. Later commits still require separate user approval.
+
+Step 1 committed and pushed as `4ed9dfb` on `codex/cib-rate-tracking`.
+Step 2 committed as `898edb2` on `codex/daily-weekly-rate-charts` after user approval.
+Its validation passed: 155 local tests (two optional probes skipped), 19 focused
+device tests, debug lint, and debug/release/Android test APK builds.
+
+Step 3 is implemented on `codex/rate-direction-arrows`, branching from `898edb2`.
+Cards compare buy/sell independently against the preceding retained observation,
+show exact decimal changes and accessible direction text, and identify the comparison
+check time. Unchanged checks clear arrows. Persisted history restores comparisons
+after restart; unavailable or expired history produces no direction. Quote/history
+matching prevents transient arrows from stale emissions.
+Validation: 162 unit tests (160 passed, two optional probes skipped), zero failures;
+debug lint zero errors and 18 existing warnings; debug app and Android test APK
+builds passed. All eight focused Home/arrow tests passed on RMX5106 (Android 16),
+including mixed directions, unchanged updates, missing history, and large text in
+dark theme. `git diff --check` passed. Visual design review remains with the user.
+The user approved committing and pushing Step 3 after reviewing these results.
+Notification arrows remain Step 4 and require their own commit approval.
+
+Step 3 committed and pushed as `95af3f8` on `codex/rate-direction-arrows`.
+Step 4 is implemented on `codex/notification-direction-arrows`, based on that commit.
+Refresh results carry their previous comparable quote into an immutable notification
+snapshot. Buy and sell reuse decimal direction rules; notification text includes
+arrows, words, and change amounts, with separate expanded lines. First baselines,
+event claiming, preferences, bank identities, tap routing, and manual-refresh silence
+retain their existing behavior. No comparison is invented for debug samples or
+incompatible quotes. The user approved committing and pushing Step 4 after reviewing
+the validation results below.
+
+Step 4 validation: 165 unit tests (163 passed, two optional probes skipped), zero
+failures/errors. Debug lint passed with zero errors and 18 existing warnings.
+Debug app and Android test APK builds passed. All 12 focused device tests passed
+on RMX5106 (Android 16): notification text for both banks, immutable tap actions,
+bank routing, background worker behavior, and the persisted-rate pipeline.
+Content tests cover rises, falls, mixed directions, unchanged sides, and decimal
+precision without posting historical test prices as real alerts.
+
+Earlier Step 1 validation on 2026-09-13:
+
+- Unit suite: 139 tests, 138 passed, 1 skipped, zero failures/errors. The skipped
+  test is the opt-in Banque Misr captured-page probe; the CIB captured-page probe ran
+  successfully against the downloaded real HTML.
+- Debug lint: zero errors, 18 warnings (dependency/target suggestions and existing
+  unused resources/manifest label).
+- Debug app, optimized release, and Android test APK assembled successfully.
+- Focused device tests were requested for Home, notification content/taps,
+  background workers, and the data pipeline. The phone disconnected before the
+  tests started; Gradle reported No connected devices. These checks and live Android
+  CIB fetching remain unverified; a compiled test APK is not a device test pass.
+- At this point charts, UI arrows, and notification arrows were still pending their
+  separate branches and user-approved commits; see the updated status above.
+
+CIB-first follow-up: the full debug unit suite, lint, debug APK, and Android test
+APK checks passed with CIB first and selected on a fresh launch. Saved-state and
+notification selections continue to take precedence when present.

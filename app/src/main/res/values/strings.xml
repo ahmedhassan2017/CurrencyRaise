@@ -1,9 +1,12 @@
 <resources>
     <string name="app_name">Currency Raise</string>
-    <string name="bank_name" translatable="false">Banque Misr</string>
-    <string name="bank_url" translatable="false">https://www.banquemisr.com/en/CAPITAL-MARKETS/Exchange-Rates-and-Currencies?sc_lang=en</string>
     <string name="currency_pair" translatable="false">USD / EGP</string>
     <string name="source_cash">%1$s · Cash rates</string>
+    <string name="source_bank_rates">%1$s · Bank rates</string>
+    <string name="select_bank">Select bank</string>
+    <string name="cib_source_note">CIB rates supplied by Ta3weem, an independent provider. Rates may lag the bank; cash and transfer prices are not distinguished.</string>
+    <string name="bank_rate_note">Bank exchange rates · Prices may change</string>
+    <string name="supported_sources">Banque Misr · CIB via Ta3weem</string>
     <string name="rate_unit">Egyptian pounds for 1 US dollar</string>
     <string name="bank_buys">Bank buys</string>
     <string name="bank_sells">Bank sells</string>
@@ -12,7 +15,7 @@
     <string name="cash_note">Cash exchange · Prices may change</string>
     <string name="last_checked">Last checked successfully</string>
     <string name="source_time">Source display time</string>
-    <string name="source_timezone">Shown as published by the bank. Source timezone unspecified.</string>
+    <string name="source_timezone">Shown as published by the source. Source timezone unspecified.</string>
     <string name="not_supplied">Not supplied by the source</string>
     <string name="freshness_recent">Recently checked · Bank prices may stay unchanged</string>
     <string name="freshness_due">Saved quote · A new check is due</string>
@@ -20,7 +23,7 @@
     <string name="showing_saved">Showing your last saved rates.</string>
     <string name="loading_first">Getting your first quote</string>
     <string name="reading_saved">Looking for saved rates…</string>
-    <string name="fetching_first">Checking the bank’s published cash rates…</string>
+    <string name="fetching_first">Checking the selected rate source…</string>
     <string name="no_saved_rates">No saved rates yet</string>
     <string name="empty_help">Connect to the internet and refresh to get your first quote.</string>
     <string name="checking">Checking rates…</string>
@@ -29,24 +32,31 @@
     <string name="check_already_running">Another check is running. Saved rates will update when it finishes.</string>
     <string name="checked_unchanged">Checked successfully · Prices unchanged</string>
     <string name="checked_saved">Checked successfully · Rates saved</string>
-    <string name="background_inactive">Background checks are not active yet</string>
-    <string name="background_explanation">Use Refresh rates for now. Automatic checks and alerts will be added in a later version.</string>
     <string name="automatic_disabled">Automatic checks are disabled in your saved preferences.</string>
-    <plurals name="configured_interval">
-        <item quantity="one">Saved interval: about every %1$d hour, once enabled</item>
-        <item quantity="other">Saved interval: about every %1$d hours, once enabled</item>
-    </plurals>
-    <string name="open_source">View Banque Misr rate source</string>
+    <string name="open_source">View %1$s rate source</string>
     <string name="source_open_failed_title">Could not open the source</string>
-    <string name="source_open_failed">A browser may not be available. Try opening the Banque Misr exchange rates page in your browser.</string>
+    <string name="source_open_failed">A browser may not be available. Try opening the selected rate source in your browser.</string>
     <string name="error_network">Could not connect. Check your connection and try again.</string>
-    <string name="error_timeout">The bank took too long to respond. Try again later.</string>
-    <string name="error_provider">The bank did not return usable cash rates. Try again later.</string>
-    <string name="error_rate_limited">The bank is limiting requests. Wait before trying again.</string>
+    <string name="error_timeout">The rate source took too long to respond. Try again later.</string>
+    <string name="error_provider">The source did not return usable rates. Try again later.</string>
+    <string name="error_rate_limited">The rate source is limiting requests. Wait before trying again.</string>
     <string name="cache_read_failed">Saved rates could not be read. Try again to reconnect to storage.</string>
     <string name="settings_read_failed">Saved preferences could not be read. The saved interval is unavailable until retry succeeds.</string>
     <string name="error_storage_write">The quote could not be saved. Check available device storage and try again.</string>
     <string name="storage_help">Storage help</string>
     <string name="storage_recovery">Try again first, check free device storage, then restart the app. If saved data remains unreadable, you can reset this app’s storage in Android Settings. This removes all saved rates and preferences. The app never resets them automatically.</string>
     <string name="close">Close</string>
+    <string name="rate_details">Rate details</string>
+    <string name="show_rate_history">Show rate history</string>
+    <string name="hide_rate_history">Hide rate history</string>
+    <string name="section_expanded">Expanded</string>
+    <string name="section_collapsed">Collapsed</string>
+    <string name="home_checked_at">Checked %1$s</string>
+    <string name="home_check_due">Saved rates · Refresh to check for updates</string>
+    <string name="home_check_unknown">Check time unverified · Refresh rates</string>
+    <string name="home_no_comparison">No comparison yet</string>
+    <string name="bank_cib">CIB</string>
+    <string name="bank_banque_misr">Banque Misr</string>
+    <string name="source_cib">CIB via Ta3weem</string>
+    <string name="source_banque_misr">Banque Misr</string>
 </resources>

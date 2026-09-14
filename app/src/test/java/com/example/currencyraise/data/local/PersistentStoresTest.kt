@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.currencyraise.data.quote
 import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.model.AppSettings
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.model.SettingsWriteResult
 import com.example.currencyraise.domain.model.UpdateInterval
 import java.io.File
@@ -41,6 +42,32 @@ class PersistentStoresTest {
     }
     @After fun closeStores() = runBlocking { jobs.forEach { it.cancelAndJoin() } }
 
+    @Test fun backgroundDeadlineAndHandledEventSurviveRecreation() = runBlocking {
+        val (first, job) = open("background")
+        val state = SyncStateStore(first)
+        val deadline = java.time.Instant.parse("2026-09-11T12:00:00Z")
+        assertNull(state.retryNotBefore())
+        assertNull(state.recordHandledQuote("first-event"))
+        state.deferRequestsUntil(deadline)
+        job.cancelAndJoin()
+        val (reopened, _) = open("background")
+        val restored = SyncStateStore(reopened)
+        assertEquals(deadline, restored.retryNotBefore())
+        assertEquals("first-event", restored.recordHandledQuote("next-event"))
+        assertEquals("next-event", restored.recordHandledQuote("next-event"))
+    }
+
+    @Test fun invalidBackgroundDeadlineIsNotSilentlyReset() = runBlocking {
+        val (store, _) = open("background")
+        store.edit { it[stringPreferencesKey("retry_not_before")] = "broken" }
+        try {
+            SyncStateStore(store).retryNotBefore()
+            fail("Expected storage failure")
+        } catch (_: IOException) {
+            assertEquals("broken", store.data.first()[stringPreferencesKey("retry_not_before")])
+        }
+    }
+
     @Test fun quoteSurvivesStoreRecreationWithAllMetadataAndDecimalScale() = runBlocking {
         val (first, job) = open("quote")
         assertNull(RateCache(first).read())
@@ -49,7 +76,35 @@ class PersistentStoresTest {
         job.cancelAndJoin()
         val (reopened, _) = open("quote")
         assertEquals(original, RateCache(reopened).read())
+        assertEquals(listOf(com.example.currencyraise.domain.model.RateObservation(
+            original.fetchedAt, original.buyRate, original.sellRate)), RateCache(reopened).readHistory())
         assertEquals("51.2700", RateCache(reopened).read()!!.buyRate.toPlainString())
+    }
+
+    @Test fun bankQuotesAndBaselinesRemainSeparateAfterRecreation() = runBlocking {
+        val misr = quote()
+        val cib = quote(buy = "51.31", sell = "51.41").copy(
+            sourceId = "cib_ta3weem", sourceName = "CIB via Ta3weem",
+            sourceUrl = com.example.currencyraise.domain.model.Bank.CIB.sourceUrl,
+            quoteKind = com.example.currencyraise.domain.model.QuoteKind.BANK_RATE,
+            sourceQuoteId = null,
+        )
+        val (misrStore, misrJob) = open("latest_rate")
+        val (cibStore, cibJob) = open("cib_latest_rate")
+        RateCache(misrStore).save(misr)
+        RateCache(cibStore).save(cib)
+        misrJob.cancelAndJoin()
+        cibJob.cancelAndJoin()
+        assertEquals(misr, RateCache(open("latest_rate").first).read())
+        assertEquals(cib, RateCache(open("cib_latest_rate").first).read())
+        val (misrState, misrStateJob) = open("background_state")
+        val (cibState, cibStateJob) = open("cib_background_state")
+        SyncStateStore(misrState).recordHandledQuote("misr-event")
+        SyncStateStore(cibState).recordHandledQuote("cib-event")
+        misrStateJob.cancelAndJoin()
+        cibStateJob.cancelAndJoin()
+        assertEquals("misr-event", SyncStateStore(open("background_state").first).recordHandledQuote("next"))
+        assertEquals("cib-event", SyncStateStore(open("cib_background_state").first).recordHandledQuote("next"))
     }
 
     @Test fun clearsOptionalFieldsWhenNextQuoteDoesNotSupplyThem() = runBlocking {
@@ -79,25 +134,35 @@ class PersistentStoresTest {
 
     @Test fun settingsDefaultsAndIndependentChangesSurviveRecreation() = runBlocking {
         val (store, job) = open("settings")
-        val repository = DefaultSettingsRepository(SettingsStore(store))
+        val (deviceState, deviceJob) = open("permission")
+        val repository = DefaultSettingsRepository(SettingsStore(store, deviceState))
         assertEquals(AppSettings(), repository.observeSettings().first())
         coroutineScope {
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setUpdateInterval(UpdateInterval.SIX_HOURS)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setAutomaticChecksEnabled(false)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setNotificationsEnabled(false)) }
+            launch { assertEquals(SettingsWriteResult.SAVED, repository.setAppearanceMode(AppearanceMode.DARK)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.markNotificationPermissionAsked()) }
         }
         job.cancelAndJoin()
+        deviceJob.cancelAndJoin()
+        val (restoredDevice, _) = open("permission")
         val (reopened, _) = open("settings")
         assertEquals(
-            AppSettings(UpdateInterval.SIX_HOURS, false, false, notificationPermissionAsked = true),
-            DefaultSettingsRepository(SettingsStore(reopened)).observeSettings().first(),
+            AppSettings(
+                UpdateInterval.SIX_HOURS,
+                false,
+                false,
+                notificationPermissionAsked = true,
+                appearanceMode = AppearanceMode.DARK,
+            ),
+            DefaultSettingsRepository(SettingsStore(reopened, restoredDevice)).observeSettings().first(),
         )
     }
 
     @Test fun allAllowedIntervalsRoundTrip() = runBlocking {
         val (store, _) = open("settings")
-        val settings = SettingsStore(store)
+        val settings = SettingsStore(store, open("permission").first)
         for (interval in UpdateInterval.entries) {
             settings.setInterval(interval)
             assertEquals(interval, settings.observe().first().updateInterval)

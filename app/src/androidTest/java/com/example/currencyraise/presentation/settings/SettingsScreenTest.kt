@@ -24,6 +24,7 @@ class SettingsScreenTest {
         compose.runOnIdle { assertEquals(0, requests) }
         compose.onNodeWithText("Allow notifications").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(1, requests) }
+        compose.onNodeWithText("Send test notification").assertDoesNotExist()
     }
 
     @Test fun denialOffersSettingsAndDoesNotRepeatPrompt() {
@@ -66,5 +67,65 @@ class SettingsScreenTest {
             assertTrue(selected.notificationsEnabled)
         }
         compose.onNodeWithText("Check interval: 1 hour").assertIsNotEnabled()
+    }
+
+    @Test fun debugNotificationToolReportsSuccessfulDelivery() {
+        var sends = 0
+        compose.setContent {
+            CurrencyRaiseTheme {
+                SettingsScreen(
+                    state = SettingsUiState(AppSettings(), loading = false),
+                    access = NotificationAccess(true, true, true),
+                    onBack = {}, onInterval = {}, onAutomatic = {}, onNotifications = {},
+                    onRetry = {}, onPermissionAction = {}, showTestNotification = true,
+                    onSendTestNotification = { sends++; true },
+                )
+            }
+        }
+        compose.onNodeWithText("Send test notification").performScrollTo().performClick()
+        compose.onNodeWithText("Test notification sent.", substring = true).assertIsDisplayed()
+        compose.runOnIdle { assertEquals(1, sends) }
+    }
+
+    @Test fun languagePickerOffersSystemEnglishAndArabic() {
+        var selected: String? = null
+        compose.setContent {
+            CurrencyRaiseTheme {
+                SettingsScreen(
+                    state = SettingsUiState(AppSettings(), loading = false),
+                    access = missing,
+                    onBack = {}, onInterval = {}, onAutomatic = {}, onNotifications = {},
+                    onRetry = {}, onPermissionAction = {},
+                    languageTag = "en", onLanguage = { selected = it },
+                )
+            }
+        }
+        compose.onNodeWithText("App language").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("English").performScrollTo().performClick()
+        compose.onNodeWithText("Follow system").assertExists()
+        compose.onNodeWithText("العربية").performClick()
+        compose.runOnIdle { assertEquals("ar", selected) }
+    }
+
+    @Test fun appearancePickerOffersSystemLightAndDark() {
+        var selected: AppearanceMode? = null
+        compose.setContent {
+            CurrencyRaiseTheme {
+                SettingsScreen(
+                    state = SettingsUiState(
+                        AppSettings(appearanceMode = AppearanceMode.SYSTEM),
+                        loading = false,
+                    ),
+                    access = missing,
+                    onBack = {}, onInterval = {}, onAutomatic = {}, onNotifications = {},
+                    onRetry = {}, onPermissionAction = {},
+                    onAppearance = { selected = it },
+                )
+            }
+        }
+        compose.onNodeWithText("Appearance").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("System").assertIsSelected()
+        compose.onNodeWithText("Dark").performClick()
+        compose.runOnIdle { assertEquals(AppearanceMode.DARK, selected) }
     }
 }
