@@ -45,6 +45,7 @@ class HomeScreenTest {
         compose.onNodeWithText("CIB", useUnmergedTree = false).performClick()
         compose.onNodeWithText("CIB").assertIsSelected()
         compose.onNodeWithText("CIB via Ta3weem · Bank rates").assertExists()
+        compose.onNodeWithText("Rate details").performScrollTo().performClick()
         compose.onNodeWithText("CIB rates supplied by Ta3weem", substring = true).assertExists()
         compose.onNodeWithText("51.27").assertDoesNotExist()
         compose.onNodeWithText("View CIB via Ta3weem rate source").performScrollTo().performClick()
@@ -84,6 +85,7 @@ class HomeScreenTest {
         }
         compose.onNodeWithText("51.27").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("51.37").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Rate details").performScrollTo().performClick()
         compose.onNodeWithText("Source display time").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("View Banque Misr rate source").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(sample.sourceUrl, opened) }
@@ -97,5 +99,21 @@ class HomeScreenTest {
         compose.onNodeWithText("The app never resets them automatically.", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText("51.27").assertExists()
+    }
+
+    @Test fun secondaryInformationIsHiddenUntilRequested() {
+        compose.setContent { CurrencyRaiseTheme { HomeScreen(saved(), {}, {}) } }
+        compose.onNodeWithText("51.27").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("51.37").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Source display time").assertDoesNotExist()
+        compose.onNodeWithText("Daily").assertDoesNotExist()
+        compose.onNodeWithText("Show rate history").performScrollTo().performClick()
+        compose.onNodeWithText("Daily").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Hide rate history").performScrollTo().performClick()
+        compose.onNodeWithText("Daily").assertDoesNotExist()
+        compose.onNodeWithText("Rate details").performScrollTo().performClick()
+        compose.onNodeWithText("Source display time").assertExists()
+        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithText("Source display time").assertDoesNotExist()
     }
 }

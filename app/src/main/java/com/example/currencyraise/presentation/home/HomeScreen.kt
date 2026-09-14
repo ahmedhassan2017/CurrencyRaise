@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
@@ -25,6 +24,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,8 +41,6 @@ import com.example.currencyraise.domain.model.QuoteKind
 import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.domain.model.RateMovement
 import com.example.currencyraise.domain.model.RateDirection
-import com.example.currencyraise.presentation.background.BackgroundStatusRoute
-import com.example.currencyraise.presentation.background.BackgroundStatusSection
 import com.example.currencyraise.presentation.components.CurrencyPanel
 import com.example.currencyraise.presentation.components.CurrencyRaiseHeader
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
@@ -70,7 +68,6 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
         onOpenSettings = onOpenSettings,
         onSelectBank = viewModel::selectBank,
         onRetryHistory = viewModel::retryHistory,
-        backgroundStatus = { BackgroundStatusRoute() },
         onOpenSource = { url ->
             try {
                 require(url.toUri().scheme == "https")
@@ -88,7 +85,7 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
             title = { Text(stringResource(R.string.source_open_failed_title)) },
             text = { Text(stringResource(R.string.source_open_failed)) },
             confirmButton = {
-                TextButton(onClick = { linkFailed = false }) { Text(stringResource(R.string.close)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { linkFailed = false }) { Text(stringResource(R.string.close)) }
             },
         )
     }
@@ -101,7 +98,6 @@ fun HomeScreen(
     onOpenSource: (String) -> Unit,
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
-    backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection() },
     onSelectBank: (Bank) -> Unit = {},
     onRetryHistory: () -> Unit = {},
 ) {
@@ -109,6 +105,8 @@ fun HomeScreen(
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
     val zone = ZoneId.systemDefault()
     var storageHelp by rememberSaveable { mutableStateOf(false) }
+    var showDetails by rememberSaveable(state.bank) { mutableStateOf(false) }
+    var showHistory by rememberSaveable { mutableStateOf(false) }
     val sourceUrl = state.rate?.sourceUrl ?: state.bank.sourceUrl
 
     Scaffold(
@@ -131,9 +129,12 @@ fun HomeScreen(
             )
 
             Text(stringResource(R.string.select_bank), style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 state.banks.forEach { bank ->
                     FilterChip(
+                        shape = MaterialTheme.shapes.small,
                         selected = state.bank == bank,
                         onClick = { onSelectBank(bank) },
                         label = { Text(bank.displayName) },
@@ -141,23 +142,20 @@ fun HomeScreen(
                 }
             }
             RateHero(state, locale, zone)
-            if (state.bank == Bank.CIB) {
-                Notice(stringResource(R.string.cib_source_note))
-            }
 
             if (state.rateReadFailed || state.settingsReadFailed) {
                 Notice(
                     stringResource(if (state.rateReadFailed) R.string.cache_read_failed else R.string.settings_read_failed),
                     isError = true,
                 )
-                TextButton(onClick = { storageHelp = true }) { Text(stringResource(R.string.storage_help)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { storageHelp = true }) { Text(stringResource(R.string.storage_help)) }
             }
             state.refreshError?.takeUnless { it == HomeError.STORAGE_READ && state.rateReadFailed }?.let { error ->
                 Notice(stringResource(error.messageResource()), isError = true)
                 if ((error == HomeError.STORAGE_READ || error == HomeError.STORAGE_WRITE) &&
                     !state.rateReadFailed && !state.settingsReadFailed
                 ) {
-                    TextButton(onClick = { storageHelp = true }) { Text(stringResource(R.string.storage_help)) }
+                    TextButton(shape = MaterialTheme.shapes.small, onClick = { storageHelp = true }) { Text(stringResource(R.string.storage_help)) }
                 }
             }
 
@@ -187,10 +185,10 @@ fun HomeScreen(
             }
 
             Button(
+                shape = MaterialTheme.shapes.small,
                 onClick = onRefresh,
                 enabled = !state.refreshing && !state.loadingCache,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -206,68 +204,85 @@ fun HomeScreen(
                 )
             }
 
-            RateHistoryChart(
-                history = state.history, now = state.now, locale = locale, zone = zone,
-                intervalHours = state.settings?.updateInterval?.hours ?: 1,
-                loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
-            )
-
-            state.rate?.let { rate ->
-                if (state.refreshError != null || state.rateReadFailed) {
-                    Notice(stringResource(R.string.showing_saved))
-                }
-                FreshnessPill(
-                    stringResource(
-                        when (state.freshness) {
-                            Freshness.RECENT_CHECK -> R.string.freshness_recent
-                            Freshness.CHECK_DUE -> R.string.freshness_due
-                            Freshness.UNKNOWN -> R.string.freshness_unknown
-                        },
-                    ),
-                )
-                CurrencyPanel {
-                    Metadata(
-                        stringResource(R.string.last_checked),
-                        formatFetchTime(rate.fetchedAt, locale, zone),
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Metadata(
-                        stringResource(R.string.source_time),
-                        rate.sourceDisplayedAt?.let { formatSourceTime(it, locale) }
-                            ?: stringResource(R.string.not_supplied),
-                    )
-                    if (rate.sourceDisplayedAt != null) {
-                        Text(
-                            stringResource(R.string.source_timezone),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-
             val feedback = when {
                 state.alreadyRefreshing -> R.string.check_already_running
+                state.refreshError != null || state.rateReadFailed || state.settingsReadFailed -> null
                 state.lastChange == RateChange.UNCHANGED -> R.string.checked_unchanged
                 state.lastChange != null -> R.string.checked_saved
                 else -> null
             }
-            feedback?.let { Notice(stringResource(it)) }
-
-            CurrencyPanel(containerColor = MaterialTheme.colorScheme.surface) {
-                backgroundStatus()
+            feedback?.let {
+                Text(
+                    stringResource(it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
 
+            val historyState = stringResource(if (showHistory) R.string.section_expanded else R.string.section_collapsed)
             OutlinedButton(
-                onClick = { onOpenSource(sourceUrl) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                shape = CircleShape,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
+                shape = MaterialTheme.shapes.small,
+                onClick = { showHistory = !showHistory },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .semantics { stateDescription = historyState },
             ) {
-                Text(stringResource(R.string.open_source, state.bank.sourceName))
+                Text(stringResource(if (showHistory) R.string.hide_rate_history else R.string.show_rate_history))
+            }
+            if (showHistory) {
+                RateHistoryChart(
+                    history = state.history, now = state.now, locale = locale, zone = zone,
+                    intervalHours = state.settings?.updateInterval?.hours ?: 1,
+                    loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
+                )
+            }
+            TextButton(
+                shape = MaterialTheme.shapes.small,
+                onClick = { showDetails = true },
+                modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp),
+            ) {
+                Text(stringResource(R.string.rate_details))
             }
         }
+    }
+
+    if (showDetails) {
+        AlertDialog(
+            onDismissRequest = { showDetails = false },
+            title = { Text(stringResource(R.string.rate_details)) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(state.rate?.sourceName ?: state.bank.sourceName, style = MaterialTheme.typography.titleMedium)
+                    if (state.bank == Bank.CIB) {
+                        Text(stringResource(R.string.cib_source_note))
+                    }
+                    state.rate?.let { rate ->
+                        Metadata(stringResource(R.string.last_checked), formatFetchTime(rate.fetchedAt, locale, zone))
+                        Metadata(
+                            stringResource(R.string.source_time),
+                            rate.sourceDisplayedAt?.let { formatSourceTime(it, locale) }
+                                ?: stringResource(R.string.not_supplied),
+                        )
+                        if (rate.sourceDisplayedAt != null) {
+                            Text(stringResource(R.string.source_timezone), style = MaterialTheme.typography.bodySmall)
+                        }
+                        state.rateComparison?.let { comparison ->
+                            Text(stringResource(R.string.rate_direction_since, formatFetchTime(comparison.previousCheck, locale, zone)))
+                        }
+                        Text(stringResource(if (rate.quoteKind == QuoteKind.CASH) R.string.cash_note else R.string.bank_rate_note))
+                    }
+                    TextButton(shape = MaterialTheme.shapes.small, onClick = { onOpenSource(sourceUrl) }) {
+                        Text(stringResource(R.string.open_source, state.bank.sourceName))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { showDetails = false }) { Text(stringResource(R.string.close)) }
+            },
+        )
     }
 
     if (storageHelp) {
@@ -276,7 +291,7 @@ fun HomeScreen(
             title = { Text(stringResource(R.string.storage_help)) },
             text = { Text(stringResource(R.string.storage_recovery)) },
             confirmButton = {
-                TextButton(onClick = { storageHelp = false }) { Text(stringResource(R.string.close)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { storageHelp = false }) { Text(stringResource(R.string.close)) }
             },
         )
     }
@@ -342,15 +357,16 @@ private fun RateHero(state: HomeUiState, locale: Locale, zone: ZoneId) {
                 rate?.let {
                     Spacer(Modifier.height(2.dp))
                     RatePair(it, locale, comparison, unavailable)
-                    comparison?.let { change ->
-                        Text(
-                            stringResource(R.string.rate_direction_since, formatFetchTime(change.previousCheck, locale, zone)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
                     Text(
-                        stringResource(if (it.quoteKind == QuoteKind.CASH) R.string.cash_note else R.string.bank_rate_note),
+                        stringResource(
+                            when {
+                                state.refreshError != null || state.rateReadFailed -> R.string.showing_saved
+                                state.freshness == Freshness.CHECK_DUE -> R.string.home_check_due
+                                state.freshness == Freshness.UNKNOWN -> R.string.home_check_unknown
+                                else -> R.string.home_checked_at
+                            },
+                            formatFetchTime(it.fetchedAt, locale, zone),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -364,19 +380,9 @@ private fun RateHero(state: HomeUiState, locale: Locale, zone: ZoneId) {
 private fun RatePair(rate: ExchangeRate, locale: Locale, comparison: RateComparison?, unavailable: String) {
     val buy = formatRate(rate.buyRate, locale)
     val sell = formatRate(rate.sellRate, locale)
-    val fontScale = LocalDensity.current.fontScale
-    BoxWithConstraints {
-        if (maxWidth < 340.dp || fontScale > 1.2f || maxOf(buy.length, sell.length) > 8) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.fillMaxWidth(), comparison?.buy, unavailable, locale)
-                RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.fillMaxWidth(), comparison?.sell, unavailable, locale)
-            }
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.weight(1f), comparison?.buy, unavailable, locale)
-                RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.weight(1f), comparison?.sell, unavailable, locale)
-            }
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        RateCard(stringResource(R.string.bank_buys), buy, stringResource(R.string.you_sell), true, Modifier.fillMaxWidth(), comparison?.buy, unavailable, locale)
+        RateCard(stringResource(R.string.bank_sells), sell, stringResource(R.string.you_buy), false, Modifier.fillMaxWidth(), comparison?.sell, unavailable, locale)
     }
 }
 
@@ -447,31 +453,7 @@ internal fun RateDirectionLabel(label: String, movement: RateMovement?, unavaila
             else -> null
         }
         icon?.let { Icon(painterResource(it), contentDescription = null, modifier = Modifier.size(20.dp)) }
-        Text(message, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
-@Composable
-private fun FreshnessPill(message: String) {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        shape = CircleShape,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.tertiary),
-            )
-            Spacer(Modifier.width(9.dp))
-            Text(message, style = MaterialTheme.typography.labelMedium)
-        }
+        Text(if (movement == null) stringResource(R.string.home_no_comparison) else message, style = MaterialTheme.typography.labelLarge)
     }
 }
 

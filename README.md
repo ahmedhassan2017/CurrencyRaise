@@ -5,8 +5,10 @@ Banque Misr cash quotes come from the bank; CIB quotes come from Ta3weem and are
 labeled **CIB via Ta3weem**. The CIB table does not distinguish cash and transfer
 prices, and third-party quotes may lag the bank.
 
-The Home screen has a bank selector and shows that bank's last successfully saved quote, a manual refresh action,
-the last successful check time, and the bank's displayed timestamp. Buy/sell labels
+The Home screen focuses on the bank selector, saved buy/sell prices and directions,
+manual refresh, and a compact check-time or stale-rate status. **Rate details** opens
+source attribution, publication and comparison timestamps, and the source link.
+Background controls and diagnostics are available in Settings. Buy/sell labels
 are from the bank's perspective. Settings controls approximate background intervals
 of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference. These preferences
 apply to both banks. Bank selection survives Android screen/process restoration;
@@ -14,7 +16,7 @@ a fresh launch defaults to CIB, which is the first tab. Notification taps open t
 
 ## Rate history
 
-Home includes a **Daily** chart covering the last 24 hours and a **Weekly** chart
+**Show rate history** on Home expands a **Daily** chart covering the last 24 hours and a **Weekly** chart
 covering the last 7 days for the selected bank. Buy and sell have separate line
 styles and markers. Tap a point, or use Previous point / Next point, to inspect its
 exact prices and local device check time. The change summary compares the first
@@ -37,7 +39,7 @@ Provider publication timestamps are not used as chart positions.
 Each buy/sell card compares its price with the preceding saved observation for
 that bank. Up/down arrows include the exact EGP change and a spoken direction;
 unchanged prices show "No change" without an arrow. The comparison timestamp is
-shown below the cards. A later unchanged check clears the previous arrow.
+available in **Rate details**. A later unchanged check clears the previous arrow.
 
 Comparisons use persisted history, so they survive restarts and reflect both
 manual and background checks. First quotes, expired comparison history (eight-day

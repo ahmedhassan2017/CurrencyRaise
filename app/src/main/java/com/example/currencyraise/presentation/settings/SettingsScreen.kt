@@ -106,7 +106,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
             title = { Text(stringResource(R.string.notification_settings_title)) },
             text = { Text(stringResource(R.string.notification_settings_unavailable)) },
             confirmButton = {
-                TextButton(onClick = { settingsOpenFailed = false }) { Text(stringResource(R.string.close)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { settingsOpenFailed = false }) { Text(stringResource(R.string.close)) }
             },
         )
     }
@@ -176,7 +176,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     )
-                    Button(onClick = onRetry, enabled = !state.loading, shape = CircleShape) {
+                    Button(shape = MaterialTheme.shapes.small, onClick = onRetry, enabled = !state.loading) {
                         Text(stringResource(R.string.try_again))
                     }
                     Text(
@@ -203,10 +203,10 @@ fun SettingsScreen(
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     OutlinedButton(
+                        shape = MaterialTheme.shapes.small,
                         onClick = { intervalDialog = true },
                         enabled = state.editable && settings.automaticChecksEnabled,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
-                        shape = CircleShape,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     ) {
@@ -244,10 +244,10 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Button(
+                            shape = MaterialTheme.shapes.small,
                             onClick = onPermissionAction,
                             enabled = state.editable,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                            shape = CircleShape,
                         ) {
                             Text(
                                 stringResource(
@@ -292,10 +292,10 @@ fun SettingsScreen(
                             )
                         }
                         OutlinedButton(
+                            shape = MaterialTheme.shapes.small,
                             onClick = { testNotificationSent = onSendTestNotification() },
                             enabled = state.editable && access.status == NotificationAccessStatus.ALLOWED,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                            shape = CircleShape,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = MaterialTheme.colorScheme.primary,
@@ -339,6 +339,7 @@ fun SettingsScreen(
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     UpdateInterval.entries.forEach { interval ->
                         TextButton(
+                            shape = MaterialTheme.shapes.small,
                             onClick = {
                                 onInterval(interval)
                                 intervalDialog = false
@@ -358,7 +359,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { intervalDialog = false }) { Text(stringResource(R.string.close)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { intervalDialog = false }) { Text(stringResource(R.string.close)) }
             },
         )
     }
