@@ -35,7 +35,7 @@ class BankBackgroundRefreshRunnerTest {
             { calls++; result }, cache, state,
             Clock.fixed(Instant.parse("2026-09-13T12:00:00Z"), ZoneOffset.UTC),
         )
-        val runner = BackgroundRefreshRunner(settings, repository, RateChangeAlerts(state) { posted.add(it); true })
+        val runner = BackgroundRefreshRunner(settings, repository, RateChangeAlerts(state) { posted.add(it.rate); true })
         fun change() {
             rate = rate.copy(buyRate = rate.buyRate + "0.01".toBigDecimal(), fetchedAt = rate.fetchedAt.plusSeconds(60))
             result = RateFetchResult.Success(rate)

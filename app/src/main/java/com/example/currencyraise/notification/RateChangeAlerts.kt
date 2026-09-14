@@ -11,7 +11,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 internal fun interface NotificationSink {
-    fun publish(rate: ExchangeRate): Boolean
+    fun publish(alert: RateAlert): Boolean
 }
 
 @Singleton
@@ -21,7 +21,7 @@ internal class RateChangeAlerts @Inject constructor(
 ) {
     private val mutex = Mutex()
 
-    suspend fun handle(rate: ExchangeRate, change: RateChange, enabled: Boolean): Boolean = mutex.withLock {
+    suspend fun handle(rate: ExchangeRate, change: RateChange, enabled: Boolean, previousRate: ExchangeRate? = null): Boolean = mutex.withLock {
         // Fetch time identifies an event, not price equality (which belongs to the rate repository).
         val event = listOf(rate.sourceId, rate.baseCurrency, rate.quoteCurrency, rate.quoteKind.name,
             rate.buyRate.stripTrailingZeros().toPlainString(), rate.sellRate.stripTrailingZeros().toPlainString(),
@@ -30,6 +30,6 @@ internal class RateChangeAlerts @Inject constructor(
         val previous = state.recordHandledQuote(event)
         if (previous == null || previous == event || change != RateChange.CHANGED || !enabled) return false
         currentCoroutineContext().ensureActive()
-        sink.publish(rate)
+        sink.publish(RateAlert(rate, previousRate))
     }
 }

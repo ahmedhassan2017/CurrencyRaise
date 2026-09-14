@@ -1,6 +1,7 @@
 package com.example.currencyraise.data.repository
 
 import com.example.currencyraise.data.local.SettingsStore
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.model.SettingsWriteResult
 import com.example.currencyraise.domain.model.StorageReadException
 import com.example.currencyraise.domain.model.UpdateInterval
@@ -24,6 +25,9 @@ internal class DefaultSettingsRepository(
 
     override suspend fun setNotificationsEnabled(enabled: Boolean) =
         write { settings.setNotifications(enabled) }
+
+    override suspend fun setAppearanceMode(mode: AppearanceMode) =
+        write { settings.setAppearance(mode) }
 
     override suspend fun markNotificationPermissionAsked() = write { settings.markPermissionAsked() }
 

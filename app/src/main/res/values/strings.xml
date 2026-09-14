@@ -46,4 +46,17 @@
     <string name="storage_help">Storage help</string>
     <string name="storage_recovery">Try again first, check free device storage, then restart the app. If saved data remains unreadable, you can reset this app’s storage in Android Settings. This removes all saved rates and preferences. The app never resets them automatically.</string>
     <string name="close">Close</string>
+    <string name="rate_details">Rate details</string>
+    <string name="show_rate_history">Show rate history</string>
+    <string name="hide_rate_history">Hide rate history</string>
+    <string name="section_expanded">Expanded</string>
+    <string name="section_collapsed">Collapsed</string>
+    <string name="home_checked_at">Checked %1$s</string>
+    <string name="home_check_due">Saved rates · Refresh to check for updates</string>
+    <string name="home_check_unknown">Check time unverified · Refresh rates</string>
+    <string name="home_no_comparison">No comparison yet</string>
+    <string name="bank_cib">CIB</string>
+    <string name="bank_banque_misr">Banque Misr</string>
+    <string name="source_cib">CIB via Ta3weem</string>
+    <string name="source_banque_misr">Banque Misr</string>
 </resources>

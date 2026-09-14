@@ -107,7 +107,7 @@ fun CurrencyRaiseTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = rememberAppTypography(),
         shapes = AppShapes,
         content = content,
     )

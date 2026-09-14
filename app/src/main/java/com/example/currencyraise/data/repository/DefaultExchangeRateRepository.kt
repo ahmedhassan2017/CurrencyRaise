@@ -92,7 +92,7 @@ internal class DefaultExchangeRateRepository(
             } catch (_: IOException) {
                 return RefreshOutcome.Failure(RefreshError.StorageWrite)
             }
-            return RefreshOutcome.Success(fetched, change)
+            return RefreshOutcome.Success(fetched, change, previous.takeUnless { change == RateChange.FIRST_QUOTE })
         } finally {
             // Cancellation propagates to the source; it never becomes a normal failure result.
             refreshMutex.unlock()

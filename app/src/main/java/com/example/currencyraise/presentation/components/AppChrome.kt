@@ -76,8 +76,8 @@ fun CurrencyRaiseHeader(
             )
         }
         OutlinedButton(
+            shape = MaterialTheme.shapes.small,
             onClick = onAction,
-            shape = CircleShape,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
         ) {

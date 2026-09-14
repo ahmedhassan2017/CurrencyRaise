@@ -5,7 +5,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.currencyraise.domain.model.AppSettings
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.model.UpdateInterval
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -21,11 +23,15 @@ internal class SettingsStore(
             val hours = prefs[INTERVAL] ?: UpdateInterval.ONE_HOUR.hours
             val interval = UpdateInterval.entries.singleOrNull { it.hours == hours }
                 ?: throw IOException("Unrecognized saved update interval")
+            val appearanceName = prefs[APPEARANCE] ?: AppearanceMode.SYSTEM.name
+            val appearance = AppearanceMode.entries.singleOrNull { it.name == appearanceName }
+                ?: throw IOException("Unrecognized saved appearance mode")
             AppSettings(
                 updateInterval = interval,
                 automaticChecksEnabled = prefs[AUTOMATIC] ?: true,
                 notificationsEnabled = prefs[NOTIFICATIONS] ?: true,
                 notificationPermissionAsked = device[PERMISSION_ASKED] ?: false,
+                appearanceMode = appearance,
             )
         } catch (e: ClassCastException) {
             throw IOException("Invalid saved setting type", e)
@@ -44,6 +50,10 @@ internal class SettingsStore(
         store.edit { it[NOTIFICATIONS] = enabled }
     }
 
+    suspend fun setAppearance(mode: AppearanceMode) {
+        store.edit { it[APPEARANCE] = mode.name }
+    }
+
     suspend fun markPermissionAsked() {
         deviceState.edit { it[PERMISSION_ASKED] = true }
     }
@@ -52,5 +62,6 @@ internal class SettingsStore(
         val INTERVAL = intPreferencesKey("interval_hours")
         val AUTOMATIC = booleanPreferencesKey("automatic_checks")
         val NOTIFICATIONS = booleanPreferencesKey("notifications")
+        val APPEARANCE = stringPreferencesKey("appearance_mode")
     }
 }

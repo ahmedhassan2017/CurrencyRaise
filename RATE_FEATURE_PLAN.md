@@ -90,10 +90,43 @@ The user approved committing and pushing Step 1 after this default-tab adjustmen
 then starting Step 2. Later commits still require separate user approval.
 
 Step 1 committed and pushed as `4ed9dfb` on `codex/cib-rate-tracking`.
-Step 2 is implemented on `codex/daily-weekly-rate-charts`; final validation is in
-progress. No Step 2 commit or push is authorized yet.
+Step 2 committed as `898edb2` on `codex/daily-weekly-rate-charts` after user approval.
+Its validation passed: 155 local tests (two optional probes skipped), 19 focused
+device tests, debug lint, and debug/release/Android test APK builds.
 
-Validation on 2026-09-13:
+Step 3 is implemented on `codex/rate-direction-arrows`, branching from `898edb2`.
+Cards compare buy/sell independently against the preceding retained observation,
+show exact decimal changes and accessible direction text, and identify the comparison
+check time. Unchanged checks clear arrows. Persisted history restores comparisons
+after restart; unavailable or expired history produces no direction. Quote/history
+matching prevents transient arrows from stale emissions.
+Validation: 162 unit tests (160 passed, two optional probes skipped), zero failures;
+debug lint zero errors and 18 existing warnings; debug app and Android test APK
+builds passed. All eight focused Home/arrow tests passed on RMX5106 (Android 16),
+including mixed directions, unchanged updates, missing history, and large text in
+dark theme. `git diff --check` passed. Visual design review remains with the user.
+The user approved committing and pushing Step 3 after reviewing these results.
+Notification arrows remain Step 4 and require their own commit approval.
+
+Step 3 committed and pushed as `95af3f8` on `codex/rate-direction-arrows`.
+Step 4 is implemented on `codex/notification-direction-arrows`, based on that commit.
+Refresh results carry their previous comparable quote into an immutable notification
+snapshot. Buy and sell reuse decimal direction rules; notification text includes
+arrows, words, and change amounts, with separate expanded lines. First baselines,
+event claiming, preferences, bank identities, tap routing, and manual-refresh silence
+retain their existing behavior. No comparison is invented for debug samples or
+incompatible quotes. The user approved committing and pushing Step 4 after reviewing
+the validation results below.
+
+Step 4 validation: 165 unit tests (163 passed, two optional probes skipped), zero
+failures/errors. Debug lint passed with zero errors and 18 existing warnings.
+Debug app and Android test APK builds passed. All 12 focused device tests passed
+on RMX5106 (Android 16): notification text for both banks, immutable tap actions,
+bank routing, background worker behavior, and the persisted-rate pipeline.
+Content tests cover rises, falls, mixed directions, unchanged sides, and decimal
+precision without posting historical test prices as real alerts.
+
+Earlier Step 1 validation on 2026-09-13:
 
 - Unit suite: 139 tests, 138 passed, 1 skipped, zero failures/errors. The skipped
   test is the opt-in Banque Misr captured-page probe; the CIB captured-page probe ran
@@ -105,8 +138,8 @@ Validation on 2026-09-13:
   background workers, and the data pipeline. The phone disconnected before the
   tests started; Gradle reported No connected devices. These checks and live Android
   CIB fetching remain unverified; a compiled test APK is not a device test pass.
-- Charts, UI arrows, and notification arrows are intentionally still pending their
-  separate branches and user-approved commits.
+- At this point charts, UI arrows, and notification arrows were still pending their
+  separate branches and user-approved commits; see the updated status above.
 
 CIB-first follow-up: the full debug unit suite, lint, debug APK, and Android test
 APK checks passed with CIB first and selected on a fresh launch. Saved-state and

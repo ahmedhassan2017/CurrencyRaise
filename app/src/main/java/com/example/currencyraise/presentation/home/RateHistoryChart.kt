@@ -50,6 +50,7 @@ internal fun RateHistoryChart(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ChartPeriod.entries.forEach { choice ->
                 FilterChip(
+                    shape = MaterialTheme.shapes.small,
                     selected = period == choice, onClick = { period = choice },
                     label = { Text(stringResource(if (choice == ChartPeriod.DAILY) R.string.history_daily else R.string.history_weekly)) },
                 )
@@ -62,7 +63,7 @@ internal fun RateHistoryChart(
         when {
             readFailed -> {
                 Text(stringResource(R.string.history_read_failed), color = MaterialTheme.colorScheme.error)
-                TextButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
             }
             loading -> Text(stringResource(R.string.history_loading))
             data.points.isEmpty() -> Text(stringResource(R.string.history_empty))
@@ -174,10 +175,10 @@ private fun ChartPlot(
     Text(stringResource(R.string.history_selected_prices, formatRate(selected.buyRate, locale), formatRate(selected.sellRate, locale)),
         style = MaterialTheme.typography.bodyMedium)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        TextButton(onClick = { selectedIndex-- }, enabled = selectedIndex > 0) {
+        TextButton(shape = MaterialTheme.shapes.small, onClick = { selectedIndex-- }, enabled = selectedIndex > 0) {
             Text(stringResource(R.string.history_previous))
         }
-        TextButton(onClick = { selectedIndex++ }, enabled = selectedIndex < data.points.lastIndex) {
+        TextButton(shape = MaterialTheme.shapes.small, onClick = { selectedIndex++ }, enabled = selectedIndex < data.points.lastIndex) {
             Text(stringResource(R.string.history_next))
         }
     }

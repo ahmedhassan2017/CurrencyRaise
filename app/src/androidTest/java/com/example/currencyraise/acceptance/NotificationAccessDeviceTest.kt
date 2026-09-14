@@ -43,7 +43,7 @@ class NotificationAccessDeviceTest {
             PackageManager.PERMISSION_DENIED,
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS))
         assertEquals(NotificationAccessStatus.PERMISSION_NEEDED, SystemNotificationAccess(context).read().status)
-        assertFalse(RateNotificationPublisher(context).publish(quote()))
+        assertFalse(RateNotificationPublisher(context).publish(com.example.currencyraise.notification.RateAlert(quote())))
         assertTrue(context.getSystemService(NotificationManager::class.java).activeNotifications.isEmpty())
     }
 
@@ -61,7 +61,7 @@ class NotificationAccessDeviceTest {
         manager.createNotificationChannel(NotificationChannel(RATE_CHANNEL_ID, "Exchange Rate Updates",
             NotificationManager.IMPORTANCE_NONE))
         assertEquals(NotificationAccessStatus.CHANNEL_BLOCKED, SystemNotificationAccess(context).read().status)
-        assertFalse(RateNotificationPublisher(context).publish(quote()))
+        assertFalse(RateNotificationPublisher(context).publish(com.example.currencyraise.notification.RateAlert(quote())))
         assertTrue(manager.activeNotifications.isEmpty())
         // Channel blocking cannot be reversed by an app. Connected tests remove this disposable
         // installation afterward. Do not revoke a runtime permission inside its own instrumentation

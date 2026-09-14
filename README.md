@@ -5,16 +5,30 @@ Banque Misr cash quotes come from the bank; CIB quotes come from Ta3weem and are
 labeled **CIB via Ta3weem**. The CIB table does not distinguish cash and transfer
 prices, and third-party quotes may lag the bank.
 
-The Home screen has a bank selector and shows that bank's last successfully saved quote, a manual refresh action,
-the last successful check time, and the bank's displayed timestamp. Buy/sell labels
+The Home screen focuses on the bank selector, saved buy/sell prices and directions,
+manual refresh, and a compact check-time or stale-rate status. **Rate details** opens
+source attribution, publication and comparison timestamps, and the source link.
+Background controls and diagnostics are available in Settings. Buy/sell labels
 are from the bank's perspective. Settings controls approximate background intervals
 of 1, 2, 4, 6, 12, or 24 hours and a separate rate-alert preference. These preferences
 apply to both banks. Bank selection survives Android screen/process restoration;
 a fresh launch defaults to CIB, which is the first tab. Notification taps open the relevant bank.
 
+## Language
+
+The app supports English and Arabic, including right-to-left layouts and localized
+rate notifications. Choose **Follow system**, **English**, or **العربية** from
+Settings. On Android 13 and newer, the same choice is synchronized with the app's
+language entry in Android Settings.
+
+## Appearance
+
+Choose **System**, **Light**, or **Dark** in Settings. The selected appearance is
+saved and applied across the whole app, while System continues to follow the device.
+
 ## Rate history
 
-Home includes a **Daily** chart covering the last 24 hours and a **Weekly** chart
+**Show rate history** on Home expands a **Daily** chart covering the last 24 hours and a **Weekly** chart
 covering the last 7 days for the selected bank. Buy and sell have separate line
 styles and markers. Tap a point, or use Previous point / Next point, to inspect its
 exact prices and local device check time. The change summary compares the first
@@ -31,6 +45,27 @@ No earlier prices are backfilled. Lines stop across gaps longer than twice the
 configured checking interval, and nothing is extrapolated beyond the observations.
 Chart windows use elapsed time (24 hours / 168 hours); labels use the device timezone.
 Provider publication timestamps are not used as chart positions.
+
+## Rate direction
+
+Each buy/sell card compares its price with the preceding saved observation for
+that bank. Up/down arrows include the exact EGP change and a spoken direction;
+unchanged prices show "No change" without an arrow. The comparison timestamp is
+available in **Rate details**. A later unchanged check clears the previous arrow.
+
+Comparisons use persisted history, so they survive restarts and reflect both
+manual and background checks. First quotes, expired comparison history (eight-day
+retention), and unavailable history have no direction. The cards wait for matching
+quote/history data before displaying a change. Failed refreshes retain the comparison
+for the last saved quote.
+
+Rate-change notifications show independent up/down arrows and decimal changes for
+buy and sell, with "No change" for an unchanged side. Expanded notifications put
+the prices on separate lines. Direction comes from the previous comparable quote
+captured during that refresh, including a preceding silent manual check; it is not
+compared with an older notification or re-read from a potentially newer cache.
+Bank-specific titles, tap targets, silent first baselines, preferences, and duplicate
+suppression are preserved. The labeled debug sample has no comparison or arrows.
 
 ## Build and install
 

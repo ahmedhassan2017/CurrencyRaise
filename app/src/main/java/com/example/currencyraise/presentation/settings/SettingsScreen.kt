@@ -6,9 +6,11 @@ import android.content.pm.ApplicationInfo
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -30,7 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.os.LocaleListCompat
 import com.example.currencyraise.R
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.NotificationAccess
 import com.example.currencyraise.domain.model.NotificationAccessStatus
@@ -55,6 +59,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
     var access by remember { mutableStateOf(systemAccess.read()) }
     var settingsOpenFailed by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val currentLanguage = AppCompatDelegate.getApplicationLocales()[0]?.language.orEmpty()
     val testNotificationPublisher = remember(context) {
         if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             RateNotificationPublisher(context.applicationContext)
@@ -71,6 +76,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
         onInterval = viewModel::setInterval,
         onAutomatic = viewModel::setAutomatic,
         onNotifications = viewModel::setNotifications,
+        onAppearance = viewModel::setAppearance,
         onRetry = viewModel::retryRead,
         backgroundStatus = { BackgroundStatusRoute(showTitle = false) },
         showTestNotification = testNotificationPublisher != null,
@@ -99,6 +105,12 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
                 PermissionAction.NONE -> Unit
             }
         },
+        languageTag = currentLanguage,
+        onLanguage = { language ->
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(language),
+            )
+        },
     )
     if (settingsOpenFailed) {
         AlertDialog(
@@ -106,7 +118,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, onBack: () -> Unit) {
             title = { Text(stringResource(R.string.notification_settings_title)) },
             text = { Text(stringResource(R.string.notification_settings_unavailable)) },
             confirmButton = {
-                TextButton(onClick = { settingsOpenFailed = false }) { Text(stringResource(R.string.close)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { settingsOpenFailed = false }) { Text(stringResource(R.string.close)) }
             },
         )
     }
@@ -125,8 +137,12 @@ fun SettingsScreen(
     backgroundStatus: @Composable () -> Unit = { BackgroundStatusSection(showTitle = false) },
     showTestNotification: Boolean = false,
     onSendTestNotification: () -> Boolean = { false },
+    languageTag: String = "",
+    onLanguage: (String) -> Unit = {},
+    onAppearance: (AppearanceMode) -> Unit = {},
 ) {
     var intervalDialog by rememberSaveable { mutableStateOf(false) }
+    var languageDialog by rememberSaveable { mutableStateOf(false) }
     var testNotificationSent by rememberSaveable { mutableStateOf<Boolean?>(null) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -176,7 +192,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     )
-                    Button(onClick = onRetry, enabled = !state.loading, shape = CircleShape) {
+                    Button(shape = MaterialTheme.shapes.small, onClick = onRetry, enabled = !state.loading) {
                         Text(stringResource(R.string.try_again))
                     }
                     Text(
@@ -185,6 +201,54 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                     )
                 }
+            }
+
+            SectionLabel(stringResource(R.string.appearance_section))
+            CurrencyPanel {
+                Text(
+                    stringResource(R.string.appearance_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AppearanceMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = state.settings?.appearanceMode == mode,
+                            onClick = { onAppearance(mode) },
+                            label = { Text(stringResource(appearanceNameResource(mode)), maxLines = 1) },
+                            enabled = state.editable,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        )
+                    }
+                }
+                Text(
+                    stringResource(R.string.appearance_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            SectionLabel(stringResource(R.string.language_section))
+            CurrencyPanel {
+                Text(
+                    stringResource(R.string.language_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                OutlinedButton(
+                    shape = MaterialTheme.shapes.small,
+                    onClick = { languageDialog = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
+                ) {
+                    Text(stringResource(languageNameResource(languageTag)))
+                }
+                Text(
+                    stringResource(R.string.language_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             state.settings?.let { settings ->
@@ -203,10 +267,10 @@ fun SettingsScreen(
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     OutlinedButton(
+                        shape = MaterialTheme.shapes.small,
                         onClick = { intervalDialog = true },
                         enabled = state.editable && settings.automaticChecksEnabled,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
-                        shape = CircleShape,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     ) {
@@ -244,10 +308,10 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Button(
+                            shape = MaterialTheme.shapes.small,
                             onClick = onPermissionAction,
                             enabled = state.editable,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                            shape = CircleShape,
                         ) {
                             Text(
                                 stringResource(
@@ -292,10 +356,10 @@ fun SettingsScreen(
                             )
                         }
                         OutlinedButton(
+                            shape = MaterialTheme.shapes.small,
                             onClick = { testNotificationSent = onSendTestNotification() },
                             enabled = state.editable && access.status == NotificationAccessStatus.ALLOWED,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                            shape = CircleShape,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = MaterialTheme.colorScheme.primary,
@@ -339,6 +403,7 @@ fun SettingsScreen(
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     UpdateInterval.entries.forEach { interval ->
                         TextButton(
+                            shape = MaterialTheme.shapes.small,
                             onClick = {
                                 onInterval(interval)
                                 intervalDialog = false
@@ -358,10 +423,57 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { intervalDialog = false }) { Text(stringResource(R.string.close)) }
+                TextButton(shape = MaterialTheme.shapes.small, onClick = { intervalDialog = false }) { Text(stringResource(R.string.close)) }
             },
         )
     }
+
+    if (languageDialog) {
+        AlertDialog(
+            onDismissRequest = { languageDialog = false },
+            title = { Text(stringResource(R.string.language_title)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    listOf(
+                        "" to R.string.language_system,
+                        "en" to R.string.language_english,
+                        "ar" to R.string.language_arabic,
+                    ).forEach { (tag, label) ->
+                        TextButton(
+                            shape = MaterialTheme.shapes.small,
+                            onClick = {
+                                languageDialog = false
+                                onLanguage(tag)
+                            },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) {
+                            Text(stringResource(label))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    shape = MaterialTheme.shapes.small,
+                    onClick = { languageDialog = false },
+                ) {
+                    Text(stringResource(R.string.close))
+                }
+            },
+        )
+    }
+}
+
+private fun languageNameResource(languageTag: String): Int = when (languageTag) {
+    "ar" -> R.string.language_arabic
+    "en" -> R.string.language_english
+    else -> R.string.language_system
+}
+
+private fun appearanceNameResource(mode: AppearanceMode): Int = when (mode) {
+    AppearanceMode.SYSTEM -> R.string.appearance_system
+    AppearanceMode.LIGHT -> R.string.appearance_light
+    AppearanceMode.DARK -> R.string.appearance_dark
 }
 
 @Composable

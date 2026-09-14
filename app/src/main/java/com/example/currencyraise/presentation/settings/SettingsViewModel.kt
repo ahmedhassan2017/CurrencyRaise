@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.currencyraise.domain.model.SettingsWriteResult
 import com.example.currencyraise.domain.model.StorageReadException
 import com.example.currencyraise.domain.model.UpdateInterval
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -46,6 +47,9 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
     }
     fun setNotifications(enabled: Boolean) {
         launchWrite { repository.setNotificationsEnabled(enabled) }
+    }
+    fun setAppearance(mode: AppearanceMode) {
+        launchWrite { repository.setAppearanceMode(mode) }
     }
 
     private fun launchWrite(block: suspend () -> SettingsWriteResult) {

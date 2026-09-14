@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.currencyraise.data.quote
 import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.model.AppSettings
+import com.example.currencyraise.domain.model.AppearanceMode
 import com.example.currencyraise.domain.model.SettingsWriteResult
 import com.example.currencyraise.domain.model.UpdateInterval
 import java.io.File
@@ -140,6 +141,7 @@ class PersistentStoresTest {
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setUpdateInterval(UpdateInterval.SIX_HOURS)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setAutomaticChecksEnabled(false)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.setNotificationsEnabled(false)) }
+            launch { assertEquals(SettingsWriteResult.SAVED, repository.setAppearanceMode(AppearanceMode.DARK)) }
             launch { assertEquals(SettingsWriteResult.SAVED, repository.markNotificationPermissionAsked()) }
         }
         job.cancelAndJoin()
@@ -147,7 +149,13 @@ class PersistentStoresTest {
         val (restoredDevice, _) = open("permission")
         val (reopened, _) = open("settings")
         assertEquals(
-            AppSettings(UpdateInterval.SIX_HOURS, false, false, notificationPermissionAsked = true),
+            AppSettings(
+                UpdateInterval.SIX_HOURS,
+                false,
+                false,
+                notificationPermissionAsked = true,
+                appearanceMode = AppearanceMode.DARK,
+            ),
             DefaultSettingsRepository(SettingsStore(reopened, restoredDevice)).observeSettings().first(),
         )
     }
