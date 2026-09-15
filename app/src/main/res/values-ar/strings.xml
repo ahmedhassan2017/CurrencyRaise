@@ -84,15 +84,21 @@
     <string name="history_weekly">أسبوعي</string>
     <string name="history_24_hours">آخر 24 ساعة</string>
     <string name="history_7_days">آخر 7 أيام</string>
+    <string name="history_24_hours_ago">قبل 24 ساعة</string>
+    <string name="history_7_days_ago">قبل 7 أيام</string>
+    <string name="history_now">الآن</string>
     <string name="history_loading">جارٍ تحميل السجل المحفوظ…</string>
     <string name="history_empty">لا توجد مشاهدات في هذه الفترة بعد. حدّث لبدء جمع السجل.</string>
     <string name="history_single">تم حفظ مشاهدة واحدة. يلزم تحقق ناجح آخر لإظهار التغيير.</string>
     <string name="history_read_failed">تعذرت قراءة السجل المحفوظ. يظهر أحدث سعر بشكل منفصل.</string>
     <string name="history_retry">إعادة تحميل السجل</string>
-    <string name="history_axis_unit">ج.م لكل دولار · وقت التحقق المحلي</string>
-    <string name="history_change_label">التغيير بين أول وآخر مشاهدة ظاهرة</string>
-    <string name="history_buy_change">الشراء: %1$s ج.م</string>
-    <string name="history_sell_change">البيع: %1$s ج.م</string>
+    <string name="history_buy_rate_only">سعر شراء البنك · جنيه لكل دولار</string>
+    <string name="history_latest_buy">أحدث سعر شراء للبنك</string>
+    <string name="history_rate_value">%1$s جنيه لكل دولار</string>
+    <string name="history_change_up">ارتفع %1$s جنيه · %2$s</string>
+    <string name="history_change_down">انخفض %1$s جنيه · %2$s</string>
+    <string name="history_change_unchanged">دون تغيير · %2$s</string>
+    <string name="history_axis_unit">سعر شراء البنك · وقت التحقق المحلي</string>
     <plurals name="history_coverage">
         <item quantity="zero">%1$d مشاهدات · من %2$s إلى %3$s</item>
         <item quantity="one">مشاهدة واحدة · من %2$s إلى %3$s</item>
@@ -102,18 +108,17 @@
         <item quantity="other">%1$d مشاهدة · من %2$s إلى %3$s</item>
     </plurals>
     <plurals name="history_chart_description">
-        <item quantity="zero">%1$d مشاهدات. سعر شراء البنك: من %2$s إلى %3$s. سعر بيع البنك: من %4$s إلى %5$s جنيه لكل دولار.</item>
-        <item quantity="one">مشاهدة واحدة. سعر شراء البنك: من %2$s إلى %3$s. سعر بيع البنك: من %4$s إلى %5$s جنيه لكل دولار.</item>
-        <item quantity="two">مشاهدتان. سعر شراء البنك: من %2$s إلى %3$s. سعر بيع البنك: من %4$s إلى %5$s جنيه لكل دولار.</item>
-        <item quantity="few">%1$d مشاهدات. سعر شراء البنك: من %2$s إلى %3$s. سعر بيع البنك: من %4$s إلى %5$s جنيه لكل دولار.</item>
-        <item quantity="many">%1$d مشاهدة. سعر شراء البنك: من %2$s إلى %3$s. سعر بيع البنك: من %4$s إلى %5$s جنيه لكل دولار.</item>
-        <item quantity="other">%1$d مشاهدة. سعر شراء البنك: من %2$s إلى %3$s. سعر بيع البنك: من %4$s إلى %5$s جنيه لكل دولار.</item>
+        <item quantity="zero">%1$d مشاهدات. سعر شراء البنك: من %2$s إلى %3$s جنيه لكل دولار.</item>
+        <item quantity="one">مشاهدة واحدة. سعر شراء البنك: من %2$s إلى %3$s جنيه لكل دولار.</item>
+        <item quantity="two">مشاهدتان. سعر شراء البنك: من %2$s إلى %3$s جنيه لكل دولار.</item>
+        <item quantity="few">%1$d مشاهدات. سعر شراء البنك: من %2$s إلى %3$s جنيه لكل دولار.</item>
+        <item quantity="many">%1$d مشاهدة. سعر شراء البنك: من %2$s إلى %3$s جنيه لكل دولار.</item>
+        <item quantity="other">%1$d مشاهدة. سعر شراء البنك: من %2$s إلى %3$s جنيه لكل دولار.</item>
     </plurals>
-    <string name="history_selected_check">التحقق المحدد: %1$s</string>
-    <string name="history_selected_prices">شراء %1$s · بيع %2$s ج.م</string>
+    <string name="history_selected_point">سعر الشراء المحدد</string>
     <string name="history_previous">النقطة السابقة</string>
     <string name="history_next">النقطة التالية</string>
-    <string name="history_observed_note">سُجلت على هذا الجهاز عند نجاح التحقق. تصل الخطوط بين المشاهدات، وتُترك فجوات عندما تزيد المدة عن ضعف فترة التحقق. لا تتم إضافة أسعار سابقة افتراضيًا.</string>
+    <string name="history_observed_note">سُجلت أسعار الشراء على هذا الجهاز عند نجاح التحقق. تُترك فجوات عندما تزيد المدة عن ضعف فترة التحقق. لا تتم إضافة أسعار سابقة افتراضيًا.</string>
 
     <string name="settings_title">الإعدادات</string>
     <string name="back_home">العودة للرئيسية</string>

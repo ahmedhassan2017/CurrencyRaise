@@ -54,13 +54,13 @@ class RateHistoryChartTest {
     @Test fun dailyWeeklyAndPointInspectionUseTheActualObservations() {
         show()
         compose.onNodeWithText("Daily").assertIsSelected()
-        compose.onNodeWithText("Buy: +0.10 EGP").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Up 0.10 EGP · Last 24 hours").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Bank sells").assertDoesNotExist()
         compose.onNodeWithText("Previous point").performScrollTo().performClick()
-        compose.onNodeWithText("Buy 51.15 · Sell 51.25 EGP").assertExists()
+        compose.onNodeWithText("51.15 EGP per USD").assertExists()
         compose.onNodeWithText("Weekly").performScrollTo().performClick()
         compose.onNodeWithText("Weekly").assertIsSelected()
-        compose.onNodeWithText("Last 7 days").assertExists()
-        compose.onNodeWithText("Buy: +0.30 EGP").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Up 0.30 EGP · Last 7 days").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Rate history").performScrollTo()
         capture("chart-weekly-light.png")
     }
@@ -68,9 +68,11 @@ class RateHistoryChartTest {
     @Test fun emptyAndSinglePointStatesDoNotInventChanges() {
         show(points = listOf(history.last()))
         compose.onNodeWithText("One observation saved.", substring = true).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Previous point").assertIsNotEnabled()
-        compose.onNodeWithText("Next point").assertIsNotEnabled()
-        compose.onNodeWithText("Change between first and last observations shown").assertDoesNotExist()
+        compose.onNodeWithText("Previous point").assertDoesNotExist()
+        compose.onNodeWithText("Next point").assertDoesNotExist()
+        compose.onNodeWithText("Up", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("24h ago").assertExists()
+        compose.onNodeWithText("Now").assertExists()
     }
 
     @Test fun emptyWindowExplainsHowToStartHistory() {
@@ -83,8 +85,8 @@ class RateHistoryChartTest {
         show(dark = true, scale = 2f)
         compose.onNodeWithText("Weekly").performScrollTo().performClick()
         compose.onNodeWithText("Previous point").performScrollTo().performClick()
-        compose.onNodeWithText("Buy 51.15 · Sell 51.25 EGP").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Buy: +0.30 EGP").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("51.15 EGP per USD").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Up 0.30 EGP · Last 7 days").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Rate history").performScrollTo()
         capture("chart-weekly-dark-large-text.png")
     }

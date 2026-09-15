@@ -21,18 +21,28 @@ class RateChartDataTest {
         val empty = rateChartData(emptyList(), ChartPeriod.DAILY, now)
         assertTrue(empty.points.isEmpty())
         assertNull(empty.buyChange)
-        assertNull(empty.sellChange)
         val single = rateChartData(listOf(point(0)), ChartPeriod.DAILY, now)
         assertNull(single.buyChange)
         assertEquals(1f, single.x(now))
     }
 
-    @Test fun changesUseExactDecimalsForEachSideAndOnlyObservedCoverage() {
+    @Test fun changesUseExactBuyDecimalsAndOnlyObservedCoverage() {
         val data = rateChartData(listOf(point(1, "51.270000001", "51.38"), point(3, "51.27", "51.39")), ChartPeriod.DAILY, now)
         assertEquals(0, data.buyChange!!.compareTo(BigDecimal("0.000000001")))
-        assertEquals(0, data.sellChange!!.compareTo(BigDecimal("-0.01")))
         assertEquals(point(3, "51.27", "51.39"), data.points.first())
         assertEquals(2, data.points.size) // No fabricated midnight or current-time quote.
+    }
+
+    @Test fun sellRatesDoNotDistortTheBuyOnlyChartScale() {
+        val data = rateChartData(
+            listOf(point(1, buy = "51.27", sell = "80.00"), point(0, buy = "51.30", sell = "90.00")),
+            ChartPeriod.DAILY,
+            now,
+        )
+
+        assertTrue(data.minimum < BigDecimal("51.27"))
+        assertTrue(data.maximum > BigDecimal("51.30"))
+        assertTrue(data.maximum < BigDecimal("52.00"))
     }
 
     @Test fun flatEqualRatesHaveFiniteCoordinatesWithHeadroom() {
