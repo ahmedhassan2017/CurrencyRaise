@@ -66,6 +66,44 @@ class HomeScreenTest {
         compose.runOnIdle { assertEquals(1, clicks) }
     }
 
+    @Test fun calculatorUsesCorrectRateSideAndFollowsSelectedBank() {
+        val state = mutableStateOf(saved())
+        compose.setContent {
+            CurrencyRaiseTheme {
+                HomeScreen(
+                    state = state.value,
+                    onRefresh = {},
+                    onOpenSource = {},
+                    onSelectBank = { bank ->
+                        state.value = state.value.copy(
+                            bank = bank,
+                            rate = sample.copy(
+                                buyRate = BigDecimal("50.00"),
+                                sellRate = BigDecimal("55.00"),
+                                sourceId = "cib_ta3weem",
+                                sourceName = "CIB via Ta3weem",
+                            ),
+                        )
+                    },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Amount").performScrollTo().performTextInput("10")
+        compose.onNodeWithText("512.70 EGP").performScrollTo().assertIsDisplayed()
+
+        compose.onNodeWithText("EGP to USD").performScrollTo().performClick()
+        compose.onNodeWithText("Amount").performTextClearance()
+        compose.onNodeWithText("Amount").performTextInput("513.70")
+        compose.onNodeWithText("10.00 USD").performScrollTo().assertIsDisplayed()
+
+        compose.onNodeWithText("CIB").performScrollTo().performClick()
+        compose.onNodeWithText("9.34 USD").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Using CIB bank sell rate: 55.00 EGP per USD.")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
     @Test fun loadingDisablesRefreshAndDoesNotInventPrices() {
         compose.setContent { CurrencyRaiseTheme { HomeScreen(HomeUiState(), {}, {}) } }
         compose.onNodeWithText("Getting your first quote").assertExists()

@@ -144,6 +144,7 @@ fun HomeScreen(
                 }
             }
             RateHero(state, locale, zone)
+            CurrencyCalculator(state.bank, state.rate, locale)
 
             if (state.rateReadFailed || state.settingsReadFailed) {
                 Notice(

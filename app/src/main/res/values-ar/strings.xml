@@ -59,6 +59,16 @@
     <string name="bank_banque_misr">بنك مصر</string>
     <string name="source_cib">البنك التجاري الدولي عبر تعويم</string>
     <string name="source_banque_misr">بنك مصر</string>
+    <string name="calculator_title">حاسبة العملات</string>
+    <string name="calculator_description">احسب قيمة تقريبية باستخدام سعر %1$s المحدد.</string>
+    <string name="calculator_usd_to_egp">دولار إلى جنيه</string>
+    <string name="calculator_egp_to_usd">جنيه إلى دولار</string>
+    <string name="calculator_amount">المبلغ</string>
+    <string name="calculator_result">المبلغ التقريبي</string>
+    <string name="calculator_waiting_rate">حدّث سعر البنك المحدد لإجراء التحويل.</string>
+    <string name="calculator_buy_rate_note">باستخدام سعر شراء %1$s: ‏%2$s جنيه لكل دولار.</string>
+    <string name="calculator_sell_rate_note">باستخدام سعر بيع %1$s: ‏%2$s جنيه لكل دولار.</string>
+    <string name="calculator_disclaimer">القيمة تقريبية فقط. قد يطبق البنك رسومًا أو أسعارًا مختلفة للنقد والتحويل.</string>
 
     <string name="rate_direction_up">ارتفع %1$s ج.م</string>
     <string name="rate_direction_down">انخفض %1$s ج.م</string>

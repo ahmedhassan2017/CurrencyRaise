@@ -59,4 +59,14 @@
     <string name="bank_banque_misr">Banque Misr</string>
     <string name="source_cib">CIB via Ta3weem</string>
     <string name="source_banque_misr">Banque Misr</string>
+    <string name="calculator_title">Currency calculator</string>
+    <string name="calculator_description">Estimate a conversion using the selected %1$s rate.</string>
+    <string name="calculator_usd_to_egp">USD to EGP</string>
+    <string name="calculator_egp_to_usd">EGP to USD</string>
+    <string name="calculator_amount">Amount</string>
+    <string name="calculator_result">Estimated amount</string>
+    <string name="calculator_waiting_rate">Refresh the selected bank to calculate a conversion.</string>
+    <string name="calculator_buy_rate_note">Using %1$s bank buy rate: %2$s EGP per USD.</string>
+    <string name="calculator_sell_rate_note">Using %1$s bank sell rate: %2$s EGP per USD.</string>
+    <string name="calculator_disclaimer">Estimate only. The bank may apply fees or different cash and transfer rates.</string>
 </resources>
