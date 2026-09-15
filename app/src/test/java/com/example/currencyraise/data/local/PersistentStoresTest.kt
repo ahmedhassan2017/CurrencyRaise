@@ -9,6 +9,7 @@ import com.example.currencyraise.data.quote
 import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.model.AppSettings
 import com.example.currencyraise.domain.model.AppearanceMode
+import com.example.currencyraise.domain.model.SavingsBalance
 import com.example.currencyraise.domain.model.SettingsWriteResult
 import com.example.currencyraise.domain.model.UpdateInterval
 import java.io.File
@@ -158,6 +159,18 @@ class PersistentStoresTest {
             ),
             DefaultSettingsRepository(SettingsStore(reopened, restoredDevice)).observeSettings().first(),
         )
+    }
+
+    @Test fun savingsDefaultAndAtomicBalancesSurviveRecreation() = runBlocking {
+        val (first, job) = open("savings")
+        val store = SavingsStore(first)
+        assertEquals(SavingsBalance.EMPTY, store.observe().first())
+        val saved = SavingsBalance(usd = "1250.75".toBigDecimal(), egp = "80000.50".toBigDecimal())
+        store.save(saved)
+        job.cancelAndJoin()
+
+        val (reopened, _) = open("savings")
+        assertEquals(saved, SavingsStore(reopened).observe().first())
     }
 
     @Test fun allAllowedIntervalsRoundTrip() = runBlocking {

@@ -1,0 +1,44 @@
+<resources>
+    <string name="tab_home">Home</string>
+    <string name="tab_wallet">Wallet</string>
+    <string name="wallet_title">My wallet</string>
+    <string name="wallet_subtitle">Track savings locally and value them with the selected bank.</string>
+    <string name="wallet_total_egp">Equivalent in EGP</string>
+    <string name="wallet_no_rate">A saved rate for this bank is needed to calculate the EGP equivalent.</string>
+    <string name="wallet_valuation_note">USD savings are converted with the selected bank’s buy rate, then added to your EGP savings.</string>
+    <string name="wallet_edit_title">Savings</string>
+    <string name="wallet_edit_help">Enter either balance or use both. Amounts stay only on this device.</string>
+    <string name="wallet_usd_savings">USD savings</string>
+    <string name="wallet_egp_savings">EGP savings</string>
+    <string name="wallet_save">Save savings</string>
+    <string name="wallet_saving">Saving…</string>
+    <string name="wallet_saved">Savings saved on this device.</string>
+    <string name="wallet_invalid_amount">Enter a valid non-negative amount with up to two decimal places.</string>
+    <string name="wallet_storage_read_failed">Saved savings could not be read. Existing data was not replaced.</string>
+    <string name="wallet_storage_write_failed">Savings could not be saved. Check available device storage and try again.</string>
+    <string name="wallet_retry">Retry savings</string>
+    <string name="wallet_selected_bank_rate">%1$s rate · Checked %2$s</string>
+    <string name="wallet_rate_unavailable">No saved %1$s rate yet.</string>
+    <string name="wallet_refresh_rate">Refresh rate</string>
+    <string name="wallet_refreshing_rate">Refreshing rate…</string>
+    <string name="wallet_refresh_failed">The selected bank rate could not be refreshed. A saved rate remains available when present.</string>
+    <string name="wallet_chart_title">Wallet value history</string>
+    <string name="wallet_chart_subtitle">Estimated EGP value using historical bank buy rates</string>
+    <string name="wallet_chart_latest">Latest tracked value</string>
+    <string name="wallet_chart_value">%1$s EGP</string>
+    <string name="wallet_chart_change_up">Up %1$s EGP · %2$s</string>
+    <string name="wallet_chart_change_down">Down %1$s EGP · %2$s</string>
+    <string name="wallet_chart_change_unchanged">No rate-driven change · %2$s</string>
+    <string name="wallet_chart_axis">Estimated wallet value · EGP</string>
+    <string name="wallet_chart_empty_savings">Add USD or EGP savings to start tracking wallet value.</string>
+    <string name="wallet_chart_empty_history">No bank-rate observations in this period yet. Refresh rates to build history.</string>
+    <string name="wallet_chart_loading">Loading wallet history…</string>
+    <string name="wallet_chart_read_failed">Rate history could not be read. Current wallet totals are still available.</string>
+    <string name="wallet_chart_single">One valuation is available. Another successful rate check is needed to show movement.</string>
+    <string name="wallet_chart_selected">Selected wallet value</string>
+    <string name="wallet_chart_note">The chart revalues today’s saved balances at each recorded buy rate. It tracks exchange-rate impact, not deposits or withdrawals over time.</string>
+    <plurals name="wallet_chart_description">
+        <item quantity="one">%1$d wallet valuation. Estimated value: %2$s to %3$s EGP.</item>
+        <item quantity="other">%1$d wallet valuations. Estimated value: %2$s to %3$s EGP.</item>
+    </plurals>
+</resources>

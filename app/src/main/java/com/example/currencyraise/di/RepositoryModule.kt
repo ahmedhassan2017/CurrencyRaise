@@ -1,12 +1,15 @@
 package com.example.currencyraise.di
 
 import com.example.currencyraise.data.local.RateCache
+import com.example.currencyraise.data.local.SavingsStore
 import com.example.currencyraise.data.local.SettingsStore
 import com.example.currencyraise.data.remote.BanqueMisrRemoteSource
 import com.example.currencyraise.data.remote.RateRemoteSource
 import com.example.currencyraise.data.repository.DefaultExchangeRateRepository
+import com.example.currencyraise.data.repository.DefaultSavingsRepository
 import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.repository.ExchangeRateRepository
+import com.example.currencyraise.domain.repository.SavingsRepository
 import com.example.currencyraise.domain.repository.SettingsRepository
 import dagger.Binds
 import dagger.Module
@@ -37,4 +40,9 @@ internal object RepositoryModule {
     @Singleton
     fun provideSettingsRepository(settings: SettingsStore): SettingsRepository =
         DefaultSettingsRepository(settings)
+
+    @Provides
+    @Singleton
+    fun provideSavingsRepository(store: SavingsStore): SavingsRepository =
+        DefaultSavingsRepository(store)
 }

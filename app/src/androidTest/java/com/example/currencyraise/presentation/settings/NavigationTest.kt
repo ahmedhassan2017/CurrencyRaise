@@ -12,9 +12,18 @@ class NavigationTest {
 
     @Test fun settingsSurvivesActivityRecreationAndSystemBackReturnsHome() {
         compose.onNodeWithText("Settings").performClick()
-        compose.onNodeWithText("Back to Home").assertIsDisplayed()
+        compose.onNodeWithText("Back").assertIsDisplayed()
         compose.activityRule.scenario.recreate()
-        compose.onNodeWithText("Back to Home").assertIsDisplayed()
+        compose.onNodeWithText("Back").assertIsDisplayed()
+        pressBack()
+        compose.onNodeWithText("USD / EGP").assertIsDisplayed()
+    }
+
+    @Test fun walletTabSurvivesActivityRecreationAndSystemBackReturnsHome() {
+        compose.onNodeWithText("Wallet").performClick()
+        compose.onNodeWithText("My wallet").assertIsDisplayed()
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithText("My wallet").assertIsDisplayed()
         pressBack()
         compose.onNodeWithText("USD / EGP").assertIsDisplayed()
     }

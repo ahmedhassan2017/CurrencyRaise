@@ -6,6 +6,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import com.example.currencyraise.data.local.PermissionHistoryMigration
 import java.io.File
 import com.example.currencyraise.data.local.RateCache
+import com.example.currencyraise.data.local.SavingsStore
 import com.example.currencyraise.data.local.SettingsStore
 import dagger.Module
 import dagger.Provides
@@ -23,6 +24,12 @@ internal object StorageModule {
     @Singleton
     fun provideRateCache(@ApplicationContext context: Context): RateCache = RateCache(
         PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("latest_rate") }
+    )
+
+    @Provides
+    @Singleton
+    fun provideSavingsStore(@ApplicationContext context: Context): SavingsStore = SavingsStore(
+        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("savings") }
     )
 
     @Provides

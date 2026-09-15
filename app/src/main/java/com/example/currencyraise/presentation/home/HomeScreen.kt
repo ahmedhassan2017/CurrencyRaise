@@ -49,7 +49,11 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
-fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
+fun HomeRoute(
+    viewModel: HomeViewModel,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val owner = LocalLifecycleOwner.current
     LaunchedEffect(owner, viewModel) {
@@ -68,6 +72,7 @@ fun HomeRoute(viewModel: HomeViewModel, onOpenSettings: () -> Unit) {
         onOpenSettings = onOpenSettings,
         onSelectBank = viewModel::selectBank,
         onRetryHistory = viewModel::retryHistory,
+        modifier = modifier,
         onOpenSource = { url ->
             try {
                 require(url.toUri().scheme == "https")
@@ -112,7 +117,9 @@ fun HomeScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets.safeDrawing,
+        contentWindowInsets = WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Top,
+        ),
     ) { insets ->
         Column(
             modifier = Modifier
