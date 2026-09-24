@@ -20,7 +20,7 @@
     <string name="gold_checking">جارٍ التحقق من أسعار الذهب…</string>
     <string name="gold_refresh">تحديث سعر الذهب</string>
     <string name="gold_check_due">سعر ذهب محفوظ · حان تحقق الخمس دقائق</string>
-    <string name="gold_foreground_refresh_note">يُفحص سعر الذهب تلقائيًا بحد أقصى مرة كل خمس دقائق أثناء فتح هذا التبويب. ويمكنك التحديث يدويًا دائمًا.</string>
+    <string name="gold_foreground_refresh_note">يتبع الذهب فترة التحقق التلقائي المشتركة أثناء فتح هذا التبويب. ويمكنك التحديث يدويًا دائمًا.</string>
     <string name="gold_details_title">تفاصيل سعر الذهب</string>
     <string name="gold_source_note">سعر محلي من تجار الذهب في مصر مقدّم عبر تعويم. لا يشمل مصنعية المشغولات وقد يختلف بين البائعين.</string>
     <string name="gold_cache_read_failed">تعذرت قراءة أسعار الذهب المحفوظة. حاول مجددًا لإعادة الاتصال بالتخزين.</string>
@@ -188,6 +188,19 @@
     <string name="history_previous">النقطة السابقة</string>
     <string name="history_next">النقطة التالية</string>
     <string name="history_observed_note">سُجلت أسعار الشراء على هذا الجهاز عند نجاح التحقق. تُترك فجوات عندما تزيد المدة عن ضعف فترة التحقق. لا تتم إضافة أسعار سابقة افتراضيًا.</string>
+    <string name="gold_history_buy_rate_only">سعر شراء التاجر · جنيه لكل جرام</string>
+    <string name="gold_history_latest_buy">أحدث سعر شراء للتاجر</string>
+    <string name="gold_history_rate_value">%1$s جنيه لكل جرام</string>
+    <string name="gold_history_axis_unit">سعر شراء التاجر · وقت التحقق المحلي</string>
+    <plurals name="gold_history_chart_description">
+        <item quantity="zero">%1$d مشاهدات. سعر شراء التاجر: من %2$s إلى %3$s جنيه لكل جرام.</item>
+        <item quantity="one">مشاهدة واحدة. سعر شراء التاجر: من %2$s إلى %3$s جنيه لكل جرام.</item>
+        <item quantity="two">مشاهدتان. سعر شراء التاجر: من %2$s إلى %3$s جنيه لكل جرام.</item>
+        <item quantity="few">%1$d مشاهدات. سعر شراء التاجر: من %2$s إلى %3$s جنيه لكل جرام.</item>
+        <item quantity="many">%1$d مشاهدة. سعر شراء التاجر: من %2$s إلى %3$s جنيه لكل جرام.</item>
+        <item quantity="other">%1$d مشاهدة. سعر شراء التاجر: من %2$s إلى %3$s جنيه لكل جرام.</item>
+    </plurals>
+    <string name="gold_history_observed_note">تُسجّل أسعار شراء التاجر للعيار المحدد على هذا الجهاز عند نجاح التحقق. تُترك فجوات عندما تزيد المدة عن ضعف فترة التحقق المشتركة. لا تتم إضافة أسعار سابقة افتراضيًا.</string>
 
     <string name="settings_title">الإعدادات</string>
     <string name="back_home">رجوع</string>

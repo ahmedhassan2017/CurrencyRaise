@@ -116,6 +116,7 @@ fun HomeRoute(
             onOpenSource = openSource,
             onOpenSettings = onOpenSettings,
             onSelectMarket = { selectedMarket = it },
+            onRetryHistory = goldViewModel::retryHistory,
             modifier = modifier,
         )
     }

@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.domain.model.GoldRate
+import com.example.currencyraise.domain.model.RateObservation
+import com.example.currencyraise.domain.model.toObservation
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDateTime
@@ -22,9 +24,23 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
 
     suspend fun read(karat: GoldKarat): GoldRate? = observe(karat).first()
 
+    fun observeHistory(karat: GoldKarat): Flow<List<RateObservation>> =
+        store.data.map { decodeHistory(it, karat) }.distinctUntilChanged()
+
+    suspend fun readHistory(karat: GoldKarat): List<RateObservation> = observeHistory(karat).first()
+
     suspend fun save(rate: GoldRate) {
         store.edit { prefs ->
             val keys = keys(rate.karat)
+            val previous = decode(prefs, rate.karat)
+            val history = if (previous != null && previous.sourceName == rate.sourceName) {
+                decodeHistory(prefs, rate.karat)
+            } else {
+                emptyList()
+            }
+            prefs[keys.history] = RateHistory.encode(
+                RateHistory.append(history, rate.toObservation())
+            )
             prefs[keys.version] = 1
             prefs[keys.buy] = rate.buyRate.toPlainString()
             prefs[keys.sell] = rate.sellRate.toPlainString()
@@ -33,6 +49,17 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
             prefs[keys.fetched] = rate.fetchedAt.toString()
             rate.sourceDisplayedAt?.let { prefs[keys.displayed] = it.toString() }
                 ?: prefs.remove(keys.displayed)
+        }
+    }
+
+    private fun decodeHistory(prefs: Preferences, karat: GoldKarat): List<RateObservation> {
+        val keys = keys(karat)
+        val latest = decode(prefs, karat) ?: return emptyList()
+        try {
+            // Existing installs begin with the real saved quote; earlier prices are never invented.
+            return prefs[keys.history]?.let(RateHistory::decode) ?: listOf(latest.toObservation())
+        } catch (error: ClassCastException) {
+            throw IOException("Invalid saved gold history field type", error)
         }
     }
 
@@ -75,6 +102,7 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
             stringPreferencesKey("${prefix}_source_url"),
             stringPreferencesKey("${prefix}_source_displayed_at"),
             stringPreferencesKey("${prefix}_fetched_at"),
+            stringPreferencesKey("${prefix}_observed_history_v1"),
         )
     }
 
@@ -86,5 +114,6 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
         val sourceUrl: Preferences.Key<String>,
         val displayed: Preferences.Key<String>,
         val fetched: Preferences.Key<String>,
+        val history: Preferences.Key<String>,
     )
 }

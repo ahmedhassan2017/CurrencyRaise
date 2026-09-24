@@ -27,6 +27,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,6 +47,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.os.ConfigurationCompat
@@ -55,6 +57,8 @@ import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.presentation.components.CurrencyPanel
 import com.example.currencyraise.presentation.components.CurrencyRaiseHeader
 import com.example.currencyraise.presentation.home.HomeError
+import com.example.currencyraise.presentation.home.HistoryMarket
+import com.example.currencyraise.presentation.home.RateHistoryChart
 import com.example.currencyraise.presentation.home.formatFetchTime
 import com.example.currencyraise.presentation.home.formatRate
 import com.example.currencyraise.presentation.home.formatSourceTime
@@ -71,12 +75,14 @@ fun GoldScreen(
     onOpenSource: (String) -> Unit,
     onOpenSettings: () -> Unit,
     onSelectMarket: (MarketTab) -> Unit,
+    onRetryHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val configuration = LocalConfiguration.current
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
     val zone = ZoneId.systemDefault()
     var showDetails by rememberSaveable(state.karat) { mutableStateOf(false) }
+    var showHistory by rememberSaveable(state.karat) { mutableStateOf(false) }
     var storageHelp by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -184,6 +190,30 @@ fun GoldScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+            val historyState = stringResource(
+                if (showHistory) R.string.section_expanded else R.string.section_collapsed
+            )
+            OutlinedButton(
+                shape = MaterialTheme.shapes.small,
+                onClick = { showHistory = !showHistory },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .semantics { stateDescription = historyState },
+            ) {
+                Text(stringResource(if (showHistory) R.string.hide_rate_history else R.string.show_rate_history))
+            }
+            if (showHistory) {
+                RateHistoryChart(
+                    history = state.history,
+                    now = state.now,
+                    locale = locale,
+                    zone = zone,
+                    intervalMinutes = state.updateInterval.minutes,
+                    loading = state.loadingHistory,
+                    readFailed = state.historyReadFailed,
+                    onRetry = onRetryHistory,
+                    market = HistoryMarket.GOLD,
                 )
             }
             Text(

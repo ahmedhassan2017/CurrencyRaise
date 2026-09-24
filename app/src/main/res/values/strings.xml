@@ -19,7 +19,7 @@
     <string name="gold_checking">Checking gold rates…</string>
     <string name="gold_refresh">Refresh gold rate</string>
     <string name="gold_check_due">Saved gold rate · A new five-minute check is due</string>
-    <string name="gold_foreground_refresh_note">Gold automatically checks at most once every five minutes while this tab is open. Manual refresh is always available.</string>
+    <string name="gold_foreground_refresh_note">Gold follows the shared automatic check interval while this tab is open. Manual refresh is always available.</string>
     <string name="gold_details_title">Gold rate details</string>
     <string name="gold_source_note">Local Egyptian dealer rate supplied by Ta3weem. It excludes jewelry workmanship and can differ between sellers.</string>
     <string name="gold_cache_read_failed">Saved gold rates could not be read. Try again to reconnect to storage.</string>

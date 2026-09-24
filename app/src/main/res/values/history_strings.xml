@@ -31,4 +31,13 @@
     <string name="history_previous">Previous point</string>
     <string name="history_next">Next point</string>
     <string name="history_observed_note">Buy rates recorded on this device when checks succeed. Gaps longer than twice your check interval are left open. Earlier prices are not backfilled.</string>
+    <string name="gold_history_buy_rate_only">Dealer buy rate · EGP per gram</string>
+    <string name="gold_history_latest_buy">Latest dealer buy rate</string>
+    <string name="gold_history_rate_value">%1$s EGP per gram</string>
+    <string name="gold_history_axis_unit">Dealer buy rate · Local check time</string>
+    <plurals name="gold_history_chart_description">
+        <item quantity="one">%1$d observation. Dealer buy rate: %2$s to %3$s EGP per gram.</item>
+        <item quantity="other">%1$d observations. Dealer buy rate: %2$s to %3$s EGP per gram.</item>
+    </plurals>
+    <string name="gold_history_observed_note">Dealer buy rates for the selected karat, recorded on this device when checks succeed. Gaps longer than twice your shared check interval are left open. Earlier prices are not backfilled.</string>
 </resources>

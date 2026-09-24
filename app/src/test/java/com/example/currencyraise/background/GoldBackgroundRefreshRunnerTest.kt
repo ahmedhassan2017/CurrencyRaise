@@ -7,6 +7,7 @@ import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.domain.model.GoldRate
 import com.example.currencyraise.domain.model.GoldRefreshOutcome
+import com.example.currencyraise.domain.model.RateObservation
 import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.domain.repository.GoldRateRepository
 import com.example.currencyraise.notification.GoldChangeAlerts
@@ -55,6 +56,7 @@ class GoldBackgroundRefreshRunnerTest {
         var changed = false
 
         override fun observeLatest(karat: GoldKarat) = flowOf<GoldRate?>(null)
+        override fun observeHistory(karat: GoldKarat) = flowOf<List<RateObservation>>(emptyList())
 
         override suspend fun refresh(karat: GoldKarat, minimumAge: Duration): GoldRefreshOutcome {
             calls += karat

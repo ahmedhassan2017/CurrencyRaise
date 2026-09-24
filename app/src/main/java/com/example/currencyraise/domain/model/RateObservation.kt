@@ -9,3 +9,4 @@ data class RateObservation(val observedAt: Instant, val buyRate: BigDecimal, val
 }
 
 fun ExchangeRate.toObservation() = RateObservation(fetchedAt, buyRate, sellRate)
+fun GoldRate.toObservation() = RateObservation(fetchedAt, buyRate, sellRate)

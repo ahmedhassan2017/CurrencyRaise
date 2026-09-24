@@ -6,6 +6,11 @@ import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.domain.model.GoldRate
 import com.example.currencyraise.domain.model.GoldRefreshOutcome
 import com.example.currencyraise.domain.model.RateChange
+import com.example.currencyraise.domain.model.RateObservation
+import com.example.currencyraise.domain.model.UpdateInterval
+import com.example.currencyraise.data.FaultablePreferences
+import com.example.currencyraise.data.local.SettingsStore
+import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.repository.GoldRateRepository
 import java.math.BigDecimal
 import java.time.Clock
@@ -35,6 +40,9 @@ class GoldViewModelTest {
     private val owner = ViewModelStore()
     private val clock = MutableClock(Instant.parse("2026-09-25T00:35:00Z"))
     private val repository = FakeGoldRepository()
+    private val settings = DefaultSettingsRepository(
+        SettingsStore(FaultablePreferences(), FaultablePreferences())
+    )
 
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
     @After fun tearDown() { owner.clear(); Dispatchers.resetMain() }
@@ -50,6 +58,7 @@ class GoldViewModelTest {
     }
 
     @Test fun foregroundCheckUsesFiveMinuteCacheFloor() = runTest(dispatcher) {
+        settings.setUpdateInterval(UpdateInterval.FIVE_MINUTES)
         repository.saved.getValue(GoldKarat.K21).value = rate()
         val viewModel = create()
         runCurrent()
@@ -78,7 +87,22 @@ class GoldViewModelTest {
         assertFalse(viewModel.uiState.value.loadingCache)
     }
 
-    private fun create() = GoldViewModel(repository, clock, SavedStateHandle()).also {
+    @Test fun switchingKaratLoadsOnlyItsIndependentHistory() = runTest(dispatcher) {
+        val k21 = RateObservation(clock.current, BigDecimal("6205"), BigDecimal("6225"))
+        val k24 = RateObservation(clock.current, BigDecimal("7091"), BigDecimal("7114"))
+        repository.history.getValue(GoldKarat.K21).value = listOf(k21)
+        repository.history.getValue(GoldKarat.K24).value = listOf(k24)
+        val viewModel = create()
+        runCurrent()
+        assertEquals(listOf(k21), viewModel.uiState.value.history)
+
+        viewModel.selectKarat(GoldKarat.K24)
+        assertTrue(viewModel.uiState.value.history.isEmpty())
+        runCurrent()
+        assertEquals(listOf(k24), viewModel.uiState.value.history)
+    }
+
+    private fun create() = GoldViewModel(repository, settings, clock, SavedStateHandle()).also {
         owner.put("gold", it)
     }
 
@@ -97,10 +121,12 @@ class GoldViewModelTest {
 
     private inner class FakeGoldRepository : GoldRateRepository {
         val saved = GoldKarat.entries.associateWith { MutableStateFlow<GoldRate?>(null) }
+        val history = GoldKarat.entries.associateWith { MutableStateFlow<List<RateObservation>>(emptyList()) }
         val minimumAges = mutableListOf<Duration>()
         var calls = 0
 
         override fun observeLatest(karat: GoldKarat) = saved.getValue(karat)
+        override fun observeHistory(karat: GoldKarat) = history.getValue(karat)
 
         override suspend fun refresh(karat: GoldKarat, minimumAge: Duration): GoldRefreshOutcome {
             calls++

@@ -50,6 +50,8 @@ import java.time.ZoneId
 import java.util.Locale
 import kotlin.math.abs
 
+internal enum class HistoryMarket { DOLLAR, GOLD }
+
 @Composable
 internal fun RateHistoryChart(
     history: List<RateObservation>,
@@ -60,10 +62,15 @@ internal fun RateHistoryChart(
     loading: Boolean,
     readFailed: Boolean,
     onRetry: () -> Unit,
+    market: HistoryMarket = HistoryMarket.DOLLAR,
 ) {
     var period by rememberSaveable { mutableStateOf(ChartPeriod.DAILY) }
     val data = remember(history, period, now) { rateChartData(history, period, now) }
-    val lineColor = MaterialTheme.colorScheme.primary
+    val lineColor = if (market == HistoryMarket.GOLD) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
 
     CurrencyPanel {
         Text(
@@ -72,7 +79,10 @@ internal fun RateHistoryChart(
             modifier = Modifier.semantics { heading() },
         )
         Text(
-            text = stringResource(R.string.history_buy_rate_only),
+            text = stringResource(
+                if (market == HistoryMarket.GOLD) R.string.gold_history_buy_rate_only
+                else R.string.history_buy_rate_only,
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -108,7 +118,7 @@ internal fun RateHistoryChart(
             loading -> Text(stringResource(R.string.history_loading))
             data.points.isEmpty() -> Text(stringResource(R.string.history_empty))
             else -> {
-                HistorySummary(data, period, locale)
+                HistorySummary(data, period, locale, market)
                 ChartPlot(
                     data = data,
                     lineColor = lineColor,
@@ -116,6 +126,7 @@ internal fun RateHistoryChart(
                     zone = zone,
                     period = period,
                     maximumGap = Duration.ofMinutes(intervalMinutes.coerceAtLeast(5) * 2L),
+                    market = market,
                 )
                 if (data.points.size == 1) {
                     Text(stringResource(R.string.history_single), style = MaterialTheme.typography.bodySmall)
@@ -133,7 +144,10 @@ internal fun RateHistoryChart(
             }
         }
         Text(
-            text = stringResource(R.string.history_observed_note),
+            text = stringResource(
+                if (market == HistoryMarket.GOLD) R.string.gold_history_observed_note
+                else R.string.history_observed_note,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -141,11 +155,26 @@ internal fun RateHistoryChart(
 }
 
 @Composable
-private fun HistorySummary(data: RateChartData, period: ChartPeriod, locale: Locale) {
+private fun HistorySummary(
+    data: RateChartData,
+    period: ChartPeriod,
+    locale: Locale,
+    market: HistoryMarket,
+) {
     val latest = data.points.last()
+    val containerColor = if (market == HistoryMarket.GOLD) {
+        MaterialTheme.colorScheme.tertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = if (market == HistoryMarket.GOLD) {
+        MaterialTheme.colorScheme.onTertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        color = containerColor,
+        contentColor = contentColor,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -154,11 +183,18 @@ private fun HistorySummary(data: RateChartData, period: ChartPeriod, locale: Loc
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = stringResource(R.string.history_latest_buy),
+                text = stringResource(
+                    if (market == HistoryMarket.GOLD) R.string.gold_history_latest_buy
+                    else R.string.history_latest_buy,
+                ),
                 style = MaterialTheme.typography.labelLarge,
             )
             Text(
-                text = stringResource(R.string.history_rate_value, formatRate(latest.buyRate, locale)),
+                text = stringResource(
+                    if (market == HistoryMarket.GOLD) R.string.gold_history_rate_value
+                    else R.string.history_rate_value,
+                    formatRate(latest.buyRate, locale),
+                ),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
             )
@@ -197,6 +233,7 @@ private fun ChartPlot(
     zone: ZoneId,
     period: ChartPeriod,
     maximumGap: Duration,
+    market: HistoryMarket,
 ) {
     val outline = MaterialTheme.colorScheme.outlineVariant
     val surface = MaterialTheme.colorScheme.surface
@@ -204,7 +241,8 @@ private fun ChartPlot(
     val selected = data.points[selectedIndex]
     val segments = remember(data.points, maximumGap) { data.points.contiguousSegments(maximumGap) }
     val summary = pluralStringResource(
-        R.plurals.history_chart_description,
+        if (market == HistoryMarket.GOLD) R.plurals.gold_history_chart_description
+        else R.plurals.history_chart_description,
         data.points.size,
         data.points.size,
         formatRate(data.points.first().buyRate, locale),
@@ -215,7 +253,10 @@ private fun ChartPlot(
     }
 
     Text(
-        text = stringResource(R.string.history_axis_unit),
+        text = stringResource(
+            if (market == HistoryMarket.GOLD) R.string.gold_history_axis_unit
+            else R.string.history_axis_unit,
+        ),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -339,7 +380,11 @@ private fun ChartPlot(
             ) {
                 Text(stringResource(R.string.history_selected_point), style = MaterialTheme.typography.labelMedium)
                 Text(
-                    stringResource(R.string.history_rate_value, formatRate(selected.buyRate, locale)),
+                    stringResource(
+                        if (market == HistoryMarket.GOLD) R.string.gold_history_rate_value
+                        else R.string.history_rate_value,
+                        formatRate(selected.buyRate, locale),
+                    ),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )

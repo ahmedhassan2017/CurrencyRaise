@@ -9,6 +9,7 @@ import com.example.currencyraise.domain.model.RateFetchError
 import com.example.currencyraise.domain.model.RefreshError
 import com.example.currencyraise.domain.model.StorageReadException
 import com.example.currencyraise.domain.repository.GoldRateRepository
+import com.example.currencyraise.domain.repository.SettingsRepository
 import com.example.currencyraise.presentation.home.HomeError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class GoldViewModel @Inject constructor(
     private val repository: GoldRateRepository,
+    private val settings: SettingsRepository,
     private val clock: Clock,
     private val savedState: SavedStateHandle,
 ) : ViewModel() {
@@ -32,13 +34,18 @@ class GoldViewModel @Inject constructor(
     private val mutableState = MutableStateFlow(GoldUiState(karat = restoredKarat, now = clock.instant()))
     val uiState = mutableState.asStateFlow()
     private var observation: Job? = null
+    private var historyObservation: Job? = null
+    private var settingsObservation: Job? = null
     private var refreshJob: Job? = null
     private var session = 0
     private var initialCheckPending = true
     private var active = false
+    private var settingsLoaded = false
 
     init {
         observeRate()
+        observeHistory()
+        observeSettings()
     }
 
     fun selectKarat(karat: GoldKarat) {
@@ -46,24 +53,33 @@ class GoldViewModel @Inject constructor(
         session++
         refreshJob?.cancel()
         observation?.cancel()
+        historyObservation?.cancel()
         savedState["gold_karat"] = karat.name
         initialCheckPending = true
-        mutableState.value = GoldUiState(karat = karat, now = clock.instant())
+        val updateInterval = mutableState.value.updateInterval
+        mutableState.value = GoldUiState(
+            karat = karat,
+            now = clock.instant(),
+            updateInterval = updateInterval,
+        )
         observeRate()
+        observeHistory()
     }
 
     fun refresh() = startRefresh(Duration.ZERO)
+
+    fun retryHistory() = observeHistory()
 
     fun setActive(value: Boolean) {
         active = value
         if (value) maybeInitialRefresh()
     }
 
-    /** Called only while the Gold tab is visible; the repository enforces the five-minute floor. */
+    /** Called only while the Gold tab is visible; the saved shared interval limits provider calls. */
     fun refreshIfDue() {
         mutableState.update { it.copy(now = clock.instant()) }
         if (mutableState.value.freshness != GoldFreshness.RECENT_CHECK) {
-            startRefresh(GOLD_CHECK_INTERVAL)
+            startRefresh(mutableState.value.updateInterval.duration)
         }
     }
 
@@ -95,12 +111,56 @@ class GoldViewModel @Inject constructor(
         }
     }
 
+    private fun observeHistory() {
+        historyObservation?.cancel()
+        val karat = mutableState.value.karat
+        val expectedSession = session
+        historyObservation = viewModelScope.launch {
+            try {
+                repository.observeHistory(karat).collect { history ->
+                    if (session != expectedSession) return@collect
+                    mutableState.update {
+                        it.copy(
+                            history = history,
+                            loadingHistory = false,
+                            historyReadFailed = false,
+                        )
+                    }
+                }
+            } catch (_: StorageReadException) {
+                if (session != expectedSession) return@launch
+                mutableState.update {
+                    it.copy(loadingHistory = false, historyReadFailed = true)
+                }
+            }
+        }
+    }
+
     private fun maybeInitialRefresh() {
         val state = mutableState.value
-        if (!active || !initialCheckPending || state.loadingCache) return
+        if (!active || !initialCheckPending || state.loadingCache || !settingsLoaded) return
         initialCheckPending = false
         if (!state.rateReadFailed && state.freshness != GoldFreshness.RECENT_CHECK) {
-            startRefresh(GOLD_CHECK_INTERVAL)
+            startRefresh(state.updateInterval.duration)
+        }
+    }
+
+    private fun observeSettings() {
+        settingsObservation?.cancel()
+        settingsObservation = viewModelScope.launch {
+            try {
+                settings.observeSettings().collect { appSettings ->
+                    settingsLoaded = true
+                    mutableState.update {
+                        it.copy(updateInterval = appSettings.updateInterval, now = clock.instant())
+                    }
+                    maybeInitialRefresh()
+                }
+            } catch (_: StorageReadException) {
+                // Keep the safe one-hour default when preferences cannot be read.
+                settingsLoaded = true
+                maybeInitialRefresh()
+            }
         }
     }
 

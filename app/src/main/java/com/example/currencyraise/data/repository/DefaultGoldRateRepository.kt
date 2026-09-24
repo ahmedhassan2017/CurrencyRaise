@@ -33,6 +33,11 @@ internal class DefaultGoldRateRepository(
         throw error
     }
 
+    override fun observeHistory(karat: GoldKarat) = cache.observeHistory(karat).catch { error ->
+        if (error is IOException) throw StorageReadException(error)
+        throw error
+    }
+
     override suspend fun refresh(karat: GoldKarat, minimumAge: Duration): GoldRefreshOutcome {
         require(!minimumAge.isNegative)
         val lock = refreshLocks.getValue(karat)
