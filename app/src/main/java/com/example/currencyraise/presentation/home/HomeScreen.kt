@@ -43,6 +43,10 @@ import com.example.currencyraise.domain.model.RateMovement
 import com.example.currencyraise.domain.model.RateDirection
 import com.example.currencyraise.presentation.components.CurrencyPanel
 import com.example.currencyraise.presentation.components.CurrencyRaiseHeader
+import com.example.currencyraise.presentation.gold.GoldScreen
+import com.example.currencyraise.presentation.gold.GoldViewModel
+import com.example.currencyraise.presentation.market.MarketTab
+import com.example.currencyraise.presentation.market.MarketTabs
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
 import java.time.ZoneId
 import java.util.Locale
@@ -51,29 +55,29 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeRoute(
     viewModel: HomeViewModel,
+    goldViewModel: GoldViewModel,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val goldState by goldViewModel.uiState.collectAsStateWithLifecycle()
+    var selectedMarket by rememberSaveable { mutableStateOf(MarketTab.DOLLAR) }
     val owner = LocalLifecycleOwner.current
-    LaunchedEffect(owner, viewModel) {
+    LaunchedEffect(selectedMarket, goldViewModel) {
+        goldViewModel.setActive(selectedMarket == MarketTab.GOLD)
+    }
+    LaunchedEffect(owner, viewModel, goldViewModel, selectedMarket) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
                 viewModel.updateDisplayTime()
+                if (selectedMarket == MarketTab.GOLD) goldViewModel.refreshIfDue()
                 delay(60_000)
             }
         }
     }
     val handler = LocalUriHandler.current
     var linkFailed by rememberSaveable { mutableStateOf(false) }
-    HomeScreen(
-        state = state,
-        onRefresh = viewModel::refresh,
-        onOpenSettings = onOpenSettings,
-        onSelectBank = viewModel::selectBank,
-        onRetryHistory = viewModel::retryHistory,
-        modifier = modifier,
-        onOpenSource = { url ->
+    val openSource: (String) -> Unit = { url ->
             try {
                 require(url.toUri().scheme == "https")
                 handler.openUri(url)
@@ -82,8 +86,29 @@ fun HomeRoute(
             } catch (_: IllegalArgumentException) {
                 linkFailed = true
             }
-        },
-    )
+        }
+    when (selectedMarket) {
+        MarketTab.DOLLAR -> HomeScreen(
+            state = state,
+            onRefresh = viewModel::refresh,
+            onOpenSettings = onOpenSettings,
+            onSelectBank = viewModel::selectBank,
+            onRetryHistory = viewModel::retryHistory,
+            onOpenSource = openSource,
+            selectedMarket = selectedMarket,
+            onSelectMarket = { selectedMarket = it },
+            modifier = modifier,
+        )
+        MarketTab.GOLD -> GoldScreen(
+            state = goldState,
+            onRefresh = goldViewModel::refresh,
+            onSelectKarat = goldViewModel::selectKarat,
+            onOpenSource = openSource,
+            onOpenSettings = onOpenSettings,
+            onSelectMarket = { selectedMarket = it },
+            modifier = modifier,
+        )
+    }
     if (linkFailed) {
         AlertDialog(
             onDismissRequest = { linkFailed = false },
@@ -105,6 +130,8 @@ fun HomeScreen(
     onOpenSettings: () -> Unit = {},
     onSelectBank: (Bank) -> Unit = {},
     onRetryHistory: () -> Unit = {},
+    selectedMarket: MarketTab = MarketTab.DOLLAR,
+    onSelectMarket: (MarketTab) -> Unit = {},
 ) {
     val configuration = LocalConfiguration.current
     val locale = ConfigurationCompat.getLocales(configuration)[0] ?: Locale.US
@@ -134,6 +161,7 @@ fun HomeScreen(
                 actionLabel = stringResource(R.string.settings_title),
                 onAction = onOpenSettings,
             )
+            MarketTabs(selectedMarket, onSelectMarket)
 
             Text(stringResource(R.string.select_bank), style = MaterialTheme.typography.labelLarge)
             FlowRow(

@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ارتفاع العملة</string>
+    <string name="market_dollar">الدولار</string>
+    <string name="market_gold">الذهب</string>
+    <string name="gold_select_karat">اختر عيار الذهب</string>
+    <string name="gold_24k">عيار 24</string>
+    <string name="gold_21k">عيار 21</string>
+    <string name="gold_18k">عيار 18</string>
+    <string name="gold_pair">ذهب %1$s / جنيه</string>
+    <string name="gold_unit">جنيه مصري لكل جرام</string>
+    <string name="gold_source_ta3weem">سوق الذهب عبر تعويم</string>
+    <string name="gold_dealer_buys">التاجر يشتري</string>
+    <string name="gold_dealer_sells">التاجر يبيع</string>
+    <string name="gold_you_sell">ج.م/جرام · أنت تبيع الذهب</string>
+    <string name="gold_you_buy">ج.م/جرام · أنت تشتري الذهب</string>
+    <string name="gold_loading_first">جارٍ الحصول على أول سعر للذهب</string>
+    <string name="gold_no_saved_rate">لا يوجد سعر ذهب محفوظ بعد</string>
+    <string name="gold_fetching_first">جارٍ التحقق من سوق الذهب المحدد عبر تعويم…</string>
+    <string name="gold_checking">جارٍ التحقق من أسعار الذهب…</string>
+    <string name="gold_refresh">تحديث سعر الذهب</string>
+    <string name="gold_check_due">سعر ذهب محفوظ · حان تحقق الخمس دقائق</string>
+    <string name="gold_foreground_refresh_note">يُفحص سعر الذهب تلقائيًا بحد أقصى مرة كل خمس دقائق أثناء فتح هذا التبويب. ويمكنك التحديث يدويًا دائمًا.</string>
+    <string name="gold_details_title">تفاصيل سعر الذهب</string>
+    <string name="gold_source_note">سعر محلي من تجار الذهب في مصر مقدّم عبر تعويم. لا يشمل مصنعية المشغولات وقد يختلف بين البائعين.</string>
+    <string name="gold_cache_read_failed">تعذرت قراءة أسعار الذهب المحفوظة. حاول مجددًا لإعادة الاتصال بالتخزين.</string>
     <string name="source_cash">%1$s · أسعار النقد</string>
     <string name="source_bank_rates">%1$s · أسعار البنك</string>
     <string name="select_bank">اختر البنك</string>

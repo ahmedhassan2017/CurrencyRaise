@@ -1,5 +1,28 @@
 <resources>
     <string name="app_name">Currency Raise</string>
+    <string name="market_dollar">Dollar</string>
+    <string name="market_gold">Gold</string>
+    <string name="gold_select_karat">Select gold karat</string>
+    <string name="gold_24k">24K</string>
+    <string name="gold_21k">21K</string>
+    <string name="gold_18k">18K</string>
+    <string name="gold_pair">%1$s gold / EGP</string>
+    <string name="gold_unit">Egyptian pounds per gram</string>
+    <string name="gold_source_ta3weem">Ta3weem gold market</string>
+    <string name="gold_dealer_buys">Dealer buys</string>
+    <string name="gold_dealer_sells">Dealer sells</string>
+    <string name="gold_you_sell">EGP/g · You sell gold</string>
+    <string name="gold_you_buy">EGP/g · You buy gold</string>
+    <string name="gold_loading_first">Getting your first gold quote</string>
+    <string name="gold_no_saved_rate">No saved gold rate yet</string>
+    <string name="gold_fetching_first">Checking the selected Ta3weem gold market…</string>
+    <string name="gold_checking">Checking gold rates…</string>
+    <string name="gold_refresh">Refresh gold rate</string>
+    <string name="gold_check_due">Saved gold rate · A new five-minute check is due</string>
+    <string name="gold_foreground_refresh_note">Gold automatically checks at most once every five minutes while this tab is open. Manual refresh is always available.</string>
+    <string name="gold_details_title">Gold rate details</string>
+    <string name="gold_source_note">Local Egyptian dealer rate supplied by Ta3weem. It excludes jewelry workmanship and can differ between sellers.</string>
+    <string name="gold_cache_read_failed">Saved gold rates could not be read. Try again to reconnect to storage.</string>
     <string name="currency_pair" translatable="false">USD / EGP</string>
     <string name="source_cash">%1$s · Cash rates</string>
     <string name="source_bank_rates">%1$s · Bank rates</string>

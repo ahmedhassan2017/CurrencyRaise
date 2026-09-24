@@ -27,6 +27,7 @@ import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.presentation.home.HomeRoute
 import com.example.currencyraise.presentation.home.HomeViewModel
+import com.example.currencyraise.presentation.gold.GoldViewModel
 import com.example.currencyraise.presentation.settings.SettingsRoute
 import com.example.currencyraise.presentation.settings.SettingsViewModel
 import com.example.currencyraise.presentation.wallet.WalletRoute
@@ -48,6 +49,7 @@ private enum class MainTab { HOME, WALLET }
 fun CurrencyRaiseApp(initialBank: Bank? = null) {
     val backStack = rememberNavBackStack(HomeRouteKey)
     val home: HomeViewModel = viewModel()
+    val gold: GoldViewModel = viewModel()
     val wallet: WalletViewModel = viewModel()
     val settings: SettingsViewModel = viewModel()
     var initialBankApplied by rememberSaveable { mutableStateOf(false) }
@@ -117,6 +119,7 @@ fun CurrencyRaiseApp(initialBank: Bank? = null) {
                 entry<HomeRouteKey> {
                     HomeRoute(
                         viewModel = home,
+                        goldViewModel = gold,
                         onOpenSettings = { backStack.add(SettingsRouteKey) },
                     )
                 }
