@@ -16,7 +16,9 @@ import com.example.currencyraise.presentation.navigation.CurrencyRaiseApp
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
 import dagger.hilt.android.AndroidEntryPoint
 import com.example.currencyraise.domain.model.Bank
+import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.domain.repository.SettingsRepository
+import com.example.currencyraise.presentation.market.MarketTab
 import javax.inject.Inject
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -29,6 +31,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val initialBank = Bank.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_BANK) }
+            val initialMarket = MarketTab.entries.firstOrNull {
+                it.name == intent.getStringExtra(EXTRA_MARKET)
+            } ?: MarketTab.DOLLAR
+            val initialGoldKarat = GoldKarat.entries.firstOrNull {
+                it.name == intent.getStringExtra(EXTRA_GOLD_KARAT)
+            }
             val appearanceFlow = remember(settingsRepository) {
                 settingsRepository.observeSettings()
                     .map { it.appearanceMode }
@@ -40,9 +48,15 @@ class MainActivity : AppCompatActivity() {
                 val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme }
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             }
-            CurrencyRaiseTheme(darkTheme = darkTheme) { CurrencyRaiseApp(initialBank) }
+            CurrencyRaiseTheme(darkTheme = darkTheme) {
+                CurrencyRaiseApp(initialBank, initialMarket, initialGoldKarat)
+            }
         }
     }
 
-    companion object { const val EXTRA_BANK = "com.example.currencyraise.BANK" }
+    companion object {
+        const val EXTRA_BANK = "com.example.currencyraise.BANK"
+        const val EXTRA_MARKET = "com.example.currencyraise.MARKET"
+        const val EXTRA_GOLD_KARAT = "com.example.currencyraise.GOLD_KARAT"
+    }
 }

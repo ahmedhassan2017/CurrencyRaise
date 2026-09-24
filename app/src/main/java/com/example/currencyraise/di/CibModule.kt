@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.example.currencyraise.background.BackgroundRefreshRunner
 import com.example.currencyraise.background.BankBackgroundRefreshRunner
+import com.example.currencyraise.background.GoldBackgroundRefreshRunner
 import com.example.currencyraise.data.local.RateCache
 import com.example.currencyraise.data.local.SyncStateStore
 import com.example.currencyraise.data.remote.CibTa3weemRemoteSource
@@ -12,9 +13,11 @@ import com.example.currencyraise.data.repository.DefaultExchangeRateRepository
 import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.repository.BankRateRepositories
 import com.example.currencyraise.domain.repository.ExchangeRateRepository
+import com.example.currencyraise.domain.repository.GoldRateRepository
 import com.example.currencyraise.domain.repository.SettingsRepository
 import com.example.currencyraise.domain.repository.SyncStateRepository
 import com.example.currencyraise.notification.NotificationSink
+import com.example.currencyraise.notification.GoldChangeAlerts
 import com.example.currencyraise.notification.RateChangeAlerts
 import dagger.Module
 import dagger.Provides
@@ -59,8 +62,10 @@ internal object CibModule {
     fun background(
         settings: SettingsRepository, banks: BankRateRepositories,
         misrAlerts: RateChangeAlerts, @Cib state: SyncStateRepository, sink: NotificationSink,
+        goldRates: GoldRateRepository, goldAlerts: GoldChangeAlerts,
     ) = BankBackgroundRefreshRunner(listOf(
         BackgroundRefreshRunner(settings, banks[Bank.BANQUE_MISR], misrAlerts),
         BackgroundRefreshRunner(settings, banks[Bank.CIB], RateChangeAlerts(state, sink)),
+        GoldBackgroundRefreshRunner(settings, goldRates, goldAlerts),
     ))
 }

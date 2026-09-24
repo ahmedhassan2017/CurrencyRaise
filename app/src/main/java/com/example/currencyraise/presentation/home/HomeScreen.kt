@@ -37,6 +37,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.Bank
+import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.domain.model.QuoteKind
 import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.domain.model.RateMovement
@@ -56,12 +57,21 @@ import kotlinx.coroutines.delay
 fun HomeRoute(
     viewModel: HomeViewModel,
     goldViewModel: GoldViewModel,
+    initialMarket: MarketTab = MarketTab.DOLLAR,
+    initialGoldKarat: GoldKarat? = null,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val goldState by goldViewModel.uiState.collectAsStateWithLifecycle()
-    var selectedMarket by rememberSaveable { mutableStateOf(MarketTab.DOLLAR) }
+    var selectedMarket by rememberSaveable { mutableStateOf(initialMarket) }
+    var initialKaratApplied by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(initialGoldKarat) {
+        if (!initialKaratApplied) {
+            initialGoldKarat?.let(goldViewModel::selectKarat)
+            initialKaratApplied = true
+        }
+    }
     val owner = LocalLifecycleOwner.current
     LaunchedEffect(selectedMarket, goldViewModel) {
         goldViewModel.setActive(selectedMarket == MarketTab.GOLD)

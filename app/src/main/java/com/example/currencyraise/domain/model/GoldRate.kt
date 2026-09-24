@@ -26,7 +26,11 @@ sealed interface GoldFetchResult {
 }
 
 sealed interface GoldRefreshOutcome {
-    data class Success(val rate: GoldRate, val change: RateChange) : GoldRefreshOutcome
+    data class Success(
+        val rate: GoldRate,
+        val change: RateChange,
+        val previousRate: GoldRate? = null,
+    ) : GoldRefreshOutcome
     data class Cached(val rate: GoldRate) : GoldRefreshOutcome
     data class Failure(val error: RefreshError) : GoldRefreshOutcome
     data object AlreadyRefreshing : GoldRefreshOutcome

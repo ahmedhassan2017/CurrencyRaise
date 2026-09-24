@@ -4,8 +4,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-/** Both providers finish independently before deciding whether the worker needs a retry. */
-internal class BankBackgroundRefreshRunner(private val runners: List<BackgroundRefreshRunner>) {
+/** Every market provider finishes independently before deciding whether the worker needs a retry. */
+internal class BankBackgroundRefreshRunner(private val runners: List<BackgroundRateRunner>) {
     suspend fun run(attempt: Int): BackgroundResult = coroutineScope {
         val results = runners.map { runner -> async { runner.run(attempt) } }.awaitAll()
         when {

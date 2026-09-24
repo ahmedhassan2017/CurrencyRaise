@@ -16,11 +16,11 @@
     <string name="language_help">The app restarts this screen when you change its language.</string>
     <string name="background_section">Background updates</string>
     <string name="automatic_checks">Automatic checks</string>
-    <string name="automatic_preference_help">Check for new rates while the app is closed.</string>
+    <string name="automatic_preference_help">Check dollar and gold rates while the app is closed.</string>
     <string name="interval_approximate">Android may delay checks to save battery or wait for a connection. Intervals are approximate.</string>
     <string name="notifications_section">Notifications</string>
     <string name="rate_alerts">Rate change alerts</string>
-    <string name="rate_alerts_help">Notify when the bank’s buy or sell price changes. This preference is separate from Android permission.</string>
+    <string name="rate_alerts_help">Notify when a tracked dollar or gold buy/sell price changes. This preference is separate from Android permission.</string>
     <string name="android_notifications_allowed">Android allows notifications.</string>
     <string name="android_permission_needed">Android notification permission is needed.</string>
     <string name="android_notifications_blocked">Android has blocked this app’s notifications.</string>

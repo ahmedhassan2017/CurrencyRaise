@@ -1,9 +1,12 @@
 <resources>
-    <string name="rate_channel_name">Exchange Rate Updates</string>
-    <string name="rate_channel_description">Alerts when Banque Misr or CIB USD/EGP prices change.</string>
+    <string name="rate_channel_name">Dollar and Gold Rate Updates</string>
+    <string name="rate_channel_description">Alerts when tracked USD/EGP bank prices or Egyptian gold prices change.</string>
     <string name="rate_notification_title">%1$s: USD/EGP changed</string>
     <string name="rate_notification_body">Bank buys: %1$s · Bank sells: %2$s EGP per 1 USD. Open for source and check times.</string>
     <string name="rate_notification_expanded">Bank buys: %1$s EGP\nBank sells: %2$s EGP\nPer 1 USD. Change since the preceding saved check. Open for source and check times.</string>
+    <string name="gold_notification_title">%1$sK gold rate changed</string>
+    <string name="gold_notification_body">Dealer buys: %1$s · Dealer sells: %2$s EGP/g. Open to view the source and check time.</string>
+    <string name="gold_notification_expanded">Dealer buys: %1$s EGP/g\nDealer sells: %2$s EGP/g\nFor %3$sK gold. Change since the preceding saved check. Open to view the source and check time.</string>
     <string name="notification_direction_up">↑ Up %1$s</string>
     <string name="notification_direction_down">↓ Down %1$s</string>
     <string name="notification_price_direction">%1$s (%2$s)</string>

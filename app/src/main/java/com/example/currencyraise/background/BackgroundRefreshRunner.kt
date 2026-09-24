@@ -11,12 +11,16 @@ import kotlinx.coroutines.flow.first
 
 internal enum class BackgroundResult { COMPLETED, RETRY, FAILED }
 
+internal fun interface BackgroundRateRunner {
+    suspend fun run(attempt: Int): BackgroundResult
+}
+
 internal class BackgroundRefreshRunner(
     private val settings: SettingsRepository,
     private val rates: ExchangeRateRepository,
     private val alerts: RateChangeAlerts,
-) {
-    suspend fun run(attempt: Int): BackgroundResult {
+) : BackgroundRateRunner {
+    override suspend fun run(attempt: Int): BackgroundResult {
         val initial = try { settings.observeSettings().first() }
             catch (_: StorageReadException) { return BackgroundResult.FAILED }
         if (!initial.automaticChecksEnabled) return BackgroundResult.COMPLETED

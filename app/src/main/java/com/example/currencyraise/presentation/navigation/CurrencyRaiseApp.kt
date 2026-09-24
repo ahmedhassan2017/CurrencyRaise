@@ -25,8 +25,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.Bank
+import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.presentation.home.HomeRoute
 import com.example.currencyraise.presentation.home.HomeViewModel
+import com.example.currencyraise.presentation.market.MarketTab
 import com.example.currencyraise.presentation.gold.GoldViewModel
 import com.example.currencyraise.presentation.settings.SettingsRoute
 import com.example.currencyraise.presentation.settings.SettingsViewModel
@@ -46,7 +48,11 @@ private data object SettingsRouteKey : NavKey
 private enum class MainTab { HOME, WALLET }
 
 @Composable
-fun CurrencyRaiseApp(initialBank: Bank? = null) {
+fun CurrencyRaiseApp(
+    initialBank: Bank? = null,
+    initialMarket: MarketTab = MarketTab.DOLLAR,
+    initialGoldKarat: GoldKarat? = null,
+) {
     val backStack = rememberNavBackStack(HomeRouteKey)
     val home: HomeViewModel = viewModel()
     val gold: GoldViewModel = viewModel()
@@ -120,6 +126,8 @@ fun CurrencyRaiseApp(initialBank: Bank? = null) {
                     HomeRoute(
                         viewModel = home,
                         goldViewModel = gold,
+                        initialMarket = initialMarket,
+                        initialGoldKarat = initialGoldKarat,
                         onOpenSettings = { backStack.add(SettingsRouteKey) },
                     )
                 }

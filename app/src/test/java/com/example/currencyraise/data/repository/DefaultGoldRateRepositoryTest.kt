@@ -65,12 +65,13 @@ class DefaultGoldRateRepositoryTest {
 
     @Test fun exactlyFiveMinutesOldPerformsNewProviderCheck() = runTest {
         val cache = GoldRateCache(FaultablePreferences())
-        cache.save(rate(fetchedAt = now.minusSeconds(300)))
+        val previous = rate(fetchedAt = now.minusSeconds(300))
+        cache.save(previous)
         var calls = 0
         val latest = rate()
         val repository = repository(cache) { calls++; GoldFetchResult.Success(latest) }
         assertEquals(
-            GoldRefreshOutcome.Success(latest, RateChange.UNCHANGED),
+            GoldRefreshOutcome.Success(latest, RateChange.UNCHANGED, previous),
             repository.refresh(GoldKarat.K21, Duration.ofMinutes(5)),
         )
         assertEquals(1, calls)
@@ -78,11 +79,12 @@ class DefaultGoldRateRepositoryTest {
 
     @Test fun rateChangeUsesDecimalValueNotScale() = runTest {
         val cache = GoldRateCache(FaultablePreferences())
-        cache.save(rate(buy = "6205.0", fetchedAt = now.minusSeconds(600)))
+        val previous = rate(buy = "6205.0", fetchedAt = now.minusSeconds(600))
+        cache.save(previous)
         val latest = rate(buy = "6205.00")
         val repository = repository(cache) { GoldFetchResult.Success(latest) }
         assertEquals(
-            GoldRefreshOutcome.Success(latest, RateChange.UNCHANGED),
+            GoldRefreshOutcome.Success(latest, RateChange.UNCHANGED, previous),
             repository.refresh(GoldKarat.K21),
         )
     }

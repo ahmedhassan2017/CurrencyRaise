@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.example.currencyraise.data.local.SyncStateStore
 import com.example.currencyraise.domain.repository.SyncStateRepository
 import com.example.currencyraise.notification.NotificationSink
+import com.example.currencyraise.notification.GoldNotificationSink
 import com.example.currencyraise.notification.RateNotificationPublisher
 import dagger.Module
 import dagger.Provides
@@ -25,4 +26,7 @@ internal object BackgroundModule {
 
     @Provides
     fun notificationSink(publisher: RateNotificationPublisher): NotificationSink = publisher
+
+    @Provides
+    fun goldNotificationSink(publisher: RateNotificationPublisher): GoldNotificationSink = publisher
 }

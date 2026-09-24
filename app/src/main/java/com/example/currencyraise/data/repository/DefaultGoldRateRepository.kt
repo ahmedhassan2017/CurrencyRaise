@@ -92,7 +92,7 @@ internal class DefaultGoldRateRepository(
             } catch (_: IOException) {
                 return GoldRefreshOutcome.Failure(RefreshError.StorageWrite)
             }
-            return GoldRefreshOutcome.Success(fetched, change)
+            return GoldRefreshOutcome.Success(fetched, change, previous)
         } finally {
             lock.unlock()
         }
