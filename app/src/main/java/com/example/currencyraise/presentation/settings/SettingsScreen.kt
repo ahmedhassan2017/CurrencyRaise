@@ -366,18 +366,6 @@ fun SettingsScreen(
                     }
                 }
 
-                SectionLabel(stringResource(R.string.source_section))
-                CurrencyPanel {
-                    Text(
-                        stringResource(R.string.supported_sources),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        stringResource(R.string.rate_unit),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
 
             if (state.saving) {

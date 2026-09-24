@@ -20,7 +20,6 @@
     <string name="gold_checking">جارٍ التحقق من أسعار الذهب…</string>
     <string name="gold_refresh">تحديث سعر الذهب</string>
     <string name="gold_check_due">سعر ذهب محفوظ · حان تحقق الخمس دقائق</string>
-    <string name="gold_foreground_refresh_note">يتبع الذهب فترة التحقق التلقائي المشتركة أثناء فتح هذا التبويب. ويمكنك التحديث يدويًا دائمًا.</string>
     <string name="gold_details_title">تفاصيل سعر الذهب</string>
     <string name="gold_source_note">سعر محلي من تجار الذهب في مصر مقدّم عبر تعويم. لا يشمل مصنعية المشغولات وقد يختلف بين البائعين.</string>
     <string name="gold_cache_read_failed">تعذرت قراءة أسعار الذهب المحفوظة. حاول مجددًا لإعادة الاتصال بالتخزين.</string>
@@ -29,7 +28,6 @@
     <string name="select_bank">اختر البنك</string>
     <string name="cib_source_note">أسعار البنك التجاري الدولي مقدمة من تعويم، وهي جهة مستقلة. قد تتأخر الأسعار عن البنك، ولا يتم التفريق بين أسعار النقد والتحويل.</string>
     <string name="bank_rate_note">أسعار صرف البنك · قد تتغير الأسعار</string>
-    <string name="supported_sources">بنك مصر · البنك التجاري الدولي عبر تعويم</string>
     <string name="rate_unit">جنيه مصري لكل دولار أمريكي واحد</string>
     <string name="bank_buys">البنك يشتري</string>
     <string name="bank_sells">البنك يبيع</string>
@@ -232,7 +230,6 @@
     <string name="allow_notifications">السماح بالإشعارات</string>
     <string name="open_notification_settings">فتح إعدادات إشعارات Android</string>
     <string name="alerts_paused">التحقق التلقائي متوقف. ستبقى تنبيهات الخلفية متوقفة حتى تفعّله.</string>
-    <string name="source_section">مصدر الأسعار</string>
     <string name="saving_preferences">جارٍ حفظ التفضيلات…</string>
     <string name="preferences_saved">تم حفظ التفضيلات</string>
     <string name="preferences_auto_save">تُحفظ التغييرات تلقائيًا</string>

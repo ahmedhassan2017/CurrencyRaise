@@ -216,11 +216,6 @@ fun GoldScreen(
                     market = HistoryMarket.GOLD,
                 )
             }
-            Text(
-                stringResource(R.string.gold_foreground_refresh_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             TextButton(
                 onClick = { showDetails = true },
                 modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp),

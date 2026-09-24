@@ -19,7 +19,6 @@
     <string name="gold_checking">Checking gold rates…</string>
     <string name="gold_refresh">Refresh gold rate</string>
     <string name="gold_check_due">Saved gold rate · A new five-minute check is due</string>
-    <string name="gold_foreground_refresh_note">Gold follows the shared automatic check interval while this tab is open. Manual refresh is always available.</string>
     <string name="gold_details_title">Gold rate details</string>
     <string name="gold_source_note">Local Egyptian dealer rate supplied by Ta3weem. It excludes jewelry workmanship and can differ between sellers.</string>
     <string name="gold_cache_read_failed">Saved gold rates could not be read. Try again to reconnect to storage.</string>
@@ -29,7 +28,6 @@
     <string name="select_bank">Select bank</string>
     <string name="cib_source_note">CIB rates supplied by Ta3weem, an independent provider. Rates may lag the bank; cash and transfer prices are not distinguished.</string>
     <string name="bank_rate_note">Bank exchange rates · Prices may change</string>
-    <string name="supported_sources">Banque Misr · CIB via Ta3weem</string>
     <string name="rate_unit">Egyptian pounds for 1 US dollar</string>
     <string name="bank_buys">Bank buys</string>
     <string name="bank_sells">Bank sells</string>
