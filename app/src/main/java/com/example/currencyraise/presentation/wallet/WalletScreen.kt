@@ -176,7 +176,7 @@ fun WalletScreen(
                 now = state.now,
                 locale = locale,
                 zone = zone,
-                intervalHours = state.intervalHours,
+                intervalMinutes = state.intervalMinutes,
                 loading = state.loadingHistory,
                 readFailed = state.historyReadFailed,
             )

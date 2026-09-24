@@ -17,4 +17,8 @@
         <item quantity="one">Automatic checks scheduled approximately every hour</item>
         <item quantity="other">Automatic checks scheduled approximately every %1$d hours</item>
     </plurals>
+    <plurals name="scheduled_interval_minutes">
+        <item quantity="one">Automatic checks scheduled approximately every minute</item>
+        <item quantity="other">Automatic checks scheduled approximately every %1$d minutes</item>
+    </plurals>
 </resources>

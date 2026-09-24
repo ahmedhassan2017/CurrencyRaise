@@ -19,11 +19,15 @@ internal sealed interface BackgroundStatus {
     data object Error : BackgroundStatus
 }
 
+internal fun interface RateSyncRescheduler {
+    suspend fun scheduleNext()
+}
+
 @Singleton
 internal class WorkSyncScheduler @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val settings: SettingsRepository,
-) {
+) : RateSyncRescheduler {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutableStatus = MutableStateFlow<BackgroundStatus>(BackgroundStatus.Starting)
     val status = mutableStatus.asStateFlow()
@@ -59,14 +63,39 @@ internal class WorkSyncScheduler @Inject constructor(
             manager.cancelUniqueWork(name).await()
             return
         }
-        val request = PeriodicWorkRequestBuilder<RateSyncWorker>(settings.updateInterval.hours.toLong(), TimeUnit.HOURS)
+        val active = manager.getWorkInfosForUniqueWorkFlow(name).first().filterNot { it.state.isFinished }
+        val intervalTag = intervalTag(settings.updateInterval)
+        if (active.size == 1 && active.single().periodicityInfo == null && intervalTag in active.single().tags) {
+            return
+        }
+        manager.cancelUniqueWork(name).await()
+        manager.enqueueUniqueWork(
+            name,
+            ExistingWorkPolicy.REPLACE,
+            request(settings.updateInterval, name),
+        ).await()
+    }
+
+    override suspend fun scheduleNext() {
+        val latest = settings.observeSettings().first()
+        if (!latest.automaticChecksEnabled) return
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            UNIQUE_WORK_NAME,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            request(latest.updateInterval, UNIQUE_WORK_NAME),
+        ).await()
+    }
+
+    private fun request(interval: UpdateInterval, name: String) =
+        OneTimeWorkRequestBuilder<RateSyncWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .setInitialDelay(settings.updateInterval.hours.toLong(), TimeUnit.HOURS)
+            .setInitialDelay(interval.minutes.toLong(), TimeUnit.MINUTES)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
             .addTag(name)
+            .addTag(intervalTag(interval))
             .build()
-        manager.enqueueUniquePeriodicWork(name, ExistingPeriodicWorkPolicy.UPDATE, request).await()
-    }
+
+    private fun intervalTag(interval: UpdateInterval) = "rate_sync_interval_${interval.minutes}_minutes"
 
     companion object { const val UNIQUE_WORK_NAME = "exchange_rate_periodic_sync" }
 }

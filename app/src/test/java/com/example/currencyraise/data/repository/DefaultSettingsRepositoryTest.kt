@@ -47,6 +47,19 @@ class DefaultSettingsRepositoryTest {
         }
     }
 
+    @Test fun minuteChoiceReplacesLegacyHourValue() = runTest {
+        val store = FaultablePreferences().apply {
+            values.value = mutablePreferencesOf(intPreferencesKey("interval_hours") to 6)
+        }
+        val repository = DefaultSettingsRepository(SettingsStore(store, FaultablePreferences()))
+        assertEquals(UpdateInterval.SIX_HOURS, repository.observeSettings().first().updateInterval)
+
+        assertEquals(SettingsWriteResult.SAVED, repository.setUpdateInterval(UpdateInterval.FIVE_MINUTES))
+        assertEquals(UpdateInterval.FIVE_MINUTES, repository.observeSettings().first().updateInterval)
+        assertEquals(5, store.values.value[intPreferencesKey("interval_minutes")])
+        assertFalse(store.values.value.contains(intPreferencesKey("interval_hours")))
+    }
+
     @Test fun cancellationIsNotReportedAsStorageFailure() = runTest {
         val store = FaultablePreferences()
         store.writeFailure = CancellationException("cancel write")

@@ -60,7 +60,7 @@ internal fun WalletValueChart(
     now: Instant,
     locale: Locale,
     zone: ZoneId,
-    intervalHours: Int,
+    intervalMinutes: Int,
     loading: Boolean,
     readFailed: Boolean,
 ) {
@@ -116,7 +116,7 @@ internal fun WalletValueChart(
                 period = period,
                 locale = locale,
                 zone = zone,
-                maximumGap = Duration.ofHours(intervalHours.coerceAtLeast(1) * 2L),
+                maximumGap = Duration.ofMinutes(intervalMinutes.coerceAtLeast(5) * 2L),
             )
         }
         Text(

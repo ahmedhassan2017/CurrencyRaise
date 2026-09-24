@@ -134,7 +134,7 @@ class WalletViewModel @Inject constructor(
         settingsObservation = viewModelScope.launch {
             try {
                 settings.observeSettings().collect { appSettings ->
-                    mutableState.update { it.copy(intervalHours = appSettings.updateInterval.hours) }
+                    mutableState.update { it.copy(intervalMinutes = appSettings.updateInterval.minutes) }
                 }
             } catch (_: StorageReadException) {
                 // The default one-hour gap threshold remains safe when preferences are unavailable.

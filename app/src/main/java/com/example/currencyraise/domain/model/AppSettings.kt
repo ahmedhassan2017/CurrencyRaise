@@ -1,7 +1,22 @@
 package com.example.currencyraise.domain.model
 
-enum class UpdateInterval(val hours: Int) {
-    ONE_HOUR(1), TWO_HOURS(2), FOUR_HOURS(4), SIX_HOURS(6), TWELVE_HOURS(12), DAILY(24)
+enum class UpdateInterval(val minutes: Int) {
+    FIVE_MINUTES(5),
+    TWENTY_MINUTES(20),
+    THIRTY_MINUTES(30),
+    ONE_HOUR(60),
+    TWO_HOURS(120),
+    FOUR_HOURS(240),
+    SIX_HOURS(360),
+    TWELVE_HOURS(720),
+    DAILY(1_440),
+    ;
+
+    val duration: java.time.Duration
+        get() = java.time.Duration.ofMinutes(minutes.toLong())
+
+    val wholeHours: Int?
+        get() = minutes.takeIf { it % 60 == 0 }?.div(60)
 }
 
 enum class AppearanceMode {

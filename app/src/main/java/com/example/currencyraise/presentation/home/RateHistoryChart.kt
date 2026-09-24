@@ -56,7 +56,7 @@ internal fun RateHistoryChart(
     now: Instant,
     locale: Locale,
     zone: ZoneId,
-    intervalHours: Int,
+    intervalMinutes: Int,
     loading: Boolean,
     readFailed: Boolean,
     onRetry: () -> Unit,
@@ -115,7 +115,7 @@ internal fun RateHistoryChart(
                     locale = locale,
                     zone = zone,
                     period = period,
-                    maximumGap = Duration.ofHours(intervalHours.coerceAtLeast(1) * 2L),
+                    maximumGap = Duration.ofMinutes(intervalMinutes.coerceAtLeast(5) * 2L),
                 )
                 if (data.points.size == 1) {
                     Text(stringResource(R.string.history_single), style = MaterialTheme.typography.bodySmall)

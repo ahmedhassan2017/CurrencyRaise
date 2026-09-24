@@ -38,7 +38,7 @@ class SettingsScreenTest {
         compose.onNodeWithText("Open Android notification settings").performScrollTo().assertIsDisplayed()
     }
 
-    @Test fun intervalChoiceReturnsSelectedValue() {
+    @Test fun minuteIntervalChoiceReturnsSelectedValue() {
         var interval: UpdateInterval? = null
         compose.setContent {
             CurrencyRaiseTheme {
@@ -47,8 +47,8 @@ class SettingsScreenTest {
             }
         }
         compose.onNodeWithText("Check interval: 1 hour").performScrollTo().performClick()
-        compose.onNodeWithText("Every 6 hours").performScrollTo().performClick()
-        compose.runOnIdle { assertEquals(UpdateInterval.SIX_HOURS, interval) }
+        compose.onNodeWithText("Every 5 minutes").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(UpdateInterval.FIVE_MINUTES, interval) }
     }
 
     @Test fun togglesRemainIndependent() {

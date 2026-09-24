@@ -280,7 +280,7 @@ fun HomeScreen(
             if (showHistory) {
                 RateHistoryChart(
                     history = state.history, now = state.now, locale = locale, zone = zone,
-                    intervalHours = state.settings?.updateInterval?.hours ?: 1,
+                    intervalMinutes = state.settings?.updateInterval?.minutes ?: 60,
                     loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
                 )
             }

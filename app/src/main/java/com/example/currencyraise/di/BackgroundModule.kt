@@ -7,6 +7,8 @@ import com.example.currencyraise.domain.repository.SyncStateRepository
 import com.example.currencyraise.notification.NotificationSink
 import com.example.currencyraise.notification.GoldNotificationSink
 import com.example.currencyraise.notification.RateNotificationPublisher
+import com.example.currencyraise.background.RateSyncRescheduler
+import com.example.currencyraise.background.WorkSyncScheduler
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,4 +31,7 @@ internal object BackgroundModule {
 
     @Provides
     fun goldNotificationSink(publisher: RateNotificationPublisher): GoldNotificationSink = publisher
+
+    @Provides
+    fun rateSyncRescheduler(scheduler: WorkSyncScheduler): RateSyncRescheduler = scheduler
 }

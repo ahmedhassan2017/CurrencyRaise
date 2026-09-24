@@ -59,10 +59,12 @@ internal fun BackgroundStatusSection(
             Spacer(Modifier.width(9.dp))
             Text(
                 when (status) {
-                    is BackgroundStatus.Active -> pluralStringResource(
-                        R.plurals.scheduled_interval,
-                        status.interval.hours,
-                        status.interval.hours,
+                    is BackgroundStatus.Active -> status.interval.wholeHours?.let { hours ->
+                        pluralStringResource(R.plurals.scheduled_interval, hours, hours)
+                    } ?: pluralStringResource(
+                        R.plurals.scheduled_interval_minutes,
+                        status.interval.minutes,
+                        status.interval.minutes,
                     )
                     BackgroundStatus.Starting -> stringResource(R.string.background_starting)
                     BackgroundStatus.Disabled -> stringResource(R.string.automatic_disabled)

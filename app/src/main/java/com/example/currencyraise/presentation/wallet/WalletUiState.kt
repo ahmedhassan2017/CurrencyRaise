@@ -29,7 +29,7 @@ data class WalletUiState(
     val refreshingRate: Boolean = false,
     val refreshFailed: Boolean = false,
     val now: Instant = Instant.EPOCH,
-    val intervalHours: Int = 1,
+    val intervalMinutes: Int = 60,
 ) {
     val draftBalance: SavingsBalance?
         get() {

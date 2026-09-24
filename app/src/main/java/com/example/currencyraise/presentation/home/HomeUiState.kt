@@ -33,8 +33,8 @@ data class HomeUiState(
             val saved = rate ?: return Freshness.UNKNOWN
             val age = Duration.between(saved.fetchedAt, now)
             if (age.isNegative) return Freshness.UNKNOWN
-            val interval = settings?.updateInterval?.hours ?: 1
-            return if (age >= Duration.ofHours(interval.toLong())) Freshness.CHECK_DUE else Freshness.RECENT_CHECK
+            val interval = settings?.updateInterval?.duration ?: Duration.ofHours(1)
+            return if (age >= interval) Freshness.CHECK_DUE else Freshness.RECENT_CHECK
         }
 }
 

@@ -30,30 +30,34 @@ class BackgroundIntegrationTest {
         worker.stop(WorkInfo.STOP_REASON_CANCELLED_BY_APP)
     }
 
-    @Test fun periodicUpdateKeepsOneRequestAndDisableCancelsIt() = runBlocking {
+    @Test fun oneTimeScheduleSupportsEveryIntervalWithoutDuplicatesAndDisableCancelsIt() = runBlocking {
         val name = "test_rate_sync_" + UUID.randomUUID()
         val manager = WorkManager.getInstance(context)
         val scheduler = WorkSyncScheduler(context, MemorySettings())
         try {
-            var id: UUID? = null
+            var previousIntervalId: UUID? = null
             for (interval in UpdateInterval.entries) {
                 val selected = AppSettings(updateInterval = interval)
                 scheduler.applyConfiguration(selected, name)
+                val firstId = manager.getWorkInfosForUniqueWork(name).get(10, TimeUnit.SECONDS)
+                    .single { !it.state.isFinished }.id
                 scheduler.applyConfiguration(selected, name)
                 val work = manager.getWorkInfosForUniqueWork(name).get(10, TimeUnit.SECONDS)
                     .filter { !it.state.isFinished }
                 assertEquals(1, work.size)
                 val info = work.single()
-                if (id == null) id = info.id else assertEquals(id, info.id)
+                assertEquals(firstId, info.id)
+                previousIntervalId?.let { assertNotEquals(it, info.id) }
+                previousIntervalId = info.id
                 assertEquals(NetworkType.CONNECTED, info.constraints.requiredNetworkType)
-                assertEquals(TimeUnit.HOURS.toMillis(interval.hours.toLong()), info.periodicityInfo!!.repeatIntervalMillis)
-                assertEquals(TimeUnit.HOURS.toMillis(interval.hours.toLong()), info.initialDelayMillis)
+                assertNull(info.periodicityInfo)
+                assertEquals(TimeUnit.MINUTES.toMillis(interval.minutes.toLong()), info.initialDelayMillis)
             }
             scheduler.applyConfiguration(AppSettings(automaticChecksEnabled = false), name)
             assertTrue(manager.getWorkInfosForUniqueWork(name).get(10, TimeUnit.SECONDS).all { it.state.isFinished })
             scheduler.applyConfiguration(AppSettings(), name)
             val recreated = manager.getWorkInfosForUniqueWork(name).get(10, TimeUnit.SECONDS).single { !it.state.isFinished }
-            assertNotEquals(id, recreated.id)
+            assertNotEquals(previousIntervalId, recreated.id)
         } finally {
             manager.cancelUniqueWork(name).await()
         }
@@ -79,30 +83,43 @@ class BackgroundIntegrationTest {
             override suspend fun recordHandledQuote(event: String): String? = this.event.also { this.event = event }
         }
         var posts = 0
+        var reschedules = 0
+        val rescheduler = RateSyncRescheduler { reschedules++ }
         val runner = BackgroundRefreshRunner(settings, rates, RateChangeAlerts(state) { posts++; true })
         val factory = object : WorkerFactory() {
             override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker =
-                RateSyncWorker(appContext, workerParameters, BankBackgroundRefreshRunner(listOf(runner)))
+                RateSyncWorker(
+                    appContext,
+                    workerParameters,
+                    BankBackgroundRefreshRunner(listOf(runner)),
+                    rescheduler,
+                )
         }
         suspend fun run(attempt: Int = 0) = TestListenableWorkerBuilder<RateSyncWorker>(context)
             .setWorkerFactory(factory).setRunAttemptCount(attempt).build().doWork()
         assertEquals(ListenableWorker.Result.retry(), run())
-        assertEquals(ListenableWorker.Result.failure(), run(2))
+        assertEquals(0, reschedules)
+        assertEquals(ListenableWorker.Result.success(), run(2))
+        assertEquals(1, reschedules)
         outcome = RefreshOutcome.Failure(RefreshError.Fetch(RateFetchError.InvalidResponse))
-        assertEquals(ListenableWorker.Result.failure(), run())
+        assertEquals(ListenableWorker.Result.success(), run())
+        assertEquals(2, reschedules)
         val first = ExchangeRate("USD", "EGP", BigDecimal("51.27"), BigDecimal("51.37"),
             "banque_misr", "Banque Misr", "https://www.banquemisr.com/", QuoteKind.CASH,
             null, null, Instant.parse("2026-09-11T10:00:00Z"))
         outcome = RefreshOutcome.Success(first, RateChange.FIRST_QUOTE)
         assertEquals(ListenableWorker.Result.success(), run())
+        assertEquals(3, reschedules)
         assertEquals(0, posts)
         outcome = RefreshOutcome.Success(first.copy(buyRate = BigDecimal("51.28")), RateChange.CHANGED)
         assertEquals(ListenableWorker.Result.success(), run())
+        assertEquals(4, reschedules)
         assertEquals(1, posts)
         settings.values.value = AppSettings(automaticChecksEnabled = false)
         val before = fetches
         assertEquals(ListenableWorker.Result.success(), run())
         assertEquals(before, fetches)
+        assertEquals(5, reschedules)
     }
 
     private class MemorySettings : SettingsRepository {

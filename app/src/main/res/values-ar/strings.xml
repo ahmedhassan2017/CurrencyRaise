@@ -207,7 +207,7 @@
     <string name="background_section">التحديث في الخلفية</string>
     <string name="automatic_checks">التحقق التلقائي</string>
     <string name="automatic_preference_help">التحقق من أسعار الدولار والذهب أثناء إغلاق التطبيق.</string>
-    <string name="interval_approximate">قد يؤخر Android عمليات التحقق لتوفير البطارية أو انتظار الاتصال. الفترات تقريبية.</string>
+    <string name="interval_approximate">تُطبّق فترة واحدة على جميع مصادر الدولار والذهب. قد يؤخر Android التحقق في الخلفية لتوفير البطارية أو انتظار الاتصال، لذا فالتوقيت تقريبي.</string>
     <string name="notifications_section">الإشعارات</string>
     <string name="rate_alerts">تنبيهات تغير الأسعار</string>
     <string name="rate_alerts_help">إرسال إشعار عند تغير سعر شراء أو بيع الدولار أو الذهب المتابع. هذا التفضيل منفصل عن إذن Android.</string>
@@ -242,6 +242,14 @@
         <item quantity="many">فترة التحقق: كل %1$d ساعة</item>
         <item quantity="other">فترة التحقق: كل %1$d ساعة</item>
     </plurals>
+    <plurals name="choose_interval_minutes">
+        <item quantity="zero">فترة التحقق: كل %1$d دقيقة</item>
+        <item quantity="one">فترة التحقق: كل دقيقة</item>
+        <item quantity="two">فترة التحقق: كل دقيقتين</item>
+        <item quantity="few">فترة التحقق: كل %1$d دقائق</item>
+        <item quantity="many">فترة التحقق: كل %1$d دقيقة</item>
+        <item quantity="other">فترة التحقق: كل %1$d دقيقة</item>
+    </plurals>
     <plurals name="interval_value">
         <item quantity="zero">كل %1$d ساعة</item>
         <item quantity="one">كل ساعة</item>
@@ -249,6 +257,14 @@
         <item quantity="few">كل %1$d ساعات</item>
         <item quantity="many">كل %1$d ساعة</item>
         <item quantity="other">كل %1$d ساعة</item>
+    </plurals>
+    <plurals name="interval_value_minutes">
+        <item quantity="zero">كل %1$d دقيقة</item>
+        <item quantity="one">كل دقيقة</item>
+        <item quantity="two">كل دقيقتين</item>
+        <item quantity="few">كل %1$d دقائق</item>
+        <item quantity="many">كل %1$d دقيقة</item>
+        <item quantity="other">كل %1$d دقيقة</item>
     </plurals>
 
     <string name="rate_channel_name">تحديثات أسعار الدولار والذهب</string>
@@ -272,5 +288,13 @@
         <item quantity="few">تمت جدولة التحقق التلقائي كل %1$d ساعات تقريبًا</item>
         <item quantity="many">تمت جدولة التحقق التلقائي كل %1$d ساعة تقريبًا</item>
         <item quantity="other">تمت جدولة التحقق التلقائي كل %1$d ساعة تقريبًا</item>
+    </plurals>
+    <plurals name="scheduled_interval_minutes">
+        <item quantity="zero">تمت جدولة التحقق التلقائي كل %1$d دقيقة تقريبًا</item>
+        <item quantity="one">تمت جدولة التحقق التلقائي كل دقيقة تقريبًا</item>
+        <item quantity="two">تمت جدولة التحقق التلقائي كل دقيقتين تقريبًا</item>
+        <item quantity="few">تمت جدولة التحقق التلقائي كل %1$d دقائق تقريبًا</item>
+        <item quantity="many">تمت جدولة التحقق التلقائي كل %1$d دقيقة تقريبًا</item>
+        <item quantity="other">تمت جدولة التحقق التلقائي كل %1$d دقيقة تقريبًا</item>
     </plurals>
 </resources>

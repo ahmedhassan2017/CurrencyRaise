@@ -275,11 +275,7 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     ) {
                         Text(
-                            pluralStringResource(
-                                R.plurals.choose_interval,
-                                settings.updateInterval.hours,
-                                settings.updateInterval.hours,
-                            ),
+                            settings.updateInterval.label(includePrefix = true),
                         )
                     }
                     Text(
@@ -412,11 +408,7 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                         ) {
                             Text(
-                                pluralStringResource(
-                                    R.plurals.interval_value,
-                                    interval.hours,
-                                    interval.hours,
-                                ),
+                                interval.label(includePrefix = false),
                             )
                         }
                     }
@@ -474,6 +466,24 @@ private fun appearanceNameResource(mode: AppearanceMode): Int = when (mode) {
     AppearanceMode.SYSTEM -> R.string.appearance_system
     AppearanceMode.LIGHT -> R.string.appearance_light
     AppearanceMode.DARK -> R.string.appearance_dark
+}
+
+@Composable
+private fun UpdateInterval.label(includePrefix: Boolean): String {
+    val hours = wholeHours
+    return if (hours == null) {
+        pluralStringResource(
+            if (includePrefix) R.plurals.choose_interval_minutes else R.plurals.interval_value_minutes,
+            minutes,
+            minutes,
+        )
+    } else {
+        pluralStringResource(
+            if (includePrefix) R.plurals.choose_interval else R.plurals.interval_value,
+            hours,
+            hours,
+        )
+    }
 }
 
 @Composable

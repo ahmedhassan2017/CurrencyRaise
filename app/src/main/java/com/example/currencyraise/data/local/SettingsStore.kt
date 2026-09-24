@@ -20,8 +20,16 @@ internal class SettingsStore(
 ) {
     fun observe(): Flow<AppSettings> = combine(store.data, deviceState.data) { prefs, device ->
         try {
-            val hours = prefs[INTERVAL] ?: UpdateInterval.ONE_HOUR.hours
-            val interval = UpdateInterval.entries.singleOrNull { it.hours == hours }
+            val minutes = prefs[INTERVAL_MINUTES]
+                ?: prefs[LEGACY_INTERVAL_HOURS]?.let { legacyHours ->
+                    try {
+                        Math.multiplyExact(legacyHours, MINUTES_PER_HOUR)
+                    } catch (error: ArithmeticException) {
+                        throw IOException("Invalid saved update interval", error)
+                    }
+                }
+                ?: UpdateInterval.ONE_HOUR.minutes
+            val interval = UpdateInterval.entries.singleOrNull { it.minutes == minutes }
                 ?: throw IOException("Unrecognized saved update interval")
             val appearanceName = prefs[APPEARANCE] ?: AppearanceMode.SYSTEM.name
             val appearance = AppearanceMode.entries.singleOrNull { it.name == appearanceName }
@@ -39,7 +47,10 @@ internal class SettingsStore(
     }.distinctUntilChanged()
 
     suspend fun setInterval(interval: UpdateInterval) {
-        store.edit { it[INTERVAL] = interval.hours }
+        store.edit {
+            it[INTERVAL_MINUTES] = interval.minutes
+            it.remove(LEGACY_INTERVAL_HOURS)
+        }
     }
 
     suspend fun setAutomatic(enabled: Boolean) {
@@ -59,7 +70,9 @@ internal class SettingsStore(
     }
 
     private companion object {
-        val INTERVAL = intPreferencesKey("interval_hours")
+        const val MINUTES_PER_HOUR = 60
+        val INTERVAL_MINUTES = intPreferencesKey("interval_minutes")
+        val LEGACY_INTERVAL_HOURS = intPreferencesKey("interval_hours")
         val AUTOMATIC = booleanPreferencesKey("automatic_checks")
         val NOTIFICATIONS = booleanPreferencesKey("notifications")
         val APPEARANCE = stringPreferencesKey("appearance_mode")

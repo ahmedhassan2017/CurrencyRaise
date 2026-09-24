@@ -186,12 +186,12 @@ class HomeViewModelTest {
     }
 
     @Test fun selectedIntervalControlsInitialFreshnessIncludingBoundary() = runTest(dispatcher) {
-        rates.saved.value = Result.success(quote(fetchedAt = "2026-09-11T09:00:00Z"))
-        settings.saved.value = Result.success(AppSettings(updateInterval = UpdateInterval.TWO_HOURS))
+        rates.saved.value = Result.success(quote(fetchedAt = "2026-09-11T10:26:00Z"))
+        settings.saved.value = Result.success(AppSettings(updateInterval = UpdateInterval.FIVE_MINUTES))
         val vm = create()
         runCurrent()
         assertEquals(0, rates.calls)
-        clock.current = Instant.parse("2026-09-11T11:00:00Z")
+        clock.current = Instant.parse("2026-09-11T10:31:00Z")
         vm.updateDisplayTime()
         assertEquals(Freshness.CHECK_DUE, vm.uiState.value.freshness)
         assertEquals(0, rates.calls) // Display ticks never perform network polling.
