@@ -184,7 +184,6 @@ fun WalletScreen(
                 now = state.now,
                 locale = locale,
                 zone = zone,
-                intervalMinutes = state.intervalMinutes,
                 loading = (state.savedBalance.usd.signum() > 0 && state.loadingHistory) ||
                     (state.savedBalance.goldGrams.signum() > 0 && state.loadingGoldHistory),
                 readFailed = (state.savedBalance.usd.signum() > 0 && state.historyReadFailed) ||

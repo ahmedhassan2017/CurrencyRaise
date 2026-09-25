@@ -35,6 +35,9 @@
     <string name="you_buy">ج.م · أنت تشتري الدولار</string>
     <string name="cash_note">صرف نقدي · قد تتغير الأسعار</string>
     <string name="last_checked">آخر تحقق ناجح</string>
+    <string name="last_attempted_check">آخر محاولة تحقق: %1$s</string>
+    <string name="last_successful_check">آخر تحقق ناجح: %1$s</string>
+    <string name="check_not_yet">ليس بعد</string>
     <string name="source_time">وقت العرض لدى المصدر</string>
     <string name="source_timezone">معروض كما نشره المصدر. المنطقة الزمنية للمصدر غير محددة.</string>
     <string name="not_supplied">لم يقدمه المصدر</string>

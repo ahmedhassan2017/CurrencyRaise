@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -35,6 +38,7 @@ import com.example.currencyraise.presentation.settings.SettingsViewModel
 import com.example.currencyraise.presentation.wallet.WalletRoute
 import com.example.currencyraise.presentation.wallet.WalletViewModel
 import kotlinx.serialization.Serializable
+import kotlinx.coroutines.delay
 
 @Serializable
 private data object HomeRouteKey : NavKey
@@ -58,12 +62,28 @@ fun CurrencyRaiseApp(
     val gold: GoldViewModel = viewModel()
     val wallet: WalletViewModel = viewModel()
     val settings: SettingsViewModel = viewModel()
+    val lifecycleOwner = LocalLifecycleOwner.current
     var initialBankApplied by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(initialBank) {
         if (!initialBankApplied) {
             initialBank?.let(home::selectBank)
             initialBankApplied = true
+        }
+    }
+
+    LaunchedEffect(lifecycleOwner, home, gold) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            gold.setActive(true)
+            try {
+                while (true) {
+                    home.refreshIfDue()
+                    gold.refreshIfDue()
+                    delay(60_000)
+                }
+            } finally {
+                gold.setActive(false)
+            }
         }
     }
 

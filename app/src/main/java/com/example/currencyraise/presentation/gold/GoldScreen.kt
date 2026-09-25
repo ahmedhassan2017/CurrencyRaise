@@ -177,6 +177,13 @@ fun GoldScreen(
                 )
             }
 
+            GoldCheckTimes(
+                attemptedAt = state.lastAttemptedAt,
+                successfulAt = state.rate?.fetchedAt,
+                locale = locale,
+                zone = zone,
+            )
+
             val feedback = when {
                 state.alreadyRefreshing -> R.string.check_already_running
                 state.refreshError != null || state.rateReadFailed -> null
@@ -209,7 +216,6 @@ fun GoldScreen(
                     now = state.now,
                     locale = locale,
                     zone = zone,
-                    intervalMinutes = state.updateInterval.minutes,
                     loading = state.loadingHistory,
                     readFailed = state.historyReadFailed,
                     onRetry = onRetryHistory,
@@ -264,6 +270,32 @@ fun GoldScreen(
             },
         )
     }
+}
+
+@Composable
+private fun GoldCheckTimes(
+    attemptedAt: java.time.Instant?,
+    successfulAt: java.time.Instant?,
+    locale: Locale,
+    zone: ZoneId,
+) {
+    val notYet = stringResource(R.string.check_not_yet)
+    Text(
+        stringResource(
+            R.string.last_attempted_check,
+            attemptedAt?.let { formatFetchTime(it, locale, zone) } ?: notYet,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+        stringResource(
+            R.string.last_successful_check,
+            successfulAt?.let { formatFetchTime(it, locale, zone) } ?: notYet,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable

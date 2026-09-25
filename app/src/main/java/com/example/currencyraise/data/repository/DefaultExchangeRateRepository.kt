@@ -37,6 +37,11 @@ internal class DefaultExchangeRateRepository(
         throw error
     }
 
+    override fun observeLastAttempt() = cache.observeLastAttempt().catch { error ->
+        if (error is IOException) throw StorageReadException(error)
+        throw error
+    }
+
     override suspend fun refreshUsdEgpRate(minimumAge: Duration): RefreshOutcome {
         require(!minimumAge.isNegative)
         if (!refreshMutex.tryLock()) return RefreshOutcome.AlreadyRefreshing
@@ -57,6 +62,11 @@ internal class DefaultExchangeRateRepository(
                 return RefreshOutcome.Failure(RefreshError.StorageRead)
             }
             if (deadline != null && now < deadline) return RefreshOutcome.Failure(RefreshError.Deferred(deadline))
+            try {
+                cache.recordAttempt(clock.instant())
+            } catch (_: IOException) {
+                return RefreshOutcome.Failure(RefreshError.StorageWrite)
+            }
             val fetched = when (val result = source.fetchLatest()) {
                 is RateFetchResult.Failure -> {
                     val error = result.error

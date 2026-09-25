@@ -12,6 +12,7 @@ data class HomeUiState(
     val bank: Bank = Bank.CIB,
     val banks: List<Bank> = Bank.entries,
     val rate: ExchangeRate? = null,
+    val lastAttemptedAt: Instant? = null,
     val history: List<RateObservation> = emptyList(),
     val loadingHistory: Boolean = true,
     val historyReadFailed: Boolean = false,

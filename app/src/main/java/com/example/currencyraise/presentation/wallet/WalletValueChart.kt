@@ -47,7 +47,6 @@ import com.example.currencyraise.presentation.home.formatCurrencyAmount
 import com.example.currencyraise.presentation.home.formatFetchTime
 import java.math.BigDecimal
 import java.math.MathContext
-import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
@@ -61,7 +60,6 @@ internal fun WalletValueChart(
     now: Instant,
     locale: Locale,
     zone: ZoneId,
-    intervalMinutes: Int,
     loading: Boolean,
     readFailed: Boolean,
 ) {
@@ -118,7 +116,6 @@ internal fun WalletValueChart(
                 period = period,
                 locale = locale,
                 zone = zone,
-                maximumGap = Duration.ofMinutes(intervalMinutes.coerceAtLeast(5) * 2L),
             )
         }
         Text(
@@ -135,14 +132,12 @@ private fun WalletChartContent(
     period: ChartPeriod,
     locale: Locale,
     zone: ZoneId,
-    maximumGap: Duration,
 ) {
     val lineColor = MaterialTheme.colorScheme.primary
     val outline = MaterialTheme.colorScheme.outlineVariant
     val surface = MaterialTheme.colorScheme.surface
     var selectedIndex by remember(data.points) { mutableIntStateOf(data.points.lastIndex) }
     val selected = data.points[selectedIndex]
-    val segments = remember(data.points, maximumGap) { data.points.contiguousSegments(maximumGap) }
     val periodLabel = stringResource(
         if (period == ChartPeriod.DAILY) R.string.history_24_hours else R.string.history_7_days,
     )
@@ -236,40 +231,38 @@ private fun WalletChartContent(
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
                 )
             }
-            segments.forEach { segment ->
-                val first = position(segment.first())
-                val last = position(segment.last())
-                val area = Path().apply {
-                    moveTo(first.x, plotBottom)
-                    lineTo(first.x, first.y)
-                    segment.drop(1).forEach { point ->
-                        val position = position(point)
-                        lineTo(position.x, position.y)
-                    }
-                    lineTo(last.x, plotBottom)
-                    close()
+            val first = position(data.points.first())
+            val last = position(data.points.last())
+            val area = Path().apply {
+                moveTo(first.x, plotBottom)
+                lineTo(first.x, first.y)
+                data.points.drop(1).forEach { point ->
+                    val position = position(point)
+                    lineTo(position.x, position.y)
                 }
-                drawPath(
-                    area,
-                    Brush.verticalGradient(
-                        listOf(lineColor.copy(alpha = 0.24f), lineColor.copy(alpha = 0.02f)),
-                        startY = inset,
-                        endY = plotBottom,
-                    ),
-                )
-                val line = Path().apply {
-                    moveTo(first.x, first.y)
-                    segment.drop(1).forEach { point ->
-                        val position = position(point)
-                        lineTo(position.x, position.y)
-                    }
-                }
-                drawPath(
-                    line,
-                    lineColor,
-                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
-                )
+                lineTo(last.x, plotBottom)
+                close()
             }
+            drawPath(
+                area,
+                Brush.verticalGradient(
+                    listOf(lineColor.copy(alpha = 0.24f), lineColor.copy(alpha = 0.02f)),
+                    startY = inset,
+                    endY = plotBottom,
+                ),
+            )
+            val line = Path().apply {
+                moveTo(first.x, first.y)
+                data.points.drop(1).forEach { point ->
+                    val position = position(point)
+                    lineTo(position.x, position.y)
+                }
+            }
+            drawPath(
+                line,
+                lineColor,
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
+            )
             listOf(0, data.points.lastIndex).distinct().forEach { index ->
                 drawCircle(lineColor, 3.5.dp.toPx(), position(data.points[index]))
             }
@@ -353,17 +346,3 @@ private fun walletChange(change: BigDecimal, periodLabel: String, locale: Locale
         formatCurrencyAmount(change.abs(), locale),
         periodLabel,
     )
-
-private fun List<WalletValuePoint>.contiguousSegments(maximumGap: Duration): List<List<WalletValuePoint>> {
-    if (isEmpty()) return emptyList()
-    val segments = mutableListOf(mutableListOf(first()))
-    drop(1).forEach { point ->
-        val current = segments.last()
-        if (Duration.between(current.last().observedAt, point.observedAt) > maximumGap) {
-            segments += mutableListOf(point)
-        } else {
-            current += point
-        }
-    }
-    return segments
-}

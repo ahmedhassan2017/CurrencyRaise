@@ -30,10 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.ConfigurationCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.ExchangeRate
 import com.example.currencyraise.domain.model.Bank
@@ -51,7 +48,6 @@ import com.example.currencyraise.presentation.market.MarketTabs
 import com.example.currencyraise.ui.theme.CurrencyRaiseTheme
 import java.time.ZoneId
 import java.util.Locale
-import kotlinx.coroutines.delay
 
 @Composable
 fun HomeRoute(
@@ -70,19 +66,6 @@ fun HomeRoute(
         if (!initialKaratApplied) {
             initialGoldKarat?.let(goldViewModel::selectKarat)
             initialKaratApplied = true
-        }
-    }
-    val owner = LocalLifecycleOwner.current
-    LaunchedEffect(selectedMarket, goldViewModel) {
-        goldViewModel.setActive(selectedMarket == MarketTab.GOLD)
-    }
-    LaunchedEffect(owner, viewModel, goldViewModel, selectedMarket) {
-        owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) {
-                viewModel.updateDisplayTime()
-                if (selectedMarket == MarketTab.GOLD) goldViewModel.refreshIfDue()
-                delay(60_000)
-            }
         }
     }
     val handler = LocalUriHandler.current
@@ -253,6 +236,13 @@ fun HomeScreen(
                 )
             }
 
+            CheckTimes(
+                attemptedAt = state.lastAttemptedAt,
+                successfulAt = state.rate?.fetchedAt,
+                locale = locale,
+                zone = zone,
+            )
+
             val feedback = when {
                 state.alreadyRefreshing -> R.string.check_already_running
                 state.refreshError != null || state.rateReadFailed || state.settingsReadFailed -> null
@@ -281,7 +271,6 @@ fun HomeScreen(
             if (showHistory) {
                 RateHistoryChart(
                     history = state.history, now = state.now, locale = locale, zone = zone,
-                    intervalMinutes = state.settings?.updateInterval?.minutes ?: 60,
                     loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
                 )
             }
@@ -347,6 +336,32 @@ fun HomeScreen(
             },
         )
     }
+}
+
+@Composable
+private fun CheckTimes(
+    attemptedAt: java.time.Instant?,
+    successfulAt: java.time.Instant?,
+    locale: Locale,
+    zone: ZoneId,
+) {
+    val notYet = stringResource(R.string.check_not_yet)
+    Text(
+        stringResource(
+            R.string.last_attempted_check,
+            attemptedAt?.let { formatFetchTime(it, locale, zone) } ?: notYet,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+        stringResource(
+            R.string.last_successful_check,
+            successfulAt?.let { formatFetchTime(it, locale, zone) } ?: notYet,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable

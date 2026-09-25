@@ -35,6 +35,9 @@
     <string name="you_buy">EGP · You buy USD</string>
     <string name="cash_note">Cash exchange · Prices may change</string>
     <string name="last_checked">Last checked successfully</string>
+    <string name="last_attempted_check">Last attempted check: %1$s</string>
+    <string name="last_successful_check">Last successful check: %1$s</string>
+    <string name="check_not_yet">Not yet</string>
     <string name="source_time">Source display time</string>
     <string name="source_timezone">Shown as published by the source. Source timezone unspecified.</string>
     <string name="not_supplied">Not supplied by the source</string>

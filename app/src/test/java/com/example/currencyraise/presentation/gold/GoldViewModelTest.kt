@@ -102,6 +102,20 @@ class GoldViewModelTest {
         assertEquals(listOf(k24), viewModel.uiState.value.history)
     }
 
+    @Test fun switchingKaratLoadsItsOwnLastAttempt() = runTest(dispatcher) {
+        val k21 = clock.current.minusSeconds(30)
+        val k24 = clock.current.minusSeconds(60)
+        repository.attempts.getValue(GoldKarat.K21).value = k21
+        repository.attempts.getValue(GoldKarat.K24).value = k24
+        val viewModel = create()
+        runCurrent()
+        assertEquals(k21, viewModel.uiState.value.lastAttemptedAt)
+
+        viewModel.selectKarat(GoldKarat.K24)
+        runCurrent()
+        assertEquals(k24, viewModel.uiState.value.lastAttemptedAt)
+    }
+
     private fun create() = GoldViewModel(repository, settings, clock, SavedStateHandle()).also {
         owner.put("gold", it)
     }
@@ -122,11 +136,13 @@ class GoldViewModelTest {
     private inner class FakeGoldRepository : GoldRateRepository {
         val saved = GoldKarat.entries.associateWith { MutableStateFlow<GoldRate?>(null) }
         val history = GoldKarat.entries.associateWith { MutableStateFlow<List<RateObservation>>(emptyList()) }
+        val attempts = GoldKarat.entries.associateWith { MutableStateFlow<Instant?>(null) }
         val minimumAges = mutableListOf<Duration>()
         var calls = 0
 
         override fun observeLatest(karat: GoldKarat) = saved.getValue(karat)
         override fun observeHistory(karat: GoldKarat) = history.getValue(karat)
+        override fun observeLastAttempt(karat: GoldKarat) = attempts.getValue(karat)
 
         override suspend fun refresh(karat: GoldKarat, minimumAge: Duration): GoldRefreshOutcome {
             calls++

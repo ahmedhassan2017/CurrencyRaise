@@ -23,6 +23,12 @@ internal class RateCache(private val store: DataStore<Preferences>) {
     suspend fun read(): ExchangeRate? = observe().first()
     fun observeHistory(): Flow<List<RateObservation>> = store.data.map(::decodeHistory).distinctUntilChanged()
     suspend fun readHistory(): List<RateObservation> = observeHistory().first()
+    fun observeLastAttempt(): Flow<Instant?> =
+        store.data.map(::decodeLastAttempt).distinctUntilChanged()
+
+    suspend fun recordAttempt(at: Instant) {
+        store.edit { it[LAST_ATTEMPT] = at.toString() }
+    }
 
     /** All fields commit together; a failed commit preserves the previous snapshot. */
     suspend fun save(rate: ExchangeRate) {
@@ -60,7 +66,7 @@ internal class RateCache(private val store: DataStore<Preferences>) {
     }
 
     private fun decode(prefs: Preferences): ExchangeRate? {
-        if (prefs.asMap().isEmpty()) return null
+        if (prefs[VERSION] == null) return null
         try {
             require(prefs[VERSION] == 1) { "Unknown cache schema" }
             return ExchangeRate(
@@ -88,6 +94,14 @@ internal class RateCache(private val store: DataStore<Preferences>) {
     private fun required(prefs: Preferences, key: Preferences.Key<String>): String =
         requireNotNull(prefs[key]) { "Incomplete saved quote" }
 
+    private fun decodeLastAttempt(prefs: Preferences): Instant? = try {
+        prefs[LAST_ATTEMPT]?.let(Instant::parse)
+    } catch (error: DateTimeParseException) {
+        throw IOException("Invalid saved check attempt timestamp", error)
+    } catch (error: ClassCastException) {
+        throw IOException("Invalid saved check attempt type", error)
+    }
+
     private companion object {
         val VERSION = intPreferencesKey("schema_version")
         val HISTORY = stringPreferencesKey("observed_history_v1")
@@ -102,5 +116,6 @@ internal class RateCache(private val store: DataStore<Preferences>) {
         val DISPLAYED = stringPreferencesKey("source_displayed_at")
         val QUOTE_ID = stringPreferencesKey("source_quote_id")
         val FETCHED = stringPreferencesKey("fetched_at")
+        val LAST_ATTEMPT = stringPreferencesKey("last_attempted_at")
     }
 }

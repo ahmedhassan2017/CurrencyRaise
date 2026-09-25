@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DefaultGoldRateRepositoryTest {
@@ -75,6 +76,16 @@ class DefaultGoldRateRepositoryTest {
             repository.refresh(GoldKarat.K21, Duration.ofMinutes(5)),
         )
         assertEquals(1, calls)
+        assertEquals(now, repository.observeLastAttempt(GoldKarat.K21).first())
+    }
+
+    @Test fun cachedResultDoesNotClaimANewProviderAttempt() = runTest {
+        val cache = GoldRateCache(FaultablePreferences())
+        cache.save(rate(fetchedAt = now.minusSeconds(60)))
+        val repository = repository(cache) { GoldFetchResult.Success(rate()) }
+
+        assertTrue(repository.refresh(GoldKarat.K21, Duration.ofMinutes(5)) is GoldRefreshOutcome.Cached)
+        assertNull(repository.observeLastAttempt(GoldKarat.K21).first())
     }
 
     @Test fun rateChangeUsesDecimalValueNotScale() = runTest {

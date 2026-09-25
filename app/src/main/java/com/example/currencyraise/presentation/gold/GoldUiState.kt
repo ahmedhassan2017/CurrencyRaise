@@ -12,6 +12,7 @@ import java.time.Instant
 data class GoldUiState(
     val karat: GoldKarat = GoldKarat.K21,
     val rate: GoldRate? = null,
+    val lastAttemptedAt: Instant? = null,
     val history: List<RateObservation> = emptyList(),
     val loadingHistory: Boolean = true,
     val historyReadFailed: Boolean = false,

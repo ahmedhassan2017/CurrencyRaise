@@ -35,6 +35,7 @@ class GoldViewModel @Inject constructor(
     val uiState = mutableState.asStateFlow()
     private var observation: Job? = null
     private var historyObservation: Job? = null
+    private var attemptObservation: Job? = null
     private var settingsObservation: Job? = null
     private var refreshJob: Job? = null
     private var session = 0
@@ -45,6 +46,7 @@ class GoldViewModel @Inject constructor(
     init {
         observeRate()
         observeHistory()
+        observeLastAttempt()
         observeSettings()
     }
 
@@ -54,6 +56,7 @@ class GoldViewModel @Inject constructor(
         refreshJob?.cancel()
         observation?.cancel()
         historyObservation?.cancel()
+        attemptObservation?.cancel()
         savedState["gold_karat"] = karat.name
         initialCheckPending = true
         val updateInterval = mutableState.value.updateInterval
@@ -64,6 +67,7 @@ class GoldViewModel @Inject constructor(
         )
         observeRate()
         observeHistory()
+        observeLastAttempt()
     }
 
     fun refresh() = startRefresh(Duration.ZERO)
@@ -75,9 +79,10 @@ class GoldViewModel @Inject constructor(
         if (value) maybeInitialRefresh()
     }
 
-    /** Called only while the Gold tab is visible; the saved shared interval limits provider calls. */
+    /** Called by the app-active polling loop; the saved shared interval limits provider calls. */
     fun refreshIfDue() {
         mutableState.update { it.copy(now = clock.instant()) }
+        if (!settingsLoaded) return
         if (mutableState.value.freshness != GoldFreshness.RECENT_CHECK) {
             startRefresh(mutableState.value.updateInterval.duration)
         }
@@ -132,6 +137,23 @@ class GoldViewModel @Inject constructor(
                 mutableState.update {
                     it.copy(loadingHistory = false, historyReadFailed = true)
                 }
+            }
+        }
+    }
+
+    private fun observeLastAttempt() {
+        attemptObservation?.cancel()
+        val karat = mutableState.value.karat
+        val expectedSession = session
+        attemptObservation = viewModelScope.launch {
+            try {
+                repository.observeLastAttempt(karat).collect { attemptedAt ->
+                    if (session == expectedSession) mutableState.update {
+                        it.copy(lastAttemptedAt = attemptedAt)
+                    }
+                }
+            } catch (_: StorageReadException) {
+                if (session == expectedSession) mutableState.update { it.copy(lastAttemptedAt = null) }
             }
         }
     }

@@ -12,6 +12,7 @@ import com.example.currencyraise.domain.model.Bank
 import com.example.currencyraise.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
+import java.time.Duration
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,7 @@ class HomeViewModel @Inject constructor(
     private var rateObservation: Job? = null
     private var settingsObservation: Job? = null
     private var historyObservation: Job? = null
+    private var attemptObservation: Job? = null
     private var refreshJob: Job? = null
     private var rateSession = 0
     private var initialCheckPending = true
@@ -44,6 +46,7 @@ class HomeViewModel @Inject constructor(
     init {
         observeRates()
         observeHistory()
+        observeLastAttempt()
         observeSettings()
     }
 
@@ -53,6 +56,7 @@ class HomeViewModel @Inject constructor(
         refreshJob?.cancel()
         rateObservation?.cancel()
         historyObservation?.cancel()
+        attemptObservation?.cancel()
         savedState["bank"] = bank.name
         initialCheckPending = true
         mutableState.update { old -> HomeUiState(
@@ -61,6 +65,7 @@ class HomeViewModel @Inject constructor(
         ) }
         observeRates()
         observeHistory()
+        observeLastAttempt()
     }
 
     fun retryHistory() = observeHistory()
@@ -80,6 +85,23 @@ class HomeViewModel @Inject constructor(
                 if (rateSession == session) mutableState.update {
                     it.copy(loadingHistory = false, historyReadFailed = true)
                 }
+            }
+        }
+    }
+
+    private fun observeLastAttempt() {
+        attemptObservation?.cancel()
+        val bank = mutableState.value.bank
+        val session = rateSession
+        attemptObservation = viewModelScope.launch {
+            try {
+                banks[bank].observeLastAttempt().collect { attemptedAt ->
+                    if (rateSession == session) mutableState.update {
+                        it.copy(lastAttemptedAt = attemptedAt)
+                    }
+                }
+            } catch (_: StorageReadException) {
+                if (rateSession == session) mutableState.update { it.copy(lastAttemptedAt = null) }
             }
         }
     }
@@ -132,11 +154,23 @@ class HomeViewModel @Inject constructor(
         if (!initialCheckPending || state.loadingCache || !settingsLoaded) return
         initialCheckPending = false
         // An unreadable cache needs explicit retry. A future timestamp is unverified.
-        if (!state.rateReadFailed && state.freshness != Freshness.RECENT_CHECK) refresh()
+        if (!state.rateReadFailed && state.freshness != Freshness.RECENT_CHECK) {
+            startRefresh(state.settings?.updateInterval?.duration ?: Duration.ofHours(1))
+        }
     }
 
     /** Called on the main thread by UI events. Cache observations remain the source of quote state. */
-    fun refresh() {
+    fun refresh() = startRefresh(Duration.ZERO)
+
+    fun refreshIfDue() {
+        mutableState.update { it.copy(now = clock.instant()) }
+        if (!settingsLoaded) return
+        val state = mutableState.value
+        val interval = state.settings?.updateInterval?.duration ?: Duration.ofHours(1)
+        if (state.freshness != Freshness.RECENT_CHECK) startRefresh(interval)
+    }
+
+    private fun startRefresh(minimumAge: Duration) {
         val state = mutableState.value
         if (state.refreshing || state.loadingCache) return
         initialCheckPending = false
@@ -150,7 +184,7 @@ class HomeViewModel @Inject constructor(
         val session = rateSession
         refreshJob = viewModelScope.launch {
             try {
-                val result = banks[bank].refreshUsdEgpRate()
+                val result = banks[bank].refreshUsdEgpRate(minimumAge)
                 if (rateSession != session) return@launch
                 when (result) {
                     is RefreshOutcome.Cached -> Unit

@@ -38,6 +38,11 @@ internal class DefaultGoldRateRepository(
         throw error
     }
 
+    override fun observeLastAttempt(karat: GoldKarat) = cache.observeLastAttempt(karat).catch { error ->
+        if (error is IOException) throw StorageReadException(error)
+        throw error
+    }
+
     override suspend fun refresh(karat: GoldKarat, minimumAge: Duration): GoldRefreshOutcome {
         require(!minimumAge.isNegative)
         val lock = refreshLocks.getValue(karat)
@@ -60,6 +65,11 @@ internal class DefaultGoldRateRepository(
             }
             if (deadline != null && now < deadline) {
                 return GoldRefreshOutcome.Failure(RefreshError.Deferred(deadline))
+            }
+            try {
+                cache.recordAttempt(karat, clock.instant())
+            } catch (_: IOException) {
+                return GoldRefreshOutcome.Failure(RefreshError.StorageWrite)
             }
             val fetched = when (val result = source.fetchLatest(karat)) {
                 is GoldFetchResult.Success -> result.rate.also {

@@ -43,7 +43,7 @@ class RateHistoryChartTest {
                 CurrencyRaiseTheme(darkTheme = dark, dynamicColor = false) {
                     Surface(color = MaterialTheme.colorScheme.background) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                            RateHistoryChart(points, now, Locale.US, ZoneOffset.UTC, 6, false, false, {})
+                            RateHistoryChart(points, now, Locale.US, ZoneOffset.UTC, false, false, {})
                         }
                     }
                 }

@@ -6,6 +6,9 @@ import com.example.currencyraise.data.quote
 import com.example.currencyraise.data.remote.RateRemoteSource
 import com.example.currencyraise.domain.model.*
 import java.io.IOException
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
@@ -17,9 +20,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DefaultExchangeRateRepositoryTest {
-    private fun repository(source: RateRemoteSource, cache: RateCache) =
+    private fun repository(
+        source: RateRemoteSource,
+        cache: RateCache,
+        clock: Clock = Clock.systemUTC(),
+    ) =
         DefaultExchangeRateRepository(source, cache,
-            com.example.currencyraise.data.local.SyncStateStore(FaultablePreferences()), java.time.Clock.systemUTC())
+            com.example.currencyraise.data.local.SyncStateStore(FaultablePreferences()), clock)
 
     @Test fun firstRefreshPersistsAndReportsFirstQuote() = runTest {
         val cache = RateCache(FaultablePreferences())
@@ -72,6 +79,23 @@ class DefaultExchangeRateRepositoryTest {
             assertEquals(RefreshOutcome.Failure(RefreshError.Fetch(error)), repository.refreshUsdEgpRate())
             assertEquals(saved, cache.read())
         }
+    }
+
+    @Test fun providerAttemptIsPersistedEvenWhenTheRequestFails() = runTest {
+        val attemptedAt = Instant.parse("2026-09-25T12:00:00Z")
+        val cache = RateCache(FaultablePreferences())
+        val repository = repository(
+            source = { RateFetchResult.Failure(RateFetchError.Network) },
+            cache = cache,
+            clock = Clock.fixed(attemptedAt, ZoneOffset.UTC),
+        )
+
+        assertEquals(
+            RefreshOutcome.Failure(RefreshError.Fetch(RateFetchError.Network)),
+            repository.refreshUsdEgpRate(),
+        )
+        assertEquals(attemptedAt, repository.observeLastAttempt().first())
+        assertNull(repository.observeLatestUsdEgpRate().first())
     }
 
     @Test fun failedWriteDoesNotReportSuccessOrReplaceCache() = runTest {

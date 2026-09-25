@@ -64,6 +64,20 @@ class HomeViewModelTest {
         assertEquals(cibPoints, vm.uiState.value.history)
     }
 
+    @Test fun lastAttemptTracksTheSelectedBankIndependentlyFromSuccess() = runTest(dispatcher) {
+        val misrAttempt = Instant.parse("2026-09-11T10:29:00Z")
+        val cibAttempt = Instant.parse("2026-09-11T10:28:00Z")
+        rates.attempt.value = misrAttempt
+        cib.attempt.value = cibAttempt
+        val vm = create()
+        runCurrent()
+        assertEquals(misrAttempt, vm.uiState.value.lastAttemptedAt)
+
+        vm.selectBank(Bank.CIB)
+        runCurrent()
+        assertEquals(cibAttempt, vm.uiState.value.lastAttemptedAt)
+    }
+
     @Test fun historyReadFailureKeepsQuoteAndRetryDoesNotFetch() = runTest(dispatcher) {
         rates.saved.value = Result.success(quote())
         rates.history.value = Result.failure(StorageReadException(IOException("history unreadable")))
@@ -185,7 +199,7 @@ class HomeViewModelTest {
         assertEquals(HomeError.NETWORK, vm.uiState.value.refreshError)
     }
 
-    @Test fun selectedIntervalControlsInitialFreshnessIncludingBoundary() = runTest(dispatcher) {
+    @Test fun foregroundCheckUsesSelectedIntervalAtTheExactBoundary() = runTest(dispatcher) {
         rates.saved.value = Result.success(quote(fetchedAt = "2026-09-11T10:26:00Z"))
         settings.saved.value = Result.success(AppSettings(updateInterval = UpdateInterval.FIVE_MINUTES))
         val vm = create()
@@ -195,10 +209,10 @@ class HomeViewModelTest {
         vm.updateDisplayTime()
         assertEquals(Freshness.CHECK_DUE, vm.uiState.value.freshness)
         assertEquals(0, rates.calls) // Display ticks never perform network polling.
-        owner.clear()
-        create()
+        vm.refreshIfDue()
         runCurrent()
         assertEquals(1, rates.calls)
+        assertEquals(java.time.Duration.ofMinutes(5), rates.minimumAges.single())
     }
 
     @Test fun futureDatedCacheTriggersOneCheckWithoutClaimingFreshness() = runTest(dispatcher) {
@@ -321,13 +335,20 @@ class HomeViewModelTest {
         val history = MutableStateFlow<Result<List<RateObservation>>>(Result.success(emptyList()))
         override fun observeUsdEgpHistory() = history.map { it.getOrThrow() }
         val saved = MutableStateFlow<Result<ExchangeRate?>>(Result.success(null))
+        val attempt = MutableStateFlow<Instant?>(null)
         var calls = 0
+        val minimumAges = mutableListOf<java.time.Duration>()
         var action: suspend () -> RefreshOutcome = {
             saved.value = Result.success(quote())
             RefreshOutcome.Success(quote(), RateChange.FIRST_QUOTE)
         }
         override fun observeLatestUsdEgpRate() = saved.map { it.getOrThrow() }
-        override suspend fun refreshUsdEgpRate(minimumAge: java.time.Duration): RefreshOutcome { calls++; return action() }
+        override fun observeLastAttempt() = attempt
+        override suspend fun refreshUsdEgpRate(minimumAge: java.time.Duration): RefreshOutcome {
+            calls++
+            minimumAges += minimumAge
+            return action()
+        }
     }
 
     private class FakeSettings : SettingsRepository {

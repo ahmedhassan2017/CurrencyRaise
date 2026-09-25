@@ -29,6 +29,13 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
 
     suspend fun readHistory(karat: GoldKarat): List<RateObservation> = observeHistory(karat).first()
 
+    fun observeLastAttempt(karat: GoldKarat): Flow<Instant?> =
+        store.data.map { decodeLastAttempt(it, karat) }.distinctUntilChanged()
+
+    suspend fun recordAttempt(karat: GoldKarat, at: Instant) {
+        store.edit { it[keys(karat).lastAttempt] = at.toString() }
+    }
+
     suspend fun save(rate: GoldRate) {
         store.edit { prefs ->
             val keys = keys(rate.karat)
@@ -92,6 +99,14 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
     private fun required(prefs: Preferences, key: Preferences.Key<String>): String =
         requireNotNull(prefs[key]) { "Incomplete saved gold quote" }
 
+    private fun decodeLastAttempt(prefs: Preferences, karat: GoldKarat): Instant? = try {
+        prefs[keys(karat).lastAttempt]?.let(Instant::parse)
+    } catch (error: DateTimeParseException) {
+        throw IOException("Invalid saved gold check attempt timestamp", error)
+    } catch (error: ClassCastException) {
+        throw IOException("Invalid saved gold check attempt type", error)
+    }
+
     private fun keys(karat: GoldKarat): Keys {
         val prefix = karat.name.lowercase()
         return Keys(
@@ -103,6 +118,7 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
             stringPreferencesKey("${prefix}_source_displayed_at"),
             stringPreferencesKey("${prefix}_fetched_at"),
             stringPreferencesKey("${prefix}_observed_history_v1"),
+            stringPreferencesKey("${prefix}_last_attempted_at"),
         )
     }
 
@@ -115,5 +131,6 @@ internal class GoldRateCache(private val store: DataStore<Preferences>) {
         val displayed: Preferences.Key<String>,
         val fetched: Preferences.Key<String>,
         val history: Preferences.Key<String>,
+        val lastAttempt: Preferences.Key<String>,
     )
 }

@@ -13,7 +13,6 @@ import com.example.currencyraise.domain.model.StorageReadException
 import com.example.currencyraise.domain.repository.BankRateRepositories
 import com.example.currencyraise.domain.repository.GoldRateRepository
 import com.example.currencyraise.domain.repository.SavingsRepository
-import com.example.currencyraise.domain.repository.SettingsRepository
 import com.example.currencyraise.presentation.home.normalizeCurrencyInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -29,7 +28,6 @@ class WalletViewModel @Inject constructor(
     private val savings: SavingsRepository,
     private val rates: BankRateRepositories,
     private val goldRates: GoldRateRepository,
-    private val settings: SettingsRepository,
     private val clock: Clock,
     private val savedState: SavedStateHandle,
 ) : ViewModel() {
@@ -48,7 +46,6 @@ class WalletViewModel @Inject constructor(
     private var goldRateObservation: Job? = null
     private var goldHistoryObservation: Job? = null
     private var refreshJob: Job? = null
-    private var settingsObservation: Job? = null
     private var bankSession = 0
     private var goldSession = 0
     private var observedGoldKarat: GoldKarat? = null
@@ -56,7 +53,6 @@ class WalletViewModel @Inject constructor(
     init {
         observeSavings()
         observeBankData()
-        observeSettings()
     }
 
     fun updateUsdInput(value: String) = updateInput(usd = normalizeCurrencyInput(value))
@@ -156,19 +152,6 @@ class WalletViewModel @Inject constructor(
                 }
             } finally {
                 if (session == bankSession) mutableState.update { it.copy(refreshingRate = false) }
-            }
-        }
-    }
-
-    private fun observeSettings() {
-        settingsObservation?.cancel()
-        settingsObservation = viewModelScope.launch {
-            try {
-                settings.observeSettings().collect { appSettings ->
-                    mutableState.update { it.copy(intervalMinutes = appSettings.updateInterval.minutes) }
-                }
-            } catch (_: StorageReadException) {
-                // The default one-hour gap threshold remains safe when preferences are unavailable.
             }
         }
     }
