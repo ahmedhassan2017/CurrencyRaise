@@ -36,7 +36,8 @@ internal fun convertCurrency(
     }
 }
 
-internal fun normalizeCurrencyInput(raw: String): String {
+internal fun normalizeCurrencyInput(raw: String, maximumFractionDigits: Int = 2): String {
+    require(maximumFractionDigits >= 0)
     val normalized = buildString {
         var hasDecimalSeparator = false
         var integerDigits = 0
@@ -49,7 +50,7 @@ internal fun normalizeCurrencyInput(raw: String): String {
                     append(digit)
                     integerDigits++
                 }
-                digit >= 0 && hasDecimalSeparator && fractionDigits < 2 -> {
+                digit >= 0 && hasDecimalSeparator && fractionDigits < maximumFractionDigits -> {
                     append(digit)
                     fractionDigits++
                 }

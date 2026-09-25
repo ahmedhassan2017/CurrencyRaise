@@ -57,6 +57,7 @@ import kotlin.math.abs
 internal fun WalletValueChart(
     balance: SavingsBalance,
     history: List<RateObservation>,
+    goldHistory: List<RateObservation>,
     now: Instant,
     locale: Locale,
     zone: ZoneId,
@@ -65,8 +66,8 @@ internal fun WalletValueChart(
     readFailed: Boolean,
 ) {
     var period by rememberSaveable { mutableStateOf(ChartPeriod.DAILY) }
-    val data = remember(balance, history, period, now) {
-        walletChartData(balance, history, period, now)
+    val data = remember(balance, history, goldHistory, period, now) {
+        walletChartData(balance, history, goldHistory, period, now)
     }
 
     CurrencyPanel {
@@ -103,7 +104,8 @@ internal fun WalletValueChart(
         }
 
         when {
-            balance.usd.signum() == 0 && balance.egp.signum() == 0 ->
+            balance.usd.signum() == 0 && balance.egp.signum() == 0 &&
+                balance.goldGrams.signum() == 0 ->
                 Text(stringResource(R.string.wallet_chart_empty_savings))
             readFailed -> Text(
                 stringResource(R.string.wallet_chart_read_failed),

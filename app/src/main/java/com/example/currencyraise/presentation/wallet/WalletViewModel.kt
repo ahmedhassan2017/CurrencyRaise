@@ -4,11 +4,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.currencyraise.domain.model.Bank
+import com.example.currencyraise.domain.model.GoldKarat
+import com.example.currencyraise.domain.model.GoldRefreshOutcome
 import com.example.currencyraise.domain.model.RefreshOutcome
 import com.example.currencyraise.domain.model.SavingsBalance
 import com.example.currencyraise.domain.model.SavingsWriteResult
 import com.example.currencyraise.domain.model.StorageReadException
 import com.example.currencyraise.domain.repository.BankRateRepositories
+import com.example.currencyraise.domain.repository.GoldRateRepository
 import com.example.currencyraise.domain.repository.SavingsRepository
 import com.example.currencyraise.domain.repository.SettingsRepository
 import com.example.currencyraise.presentation.home.normalizeCurrencyInput
@@ -25,6 +28,7 @@ import kotlinx.coroutines.launch
 class WalletViewModel @Inject constructor(
     private val savings: SavingsRepository,
     private val rates: BankRateRepositories,
+    private val goldRates: GoldRateRepository,
     private val settings: SettingsRepository,
     private val clock: Clock,
     private val savedState: SavedStateHandle,
@@ -41,9 +45,13 @@ class WalletViewModel @Inject constructor(
     private var savingsObservation: Job? = null
     private var rateObservation: Job? = null
     private var historyObservation: Job? = null
+    private var goldRateObservation: Job? = null
+    private var goldHistoryObservation: Job? = null
     private var refreshJob: Job? = null
     private var settingsObservation: Job? = null
     private var bankSession = 0
+    private var goldSession = 0
+    private var observedGoldKarat: GoldKarat? = null
 
     init {
         observeSavings()
@@ -55,11 +63,22 @@ class WalletViewModel @Inject constructor(
 
     fun updateEgpInput(value: String) = updateInput(egp = normalizeCurrencyInput(value))
 
-    private fun updateInput(usd: String? = null, egp: String? = null) {
+    fun updateGoldInput(value: String) = updateInput(gold = normalizeCurrencyInput(value, 3))
+
+    fun selectGoldKarat(karat: GoldKarat) {
+        if (karat == mutableState.value.goldKarat) return
+        mutableState.update {
+            it.copy(goldKarat = karat, saveFailed = false, saveConfirmed = false)
+        }
+        if (mutableState.value.savedBalance.goldGrams.signum() == 0) observeGoldData(karat)
+    }
+
+    private fun updateInput(usd: String? = null, egp: String? = null, gold: String? = null) {
         mutableState.update {
             it.copy(
                 usdInput = usd ?: it.usdInput,
                 egpInput = egp ?: it.egpInput,
+                goldInput = gold ?: it.goldInput,
                 saveFailed = false,
                 saveConfirmed = false,
             )
@@ -72,8 +91,11 @@ class WalletViewModel @Inject constructor(
         mutableState.update { it.copy(saving = true, saveFailed = false, saveConfirmed = false) }
         viewModelScope.launch {
             when (savings.saveSavings(balance)) {
-                SavingsWriteResult.SAVED -> mutableState.update {
-                    it.copy(saving = false, saveConfirmed = true, savedBalance = balance)
+                SavingsWriteResult.SAVED -> {
+                    mutableState.update {
+                        it.copy(saving = false, saveConfirmed = true, savedBalance = balance)
+                    }
+                    observeGoldData(balance.goldKarat)
                 }
                 SavingsWriteResult.STORAGE_FAILURE -> mutableState.update {
                     it.copy(saving = false, saveFailed = true)
@@ -113,15 +135,24 @@ class WalletViewModel @Inject constructor(
         val state = mutableState.value
         if (state.refreshingRate) return
         val bank = state.bank
+        val karat = trackedGoldKarat(state)
         val session = bankSession
+        val expectedGoldSession = goldSession
         mutableState.update { it.copy(refreshingRate = true, refreshFailed = false) }
         refreshJob = viewModelScope.launch {
             try {
-                when (rates[bank].refreshUsdEgpRate()) {
-                    is RefreshOutcome.Failure -> if (session == bankSession) {
-                        mutableState.update { it.copy(refreshFailed = true) }
-                    }
-                    else -> Unit
+                val bankFailed = when (rates[bank].refreshUsdEgpRate()) {
+                    is RefreshOutcome.Failure -> true
+                    else -> false
+                }
+                val goldFailed = when (goldRates.refresh(karat)) {
+                    is GoldRefreshOutcome.Failure -> true
+                    else -> false
+                }
+                if (session == bankSession && expectedGoldSession == goldSession &&
+                    (bankFailed || goldFailed)
+                ) {
+                    mutableState.update { it.copy(refreshFailed = true) }
                 }
             } finally {
                 if (session == bankSession) mutableState.update { it.copy(refreshingRate = false) }
@@ -152,10 +183,13 @@ class WalletViewModel @Inject constructor(
                             savedBalance = balance,
                             usdInput = if (inputsInitialized) state.usdInput else balance.usd.editableAmount(),
                             egpInput = if (inputsInitialized) state.egpInput else balance.egp.editableAmount(),
+                            goldInput = if (inputsInitialized) state.goldInput else balance.goldGrams.editableAmount(),
+                            goldKarat = if (inputsInitialized) state.goldKarat else balance.goldKarat,
                             loadingSavings = false,
                             savingsReadFailed = false,
                         )
                     }
+                    observeGoldData(trackedGoldKarat(mutableState.value))
                     inputsInitialized = true
                 }
             } catch (_: StorageReadException) {
@@ -167,6 +201,7 @@ class WalletViewModel @Inject constructor(
     private fun observeBankData() {
         observeRate()
         observeHistory()
+        observeGoldData(trackedGoldKarat(mutableState.value))
     }
 
     private fun observeRate() {
@@ -204,6 +239,60 @@ class WalletViewModel @Inject constructor(
             }
         }
     }
+
+    private fun observeGoldData(karat: GoldKarat) {
+        if (observedGoldKarat == karat && goldRateObservation?.isActive == true &&
+            goldHistoryObservation?.isActive == true
+        ) return
+        observedGoldKarat = karat
+        goldSession++
+        val session = goldSession
+        goldRateObservation?.cancel()
+        goldHistoryObservation?.cancel()
+        mutableState.update {
+            it.copy(
+                goldRate = null,
+                goldHistory = emptyList(),
+                loadingGoldRate = true,
+                goldRateReadFailed = false,
+                loadingGoldHistory = true,
+                goldHistoryReadFailed = false,
+            )
+        }
+        goldRateObservation = viewModelScope.launch {
+            try {
+                goldRates.observeLatest(karat).collect { rate ->
+                    if (session == goldSession) mutableState.update {
+                        it.copy(goldRate = rate, loadingGoldRate = false, goldRateReadFailed = false)
+                    }
+                }
+            } catch (_: StorageReadException) {
+                if (session == goldSession) mutableState.update {
+                    it.copy(loadingGoldRate = false, goldRateReadFailed = true)
+                }
+            }
+        }
+        goldHistoryObservation = viewModelScope.launch {
+            try {
+                goldRates.observeHistory(karat).collect { history ->
+                    if (session == goldSession) mutableState.update {
+                        it.copy(
+                            goldHistory = history,
+                            loadingGoldHistory = false,
+                            goldHistoryReadFailed = false,
+                        )
+                    }
+                }
+            } catch (_: StorageReadException) {
+                if (session == goldSession) mutableState.update {
+                    it.copy(loadingGoldHistory = false, goldHistoryReadFailed = true)
+                }
+            }
+        }
+    }
+
+    private fun trackedGoldKarat(state: WalletUiState): GoldKarat =
+        if (state.savedBalance.goldGrams.signum() > 0) state.savedBalance.goldKarat else state.goldKarat
 
     private fun java.math.BigDecimal.editableAmount(): String =
         stripTrailingZeros().toPlainString()

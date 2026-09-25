@@ -33,22 +33,40 @@ internal data class WalletChartData(
 
 internal fun walletChartData(
     balance: SavingsBalance,
-    history: List<RateObservation>,
+    bankHistory: List<RateObservation>,
+    goldHistory: List<RateObservation>,
     period: ChartPeriod,
     now: Instant,
 ): WalletChartData {
     val start = now.minus(period.duration)
-    val points = history
-        .filter { it.observedAt >= start && it.observedAt <= now }
-        .associateBy { it.observedAt }
-        .values
-        .sortedBy { it.observedAt }
-        .map { observation ->
-            WalletValuePoint(
-                observedAt = observation.observedAt,
-                totalEgp = balance.egp.add(balance.usd.multiply(observation.buyRate)),
-            )
+    val needsBank = balance.usd.signum() > 0
+    val needsGold = balance.goldGrams.signum() > 0
+    val bankRates = bankHistory.sortedBy { it.observedAt }
+    val goldRates = goldHistory.sortedBy { it.observedAt }
+    val timestamps = when {
+        !needsBank && !needsGold -> listOf(now)
+        needsBank && needsGold -> (bankRates + goldRates).map(RateObservation::observedAt)
+        needsBank -> bankRates.map(RateObservation::observedAt)
+        else -> goldRates.map(RateObservation::observedAt)
+    }.filter { it >= start && it <= now }.distinct().sorted()
+    val points = timestamps.mapNotNull { observedAt ->
+        val bankRate = if (needsBank) {
+            bankRates.lastOrNull { it.observedAt <= observedAt }?.buyRate ?: return@mapNotNull null
+        } else {
+            BigDecimal.ZERO
         }
+        val goldRate = if (needsGold) {
+            goldRates.lastOrNull { it.observedAt <= observedAt }?.buyRate ?: return@mapNotNull null
+        } else {
+            BigDecimal.ZERO
+        }
+        WalletValuePoint(
+            observedAt = observedAt,
+            totalEgp = balance.egp
+                .add(balance.usd.multiply(bankRate))
+                .add(balance.goldGrams.multiply(goldRate)),
+        )
+    }
     val low = points.minOfOrNull { it.totalEgp } ?: BigDecimal.ZERO
     val high = points.maxOfOrNull { it.totalEgp } ?: BigDecimal.ONE
     val padding = high.subtract(low).multiply(BigDecimal("0.1")).max(BigDecimal("0.01"))

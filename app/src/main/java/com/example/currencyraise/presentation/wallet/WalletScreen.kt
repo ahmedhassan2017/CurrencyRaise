@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.currencyraise.R
 import com.example.currencyraise.domain.model.Bank
+import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.presentation.components.CurrencyPanel
 import com.example.currencyraise.presentation.components.CurrencyRaiseHeader
 import com.example.currencyraise.presentation.home.formatCurrencyAmount
@@ -83,6 +84,8 @@ fun WalletRoute(
         onSelectBank = viewModel::selectBank,
         onUsdInput = viewModel::updateUsdInput,
         onEgpInput = viewModel::updateEgpInput,
+        onGoldInput = viewModel::updateGoldInput,
+        onSelectGoldKarat = viewModel::selectGoldKarat,
         onSave = viewModel::save,
         onRetrySavings = viewModel::retrySavings,
         onRefreshRate = viewModel::refreshRate,
@@ -97,6 +100,8 @@ fun WalletScreen(
     onSelectBank: (Bank) -> Unit,
     onUsdInput: (String) -> Unit,
     onEgpInput: (String) -> Unit,
+    onGoldInput: (String) -> Unit,
+    onSelectGoldKarat: (GoldKarat) -> Unit,
     onSave: () -> Unit,
     onRetrySavings: () -> Unit,
     onRefreshRate: () -> Unit,
@@ -167,18 +172,23 @@ fun WalletScreen(
                 state = state,
                 onUsdInput = onUsdInput,
                 onEgpInput = onEgpInput,
+                onGoldInput = onGoldInput,
+                onSelectGoldKarat = onSelectGoldKarat,
                 onSave = onSave,
                 onRetry = onRetrySavings,
             )
             WalletValueChart(
                 balance = state.savedBalance,
                 history = state.history,
+                goldHistory = state.goldHistory,
                 now = state.now,
                 locale = locale,
                 zone = zone,
                 intervalMinutes = state.intervalMinutes,
-                loading = state.loadingHistory,
-                readFailed = state.historyReadFailed,
+                loading = (state.savedBalance.usd.signum() > 0 && state.loadingHistory) ||
+                    (state.savedBalance.goldGrams.signum() > 0 && state.loadingGoldHistory),
+                readFailed = (state.savedBalance.usd.signum() > 0 && state.historyReadFailed) ||
+                    (state.savedBalance.goldGrams.signum() > 0 && state.goldHistoryReadFailed),
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -187,6 +197,8 @@ fun WalletScreen(
 
 @Composable
 private fun WalletBalanceHero(state: WalletUiState, locale: Locale) {
+    val missingBankRate = state.needsBankRate && state.rate == null
+    val missingGoldRate = state.needsGoldRate && state.goldRate == null
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.extraLarge,
@@ -208,7 +220,13 @@ private fun WalletBalanceHero(state: WalletUiState, locale: Locale) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } ?: Text(
-                stringResource(R.string.wallet_no_rate),
+                stringResource(
+                    when {
+                        missingBankRate && missingGoldRate -> R.string.wallet_no_rates
+                        missingGoldRate -> R.string.wallet_no_gold_rate
+                        else -> R.string.wallet_no_rate
+                    },
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -242,6 +260,11 @@ private fun RateStatus(
     zone: ZoneId,
     onRefreshRate: () -> Unit,
 ) {
+    val trackedKarat = if (state.savedBalance.goldGrams.signum() > 0) {
+        state.savedBalance.goldKarat
+    } else {
+        state.goldKarat
+    }
     CurrencyPanel {
         Text(
             state.rate?.let {
@@ -253,7 +276,17 @@ private fun RateStatus(
             } ?: stringResource(R.string.wallet_rate_unavailable, bankName),
             style = MaterialTheme.typography.bodyMedium,
         )
-        if (state.loadingRate || state.refreshingRate) {
+        Text(
+            state.goldRate?.let {
+                stringResource(
+                    R.string.wallet_selected_gold_rate,
+                    trackedKarat.label,
+                    formatFetchTime(it.fetchedAt, locale, zone),
+                )
+            } ?: stringResource(R.string.wallet_gold_rate_unavailable, trackedKarat.label),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if (state.loadingRate || state.loadingGoldRate || state.refreshingRate) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
         if (state.rateReadFailed || state.refreshFailed) {
@@ -283,6 +316,8 @@ private fun SavingsEditor(
     state: WalletUiState,
     onUsdInput: (String) -> Unit,
     onEgpInput: (String) -> Unit,
+    onGoldInput: (String) -> Unit,
+    onSelectGoldKarat: (GoldKarat) -> Unit,
     onSave: () -> Unit,
     onRetry: () -> Unit,
 ) {
@@ -312,6 +347,24 @@ private fun SavingsEditor(
                 currency = "USD",
                 imeAction = ImeAction.Next,
             )
+            SavingsAmountField(
+                value = state.goldInput,
+                onValueChange = onGoldInput,
+                label = stringResource(R.string.wallet_gold_savings),
+                currency = stringResource(R.string.wallet_grams),
+                imeAction = ImeAction.Next,
+            )
+            Text(stringResource(R.string.wallet_gold_karat), style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GoldKarat.entries.forEach { karat ->
+                    FilterChip(
+                        selected = state.goldKarat == karat,
+                        onClick = { onSelectGoldKarat(karat) },
+                        label = { Text(karat.label) },
+                        shape = MaterialTheme.shapes.small,
+                    )
+                }
+            }
             SavingsAmountField(
                 value = state.egpInput,
                 onValueChange = onEgpInput,
@@ -389,3 +442,10 @@ private fun SavingsAmountField(
 }
 
 private fun String.isZeroAmount(): Boolean = toBigDecimalOrNull()?.signum() == 0
+
+private val GoldKarat.label: String
+    get() = when (this) {
+        GoldKarat.K24 -> "24K"
+        GoldKarat.K21 -> "21K"
+        GoldKarat.K18 -> "18K"
+    }

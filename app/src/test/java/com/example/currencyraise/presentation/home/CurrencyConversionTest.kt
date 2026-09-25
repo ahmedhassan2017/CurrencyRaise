@@ -40,6 +40,7 @@ class CurrencyConversionTest {
         assertEquals("12.50", normalizeCurrencyInput("12,50"))
         assertEquals("0.75", normalizeCurrencyInput(".75"))
         assertEquals("123456789012345.67", normalizeCurrencyInput("12345678901234567.678"))
+        assertEquals("12.375", normalizeCurrencyInput("12.3759", maximumFractionDigits = 3))
     }
 
     @Test fun formatsMoneyToTwoDecimalPlaces() {

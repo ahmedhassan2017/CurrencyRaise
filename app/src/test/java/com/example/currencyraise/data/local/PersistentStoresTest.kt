@@ -4,11 +4,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.currencyraise.data.quote
 import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.model.AppSettings
 import com.example.currencyraise.domain.model.AppearanceMode
+import com.example.currencyraise.domain.model.GoldKarat
 import com.example.currencyraise.domain.model.SavingsBalance
 import com.example.currencyraise.domain.model.SettingsWriteResult
 import com.example.currencyraise.domain.model.UpdateInterval
@@ -165,12 +167,31 @@ class PersistentStoresTest {
         val (first, job) = open("savings")
         val store = SavingsStore(first)
         assertEquals(SavingsBalance.EMPTY, store.observe().first())
-        val saved = SavingsBalance(usd = "1250.75".toBigDecimal(), egp = "80000.50".toBigDecimal())
+        val saved = SavingsBalance(
+            usd = "1250.75".toBigDecimal(),
+            egp = "80000.50".toBigDecimal(),
+            goldGrams = "12.375".toBigDecimal(),
+            goldKarat = GoldKarat.K24,
+        )
         store.save(saved)
         job.cancelAndJoin()
 
         val (reopened, _) = open("savings")
         assertEquals(saved, SavingsStore(reopened).observe().first())
+    }
+
+    @Test fun versionOneSavingsMigrateWithZeroGold() = runBlocking {
+        val (store, _) = open("legacy_savings")
+        store.edit {
+            it[intPreferencesKey("schema_version")] = 1
+            it[stringPreferencesKey("usd_savings")] = "250.50"
+            it[stringPreferencesKey("egp_savings")] = "1000"
+        }
+
+        assertEquals(
+            SavingsBalance(usd = "250.50".toBigDecimal(), egp = "1000".toBigDecimal()),
+            SavingsStore(store).observe().first(),
+        )
     }
 
     @Test fun allAllowedIntervalsRoundTrip() = runBlocking {
