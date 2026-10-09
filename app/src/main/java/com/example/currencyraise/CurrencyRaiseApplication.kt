@@ -20,6 +20,7 @@ class CurrencyRaiseApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         notifications.createChannel()
+        notifications.clearOldGoldNotifications()
         scheduler.start()
     }
 }

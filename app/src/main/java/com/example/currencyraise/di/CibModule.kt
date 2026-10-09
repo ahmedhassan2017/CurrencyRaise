@@ -17,7 +17,6 @@ import com.example.currencyraise.domain.repository.GoldRateRepository
 import com.example.currencyraise.domain.repository.SettingsRepository
 import com.example.currencyraise.domain.repository.SyncStateRepository
 import com.example.currencyraise.notification.NotificationSink
-import com.example.currencyraise.notification.GoldChangeAlerts
 import com.example.currencyraise.notification.RateChangeAlerts
 import dagger.Module
 import dagger.Provides
@@ -62,10 +61,10 @@ internal object CibModule {
     fun background(
         settings: SettingsRepository, banks: BankRateRepositories,
         misrAlerts: RateChangeAlerts, @Cib state: SyncStateRepository, sink: NotificationSink,
-        goldRates: GoldRateRepository, goldAlerts: GoldChangeAlerts,
+        goldRates: GoldRateRepository,
     ) = BankBackgroundRefreshRunner(listOf(
         BackgroundRefreshRunner(settings, banks[Bank.BANQUE_MISR], misrAlerts),
         BackgroundRefreshRunner(settings, banks[Bank.CIB], RateChangeAlerts(state, sink)),
-        GoldBackgroundRefreshRunner(settings, goldRates, goldAlerts),
+        GoldBackgroundRefreshRunner(settings, goldRates),
     ))
 }

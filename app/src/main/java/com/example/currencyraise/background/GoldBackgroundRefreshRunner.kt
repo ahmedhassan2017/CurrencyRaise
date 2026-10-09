@@ -1,24 +1,18 @@
 package com.example.currencyraise.background
 
 import com.example.currencyraise.domain.model.GoldKarat
-import com.example.currencyraise.domain.model.GoldRate
 import com.example.currencyraise.domain.model.GoldRefreshOutcome
-import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.domain.model.RateFetchError
 import com.example.currencyraise.domain.model.RefreshError
 import com.example.currencyraise.domain.model.StorageReadException
 import com.example.currencyraise.domain.repository.GoldRateRepository
 import com.example.currencyraise.domain.repository.SettingsRepository
-import com.example.currencyraise.notification.GoldChangeAlerts
-import java.io.IOException
 import java.time.Duration
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
 internal class GoldBackgroundRefreshRunner(
     private val settings: SettingsRepository,
     private val rates: GoldRateRepository,
-    private val alerts: GoldChangeAlerts,
 ) : BackgroundRateRunner {
     override suspend fun run(attempt: Int): BackgroundResult {
         val initial = try {
@@ -38,9 +32,7 @@ internal class GoldBackgroundRefreshRunner(
 
     private suspend fun refresh(karat: GoldKarat, attempt: Int): BackgroundResult =
         when (val result = rates.refresh(karat, Duration.ofMinutes(5))) {
-            is GoldRefreshOutcome.Success ->
-                finish(result.rate, result.change, result.previousRate)
-            is GoldRefreshOutcome.Cached -> finish(result.rate, RateChange.UNCHANGED)
+            is GoldRefreshOutcome.Success, is GoldRefreshOutcome.Cached -> BackgroundResult.COMPLETED
             GoldRefreshOutcome.AlreadyRefreshing ->
                 if (attempt < MAX_RETRIES) BackgroundResult.RETRY else BackgroundResult.COMPLETED
             is GoldRefreshOutcome.Failure -> when (val error = result.error) {
@@ -53,32 +45,6 @@ internal class GoldBackgroundRefreshRunner(
                 RefreshError.StorageRead, RefreshError.StorageWrite -> BackgroundResult.FAILED
             }
         }
-
-    private suspend fun finish(
-        rate: GoldRate,
-        change: RateChange,
-        previousRate: GoldRate? = null,
-    ): BackgroundResult {
-        // A saved quote is already success. Alert failure must never trigger another HTTP request.
-        try {
-            val latest = settings.observeSettings().first()
-            alerts.handle(
-                rate,
-                change,
-                latest.automaticChecksEnabled && latest.notificationsEnabled,
-                previousRate,
-            )
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: StorageReadException) {
-            return BackgroundResult.COMPLETED
-        } catch (_: IOException) {
-            return BackgroundResult.COMPLETED
-        } catch (_: RuntimeException) {
-            return BackgroundResult.COMPLETED
-        }
-        return BackgroundResult.COMPLETED
-    }
 
     private fun RateFetchError.isTransient(): Boolean = when (this) {
         RateFetchError.Network, RateFetchError.Timeout -> true

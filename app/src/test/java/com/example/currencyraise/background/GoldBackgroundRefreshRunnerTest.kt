@@ -1,7 +1,6 @@
 package com.example.currencyraise.background
 
 import com.example.currencyraise.data.FaultablePreferences
-import com.example.currencyraise.data.local.GoldAlertStateStore
 import com.example.currencyraise.data.local.SettingsStore
 import com.example.currencyraise.data.repository.DefaultSettingsRepository
 import com.example.currencyraise.domain.model.GoldKarat
@@ -10,7 +9,6 @@ import com.example.currencyraise.domain.model.GoldRefreshOutcome
 import com.example.currencyraise.domain.model.RateObservation
 import com.example.currencyraise.domain.model.RateChange
 import com.example.currencyraise.domain.repository.GoldRateRepository
-import com.example.currencyraise.notification.GoldChangeAlerts
 import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
@@ -26,22 +24,16 @@ class GoldBackgroundRefreshRunnerTest {
         SettingsStore(FaultablePreferences(), FaultablePreferences())
     )
     private val rates = FakeGoldRates()
-    private val posted = mutableListOf<GoldKarat>()
-    private val alerts = GoldChangeAlerts(GoldAlertStateStore(FaultablePreferences())) {
-        posted += it.rate.karat
-        true
-    }
-    private val runner = GoldBackgroundRefreshRunner(settings, rates, alerts)
+    private val runner = GoldBackgroundRefreshRunner(settings, rates)
 
-    @Test fun checksAllKaratsAndAlertsOnlyAfterEachBaselineChanges() = runTest {
+    @Test fun checksAllKaratsEvenWhenTheirPricesChange() = runTest {
         assertEquals(BackgroundResult.COMPLETED, runner.run(0))
         assertEquals(GoldKarat.entries.toSet(), rates.calls.toSet())
         assertEquals(List(GoldKarat.entries.size) { Duration.ofMinutes(5) }, rates.minimumAges)
-        assertTrue(posted.isEmpty())
 
         rates.changed = true
         assertEquals(BackgroundResult.COMPLETED, runner.run(0))
-        assertEquals(GoldKarat.entries.toSet(), posted.toSet())
+        assertEquals(GoldKarat.entries.size * 2, rates.calls.size)
     }
 
     @Test fun automaticChecksOffSkipsEveryKarat() = runTest {

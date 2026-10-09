@@ -19,13 +19,13 @@
     <string name="automatic_preference_help">Check dollar and gold rates while the app is closed.</string>
     <string name="interval_approximate">One interval applies to every dollar and gold source. Android may delay background checks to save battery or wait for a connection, so timing is approximate.</string>
     <string name="notifications_section">Notifications</string>
-    <string name="rate_alerts">Rate change alerts</string>
-    <string name="rate_alerts_help">Notify when a tracked dollar or gold buy/sell price changes. This preference is separate from Android permission.</string>
+    <string name="rate_alerts">Dollar rate alerts</string>
+    <string name="rate_alerts_help">Notify when a tracked dollar buy/sell price changes. This preference is separate from Android permission.</string>
     <string name="android_notifications_allowed">Android allows notifications.</string>
     <string name="android_permission_needed">Android notification permission is needed.</string>
     <string name="android_notifications_blocked">Android has blocked this app’s notifications.</string>
     <string name="android_channel_blocked">The rate alert channel or its group is blocked in Android settings.</string>
-    <string name="permission_context">Allow notifications to receive alerts when an automatic check finds changed prices. The first background check is silent; manual refresh never sends alerts.</string>
+    <string name="permission_context">Allow notifications to receive alerts when an automatic check finds changed dollar prices. The first background check is silent; manual refresh never sends alerts.</string>
     <string name="allow_notifications">Allow notifications</string>
     <string name="open_notification_settings">Open Android notification settings</string>
     <string name="alerts_paused">Automatic checks are off. Background alerts will stay paused until they are enabled.</string>

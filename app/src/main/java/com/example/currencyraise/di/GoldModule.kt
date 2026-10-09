@@ -4,13 +4,11 @@ import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.example.currencyraise.data.local.GoldRateCache
-import com.example.currencyraise.data.local.GoldAlertStateStore
 import com.example.currencyraise.data.local.SyncStateStore
 import com.example.currencyraise.data.remote.GoldRemoteSource
 import com.example.currencyraise.data.remote.Ta3weemGoldRemoteSource
 import com.example.currencyraise.data.repository.DefaultGoldRateRepository
 import com.example.currencyraise.domain.repository.GoldRateRepository
-import com.example.currencyraise.domain.repository.GoldAlertStateRepository
 import com.example.currencyraise.domain.repository.SyncStateRepository
 import dagger.Binds
 import dagger.Module
@@ -49,14 +47,6 @@ internal object GoldModule {
     fun syncState(@ApplicationContext context: Context): SyncStateRepository = SyncStateStore(
         PreferenceDataStoreFactory.create {
             File(context.noBackupFilesDir, "gold_sync_state.preferences_pb")
-        }
-    )
-
-    @Provides
-    @Singleton
-    fun alertState(@ApplicationContext context: Context): GoldAlertStateRepository = GoldAlertStateStore(
-        PreferenceDataStoreFactory.create {
-            File(context.noBackupFilesDir, "gold_alert_state.preferences_pb")
         }
     )
 

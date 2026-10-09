@@ -230,13 +230,13 @@
     <string name="automatic_preference_help">التحقق من أسعار الدولار والذهب أثناء إغلاق التطبيق.</string>
     <string name="interval_approximate">تُطبّق فترة واحدة على جميع مصادر الدولار والذهب. قد يؤخر Android التحقق في الخلفية لتوفير البطارية أو انتظار الاتصال، لذا فالتوقيت تقريبي.</string>
     <string name="notifications_section">الإشعارات</string>
-    <string name="rate_alerts">تنبيهات تغير الأسعار</string>
-    <string name="rate_alerts_help">إرسال إشعار عند تغير سعر شراء أو بيع الدولار أو الذهب المتابع. هذا التفضيل منفصل عن إذن Android.</string>
+    <string name="rate_alerts">تنبيهات تغير سعر الدولار</string>
+    <string name="rate_alerts_help">إرسال إشعار عند تغير سعر شراء أو بيع الدولار المتابع. هذا التفضيل منفصل عن إذن Android.</string>
     <string name="android_notifications_allowed">يسمح Android بالإشعارات.</string>
     <string name="android_permission_needed">يلزم منح إذن إشعارات Android.</string>
     <string name="android_notifications_blocked">حظر Android إشعارات هذا التطبيق.</string>
     <string name="android_channel_blocked">قناة تنبيهات الأسعار أو مجموعتها محظورة في إعدادات Android.</string>
-    <string name="permission_context">اسمح بالإشعارات لاستلام تنبيه عندما يجد التحقق التلقائي تغيرًا في الأسعار. أول تحقق في الخلفية صامت، والتحديث اليدوي لا يرسل تنبيهات.</string>
+    <string name="permission_context">اسمح بالإشعارات لاستلام تنبيه عندما يجد التحقق التلقائي تغيرًا في سعر الدولار. أول تحقق في الخلفية صامت، والتحديث اليدوي لا يرسل تنبيهات.</string>
     <string name="allow_notifications">السماح بالإشعارات</string>
     <string name="open_notification_settings">فتح إعدادات إشعارات Android</string>
     <string name="alerts_paused">التحقق التلقائي متوقف. ستبقى تنبيهات الخلفية متوقفة حتى تفعّله.</string>
@@ -287,14 +287,11 @@
         <item quantity="other">كل %1$d دقيقة</item>
     </plurals>
 
-    <string name="rate_channel_name">تحديثات أسعار الدولار والذهب</string>
-    <string name="rate_channel_description">تنبيهات عند تغير أسعار الدولار مقابل الجنيه أو أسعار الذهب المصري المتابعة.</string>
+    <string name="rate_channel_name">تحديثات سعر الدولار</string>
+    <string name="rate_channel_description">تنبيهات عند تغير أسعار الدولار مقابل الجنيه المتابعة.</string>
     <string name="rate_notification_title">%1$s: تغير سعر الدولار/الجنيه</string>
     <string name="rate_notification_body">البنك يشتري: %1$s · البنك يبيع: %2$s ج.م لكل دولار. افتح لمعرفة المصدر وأوقات التحقق.</string>
     <string name="rate_notification_expanded">البنك يشتري: %1$s ج.م\nالبنك يبيع: %2$s ج.م\nلكل دولار واحد. التغيير منذ التحقق المحفوظ السابق. افتح لمعرفة المصدر وأوقات التحقق.</string>
-    <string name="gold_notification_title">تغير سعر الذهب عيار %1$s</string>
-    <string name="gold_notification_body">التاجر يشتري: %1$s · التاجر يبيع: %2$s ج.م/جرام. افتح لمعرفة المصدر ووقت التحقق.</string>
-    <string name="gold_notification_expanded">التاجر يشتري: %1$s ج.م/جرام\nالتاجر يبيع: %2$s ج.م/جرام\nللذهب عيار %3$s. التغيير منذ التحقق المحفوظ السابق. افتح لمعرفة المصدر ووقت التحقق.</string>
     <string name="notification_direction_up">↑ ارتفع %1$s</string>
     <string name="notification_direction_down">↓ انخفض %1$s</string>
     <string name="notification_price_direction">%1$s (%2$s)</string>
