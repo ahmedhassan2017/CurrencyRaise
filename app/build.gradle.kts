@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.ktlint)
 }
 
 android {
@@ -106,6 +107,10 @@ configurations.matching { it.name == "releaseSmokeAndroidTestRuntimeClasspath" }
 
 hilt {
     enableAggregatingTask = true
+}
+
+ktlint {
+    baseline.set(file("ktlint-baseline.xml"))
 }
 
 // Opt-in verification of a separately captured page; normal tests stay offline.

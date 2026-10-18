@@ -9,3 +9,4 @@ trim_trailing_whitespace = true
 [*.{kt,kts}]
 indent_style = space
 indent_size = 4
+ktlint_code_style = intellij_idea

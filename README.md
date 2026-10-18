@@ -160,9 +160,13 @@ of backup is controlled by Android and the device's backup settings.
 Normal checks:
 
 ```powershell
+.\gradlew.bat :app:ktlintCheck --console=plain
 .\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --console=plain
 .\gradlew.bat :app:connectedDebugAndroidTest --console=plain
 ```
+
+Ktlint uses `app/ktlint-baseline.xml` for existing formatting violations. New
+violations fail CI; reduce the baseline as affected files are cleaned up.
 
 The optimized device check uses a separate, non-debuggable application ID
 (`com.example.currencyraise.smoke`), displayed as Currency Raise Release Check:
