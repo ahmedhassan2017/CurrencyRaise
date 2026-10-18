@@ -9,6 +9,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
@@ -38,12 +42,16 @@ class RateHistoryChartTest {
 
     private fun show(points: List<RateObservation> = history, dark: Boolean = false, scale: Float = 1f) {
         compose.setContent {
+            var expanded by rememberSaveable { mutableStateOf(true) }
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
                 CurrencyRaiseTheme(darkTheme = dark, dynamicColor = false) {
                     Surface(color = MaterialTheme.colorScheme.background) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                            RateHistoryChart(points, now, Locale.US, ZoneOffset.UTC, false, false, {})
+                            RateHistoryChart(
+                                points, now, Locale.US, ZoneOffset.UTC, false, false, {},
+                                expanded = expanded, onToggleExpanded = { expanded = !expanded },
+                            )
                         }
                     }
                 }

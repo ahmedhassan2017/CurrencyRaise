@@ -3,6 +3,7 @@ package com.example.currencyraise.presentation.home
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
@@ -139,16 +140,21 @@ class HomeScreenTest {
         compose.onNodeWithText("51.27").assertExists()
     }
 
-    @Test fun secondaryInformationIsHiddenUntilRequested() {
+    @Test fun historyStartsExpandedAndKeepsPeriodWhenCollapsedWhileDetailsStayHidden() {
         compose.setContent { CurrencyRaiseTheme { HomeScreen(saved(), {}, {}) } }
         compose.onNodeWithText("51.27").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("51.37").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Source display time").assertDoesNotExist()
-        compose.onNodeWithText("Daily").assertDoesNotExist()
-        compose.onNodeWithText("Show rate history").performScrollTo().performClick()
         compose.onNodeWithText("Daily").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Hide rate history").performScrollTo().performClick()
+        compose.onNodeWithText("Weekly").performScrollTo().performClick()
+        compose.onNodeWithText("Rate history")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Expanded"))
+            .performScrollTo().performClick()
         compose.onNodeWithText("Daily").assertDoesNotExist()
+        compose.onNodeWithText("Rate history")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Collapsed"))
+            .performScrollTo().performClick()
+        compose.onNodeWithText("Weekly").performScrollTo().assertIsSelected()
         compose.onNodeWithText("Rate details").performScrollTo().performClick()
         compose.onNodeWithText("Source display time").assertExists()
         compose.onNodeWithText("Close").performClick()

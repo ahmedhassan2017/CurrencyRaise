@@ -1,6 +1,10 @@
 package com.example.currencyraise.presentation.home
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,7 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,7 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,10 +43,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.currencyraise.R
@@ -60,94 +73,135 @@ internal fun RateHistoryChart(
     loading: Boolean,
     readFailed: Boolean,
     onRetry: () -> Unit,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
     market: HistoryMarket = HistoryMarket.DOLLAR,
 ) {
     var period by rememberSaveable { mutableStateOf(ChartPeriod.DAILY) }
-    val data = remember(history, period, now) { rateChartData(history, period, now) }
     val lineColor = if (market == HistoryMarket.GOLD) {
         MaterialTheme.colorScheme.tertiary
     } else {
         MaterialTheme.colorScheme.primary
     }
 
-    CurrencyPanel {
-        Text(
-            text = stringResource(R.string.history_title),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(
-            text = stringResource(
-                if (market == HistoryMarket.GOLD) R.string.gold_history_buy_rate_only
-                else R.string.history_buy_rate_only,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(200),
+        label = "History chevron rotation",
+    )
+    val historyState = stringResource(
+        if (expanded) R.string.section_expanded else R.string.section_collapsed,
+    )
+    val toggleLabel = stringResource(
+        if (expanded) R.string.hide_rate_history else R.string.show_rate_history,
+    )
+
+    CurrencyPanel(modifier = Modifier.animateContentSize(animationSpec = tween(220))) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .clickable(role = Role.Button, onClickLabel = toggleLabel, onClick = onToggleExpanded)
+                .semantics { stateDescription = historyState }
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            ChartPeriod.entries.forEach { choice ->
-                FilterChip(
-                    shape = MaterialTheme.shapes.small,
-                    selected = period == choice,
-                    onClick = { period = choice },
-                    label = {
-                        Text(
-                            stringResource(
-                                if (choice == ChartPeriod.DAILY) R.string.history_daily
-                                else R.string.history_weekly,
-                            ),
-                        )
-                    },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+            Text(
+                text = stringResource(R.string.history_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                contentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_history_chevron),
+                    contentDescription = null,
+                    modifier = Modifier.padding(8.dp).rotate(chevronRotation),
                 )
             }
         }
 
-        when {
-            readFailed -> {
-                Text(stringResource(R.string.history_read_failed), color = MaterialTheme.colorScheme.error)
-                TextButton(shape = MaterialTheme.shapes.small, onClick = onRetry) {
-                    Text(stringResource(R.string.history_retry))
+        if (expanded) {
+            val data = remember(history, period, now) { rateChartData(history, period, now) }
+            Text(
+                text = stringResource(
+                    if (market == HistoryMarket.GOLD) R.string.gold_history_buy_rate_only
+                    else R.string.history_buy_rate_only,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ChartPeriod.entries.forEach { choice ->
+                    FilterChip(
+                        shape = MaterialTheme.shapes.small,
+                        selected = period == choice,
+                        onClick = { period = choice },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (choice == ChartPeriod.DAILY) R.string.history_daily
+                                    else R.string.history_weekly,
+                                ),
+                            )
+                        },
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    )
                 }
             }
-            loading -> Text(stringResource(R.string.history_loading))
-            data.points.isEmpty() -> Text(stringResource(R.string.history_empty))
-            else -> {
-                HistorySummary(data, period, locale, market)
-                ChartPlot(
-                    data = data,
-                    lineColor = lineColor,
-                    locale = locale,
-                    zone = zone,
-                    period = period,
-                    market = market,
-                )
-                if (data.points.size == 1) {
-                    Text(stringResource(R.string.history_single), style = MaterialTheme.typography.bodySmall)
+
+            when {
+                readFailed -> {
+                    Text(stringResource(R.string.history_read_failed), color = MaterialTheme.colorScheme.error)
+                    TextButton(shape = MaterialTheme.shapes.small, onClick = onRetry) {
+                        Text(stringResource(R.string.history_retry))
+                    }
                 }
-                Text(
-                    pluralStringResource(
-                        R.plurals.history_coverage,
-                        data.points.size,
-                        data.points.size,
-                        formatFetchTime(data.points.first().observedAt, locale, zone),
-                        formatFetchTime(data.points.last().observedAt, locale, zone),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                loading -> Text(stringResource(R.string.history_loading))
+                data.points.isEmpty() -> Text(stringResource(R.string.history_empty))
+                else -> {
+                    HistorySummary(data, period, locale, market)
+                    ChartPlot(
+                        data = data,
+                        lineColor = lineColor,
+                        locale = locale,
+                        zone = zone,
+                        period = period,
+                        market = market,
+                    )
+                    if (data.points.size == 1) {
+                        Text(stringResource(R.string.history_single), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text(
+                        pluralStringResource(
+                            R.plurals.history_coverage,
+                            data.points.size,
+                            data.points.size,
+                            formatFetchTime(data.points.first().observedAt, locale, zone),
+                            formatFetchTime(data.points.last().observedAt, locale, zone),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
+            Text(
+                text = stringResource(
+                    if (market == HistoryMarket.GOLD) R.string.gold_history_observed_note
+                    else R.string.history_observed_note,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            text = stringResource(
-                if (market == HistoryMarket.GOLD) R.string.gold_history_observed_note
-                else R.string.history_observed_note,
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

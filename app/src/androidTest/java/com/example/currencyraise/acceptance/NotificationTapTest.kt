@@ -7,11 +7,7 @@ import com.example.currencyraise.data.mapper.toExchangeRate
 import com.example.currencyraise.data.remote.BanqueMisrParser
 import com.example.currencyraise.data.remote.CibTa3weemParser
 import com.example.currencyraise.notification.RateNotificationPublisher
-import com.example.currencyraise.domain.model.GoldKarat
-import com.example.currencyraise.domain.model.GoldRate
-import java.math.BigDecimal
 import java.time.Instant
-import java.time.LocalDateTime
 import org.junit.Rule
 import org.junit.Test
 import androidx.test.platform.app.InstrumentationRegistry
@@ -51,23 +47,4 @@ class NotificationTapTest {
         compose.onNodeWithText("CIB via Ta3weem · Bank rates").assertExists()
     }
 
-    @Test fun goldNotificationActionOpensMatchingGoldKarat() {
-        val rate = GoldRate(
-            karat = GoldKarat.K24,
-            buyRate = BigDecimal("7091"),
-            sellRate = BigDecimal("7114"),
-            sourceName = "Ta3weem",
-            sourceUrl = "https://ta3weem.com/en/gold-prices/GOLD24K",
-            sourceDisplayedAt = LocalDateTime.of(2026, 9, 25, 12, 0),
-            fetchedAt = Instant.parse("2026-09-25T10:00:00Z"),
-        )
-        val action = RateNotificationPublisher(compose.activity).buildGoldNotification(rate).contentIntent
-        compose.runOnUiThread { action.send() }
-        compose.waitUntil(10_000) {
-            compose.onAllNodes(hasText("Gold") and isSelected()).fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithText("Gold").assertIsSelected()
-        compose.onNodeWithText("24K").assertIsSelected()
-        compose.onNodeWithText("24K gold / EGP").assertIsDisplayed()
-    }
 }

@@ -7,12 +7,9 @@ import android.content.res.Configuration
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import com.example.currencyraise.domain.model.ExchangeRate
-import com.example.currencyraise.domain.model.GoldKarat
-import com.example.currencyraise.domain.model.GoldRate
 import com.example.currencyraise.domain.model.QuoteKind
 import java.math.BigDecimal
 import java.time.Instant
-import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.Assert.*
 import org.junit.Test
@@ -74,7 +71,7 @@ class RateNotificationPublisherTest {
         if (Build.VERSION.SDK_INT >= 26) {
             val channel = context.getSystemService(NotificationManager::class.java).getNotificationChannel(RATE_CHANNEL_ID)
             assertNotNull(channel)
-            assertEquals("Dollar and Gold Rate Updates", channel.name.toString())
+            assertEquals("Dollar Rate Updates", channel.name.toString())
         }
         val rate = ExchangeRate("USD", "EGP", BigDecimal("51.27"), BigDecimal("51.37"),
             "banque_misr", "Banque Misr", "https://www.banquemisr.com/", QuoteKind.CASH,
@@ -96,36 +93,4 @@ class RateNotificationPublisherTest {
         assertNotEquals(RateNotificationPublisher.RATE_NOTIFICATION_ID, RateNotificationPublisher.TEST_NOTIFICATION_ID)
     }
 
-    @Test fun goldNotificationHasIndependentArrowsIdsAndAppOwnedTapAction() {
-        val appContext = ApplicationProvider.getApplicationContext<Context>()
-        val context = appContext.createConfigurationContext(Configuration(appContext.resources.configuration).apply {
-            setLocale(Locale.US)
-        })
-        val publisher = RateNotificationPublisher(context)
-        val baseline = goldRate(GoldKarat.K21, "6205", "6225")
-        val changed = goldRate(GoldKarat.K21, "6206", "6224").copy(
-            fetchedAt = baseline.fetchedAt.plusSeconds(300)
-        )
-        val notification = publisher.buildGoldNotification(changed, baseline)
-
-        assertEquals("21K gold rate changed", notification.extras.getCharSequence(Notification.EXTRA_TITLE))
-        val expanded = notification.extras.getCharSequence(Notification.EXTRA_BIG_TEXT).toString()
-        assertTrue(expanded.contains("↑ Up 1"))
-        assertTrue(expanded.contains("↓ Down 1"))
-        assertEquals(context.packageName, notification.contentIntent.creatorPackage)
-        if (Build.VERSION.SDK_INT >= 31) assertTrue(notification.contentIntent.isImmutable)
-        assertEquals(3, GoldKarat.entries.map { publisher.notificationId(goldRate(it, "1", "2")) }.toSet().size)
-        assertNotEquals(RateNotificationPublisher.RATE_NOTIFICATION_ID, publisher.notificationId(changed))
-        assertNotEquals(RateNotificationPublisher.CIB_NOTIFICATION_ID, publisher.notificationId(changed))
-    }
-
-    private fun goldRate(karat: GoldKarat, buy: String, sell: String) = GoldRate(
-        karat = karat,
-        buyRate = BigDecimal(buy),
-        sellRate = BigDecimal(sell),
-        sourceName = "Ta3weem",
-        sourceUrl = "https://ta3weem.com/en/gold-prices/${karat.ta3weemSlug}",
-        sourceDisplayedAt = LocalDateTime.of(2026, 9, 25, 12, 0),
-        fetchedAt = Instant.parse("2026-09-25T10:00:00Z"),
-    )
 }

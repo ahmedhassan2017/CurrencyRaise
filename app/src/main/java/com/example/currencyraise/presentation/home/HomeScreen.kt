@@ -24,7 +24,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -132,7 +131,7 @@ fun HomeScreen(
     val zone = ZoneId.systemDefault()
     var storageHelp by rememberSaveable { mutableStateOf(false) }
     var showDetails by rememberSaveable(state.bank) { mutableStateOf(false) }
-    var showHistory by rememberSaveable { mutableStateOf(false) }
+    var showHistory by rememberSaveable { mutableStateOf(true) }
     val sourceUrl = state.rate?.sourceUrl ?: state.bank.sourceUrl
 
     Scaffold(
@@ -259,21 +258,11 @@ fun HomeScreen(
                 )
             }
 
-            val historyState = stringResource(if (showHistory) R.string.section_expanded else R.string.section_collapsed)
-            OutlinedButton(
-                shape = MaterialTheme.shapes.small,
-                onClick = { showHistory = !showHistory },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                    .semantics { stateDescription = historyState },
-            ) {
-                Text(stringResource(if (showHistory) R.string.hide_rate_history else R.string.show_rate_history))
-            }
-            if (showHistory) {
-                RateHistoryChart(
-                    history = state.history, now = state.now, locale = locale, zone = zone,
-                    loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
-                )
-            }
+            RateHistoryChart(
+                history = state.history, now = state.now, locale = locale, zone = zone,
+                loading = state.loadingHistory, readFailed = state.historyReadFailed, onRetry = onRetryHistory,
+                expanded = showHistory, onToggleExpanded = { showHistory = !showHistory },
+            )
             TextButton(
                 shape = MaterialTheme.shapes.small,
                 onClick = { showDetails = true },
