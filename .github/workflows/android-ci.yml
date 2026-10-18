@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [master, add-ci-setup]
+    branches: [master, add-ci-setup, 'codex/**']
   pull_request:
     branches: [master]
 
